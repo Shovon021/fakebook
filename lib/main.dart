@@ -115,7 +115,7 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
           children: [
             // Facebook Logo Text
             Text(
-              'facebook',
+              'fakebook',
               style: TextStyle(
                 color: AppTheme.facebookBlue,
                 fontWeight: FontWeight.bold,
