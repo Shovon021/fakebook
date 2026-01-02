@@ -15,7 +15,7 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-import '../widgets/loading_post_shimmer.dart';
+import '../widgets/facebook_shimmer.dart';
 
 class HomeScreenContent extends StatefulWidget {
   const HomeScreenContent({super.key});
@@ -44,17 +44,7 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     
     if (_isLoading) {
-      return ListView.builder(
-        itemCount: 5,
-        itemBuilder: (context, index) {
-          return Column(
-            children: [
-              const LoadingPostShimmer(),
-              _buildDivider(isDark),
-            ],
-          );
-        },
-      );
+      return const HomeScreenShimmer();
     }
 
     return RefreshIndicator(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../models/post_model.dart';
 import '../theme/app_theme.dart';
+import 'package:flutter/services.dart';
 import 'comment_bottom_sheet.dart';
 import '../screens/photo_viewer_screen.dart';
 
@@ -366,6 +367,8 @@ class _PostCardState extends State<PostCard> with SingleTickerProviderStateMixin
                             _animationController.forward().then((_) {
                               _animationController.reverse();
                             });
+                             // Feature #1 (Polish): Haptic Feedback on Like
+                            HapticFeedback.lightImpact();
                           },
                           isDark: isDark,
                         ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../models/reel_model.dart';
 import '../theme/app_theme.dart';
+import '../screens/reels_viewer_screen.dart';
 
 class ReelsList extends StatelessWidget {
   final List<ReelModel> reels;
@@ -56,7 +57,20 @@ class ReelsList extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               itemCount: reels.length,
               itemBuilder: (context, index) {
-                return _buildReelCard(reels[index], isDark);
+                return GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ReelsViewerScreen(
+                          reels: reels,
+                          initialIndex: index,
+                        ),
+                      ),
+                    );
+                  },
+                  child: _buildReelCard(reels[index], isDark),
+                );
               },
             ),
           ),

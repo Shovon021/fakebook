@@ -3,258 +3,294 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../data/dummy_data.dart';
 import '../theme/app_theme.dart';
 import 'profile_screen.dart';
+import 'groups_screen.dart';
 
-class MenuScreen extends StatelessWidget {
+class MenuScreen extends StatefulWidget {
   const MenuScreen({super.key});
+
+  @override
+  State<MenuScreen> createState() => _MenuScreenState();
+}
+
+class _MenuScreenState extends State<MenuScreen> {
+  // Expansion state for the "See more" shortcuts (optional, but requested implicitly by "See more" pattern)
+  bool _showAllShortcuts = false;
+
+  final List<Map<String, dynamic>> _allShortcuts = [
+    {'icon': Icons.bookmark, 'label': 'Saved', 'color': Colors.purple},
+    {'icon': Icons.group, 'label': 'Groups', 'color': AppTheme.facebookBlue},
+    {'icon': Icons.ondemand_video, 'label': 'Video', 'color': Colors.blue},
+    {'icon': Icons.storefront, 'label': 'Marketplace', 'color': Colors.blueAccent},
+    {'icon': Icons.people, 'label': 'Friends', 'color': Colors.blue},
+    {'icon': Icons.history, 'label': 'Memories', 'color': Colors.blue},
+    {'icon': Icons.event, 'label': 'Events', 'color': Colors.red},
+    {'icon': Icons.games, 'label': 'Gaming', 'color': Colors.blue},
+    {'icon': Icons.flag, 'label': 'Pages', 'color': Colors.orange},
+    {'icon': Icons.campaign, 'label': 'Ad Center', 'color': Colors.teal},
+  ];
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final currentUser = DummyData.currentUser;
     
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    // Show top 6, or all if expanded
+    final displayShortcuts = _showAllShortcuts 
+        ? _allShortcuts 
+        : _allShortcuts.take(8).toList(); // Show first 8 initially (2 rows x 2 cols? No, 8 is 4 rows. Facebook usually shows ~half). Let's stick to 6 + see more button slot logic handling
+
+    return Scaffold(
+      backgroundColor: isDark ? const Color(0xFF18191A) : const Color(0xFFF0F2F5),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Menu',
-                style: TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
-                  color: isDark ? Colors.white : AppTheme.black,
-                ),
-              ),
+              // HEADER
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF3A3B3C) : AppTheme.lightGrey,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.settings,
+                  Text(
+                    'Menu',
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
                       color: isDark ? Colors.white : AppTheme.black,
-                      size: 22,
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF3A3B3C) : AppTheme.lightGrey,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.search,
-                      color: isDark ? Colors.white : AppTheme.black,
-                      size: 22,
-                    ),
+                  Row(
+                    children: [
+                      _buildHeaderButton(Icons.settings, isDark),
+                      const SizedBox(width: 12),
+                      _buildHeaderButton(Icons.search, isDark),
+                    ],
                   ),
                 ],
               ),
+              const SizedBox(height: 16),
+              
+              // PROFILE CARD
+              InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ProfileScreen(user: currentUser),
+                    ),
+                  );
+                },
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 24,
+                      backgroundImage: CachedNetworkImageProvider(currentUser.avatarUrl),
+                    ),
+                    const SizedBox(width: 12),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          currentUser.name,
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: isDark ? Colors.white : AppTheme.black,
+                          ),
+                        ),
+                        Text(
+                          'See your profile',
+                          style: TextStyle(
+                            color: isDark ? const Color(0xFFB0B3B8) : Colors.grey[600],
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Divider(height: 1),
+              const SizedBox(height: 16),
+
+              // SHORTCUTS LABEL
+              Text(
+                'All shortcuts',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? Colors.white : AppTheme.black,
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // GRID
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 8,
+                  mainAxisSpacing: 8,
+                  childAspectRatio: 2.5, // Wider cards
+                ),
+                itemCount: _showAllShortcuts ? _allShortcuts.length : 8,
+                itemBuilder: (context, index) {
+                  // If not expanded and this is the last item (index 7), show "See more"
+                  if (!_showAllShortcuts && index == 7) {
+                    return _buildSeeMoreButton(isDark, true);
+                  }
+                  // If expanded and this is the last item, show "See less"
+                  if (_showAllShortcuts && index == _allShortcuts.length - 1) {
+                    // Logic issue: if we just append "See less", length needs to be +1. 
+                    // Let's simplify: Standard button in list.
+                  }
+                  
+                  final item = _allShortcuts[index];
+                  return _buildShortcutCard(
+                    icon: item['icon'],
+                    label: item['label'],
+                    color: item['color'],
+                    isDark: isDark,
+                  );
+                },
+              ),
+              if (_showAllShortcuts)
+                 Padding(
+                   padding: const EdgeInsets.only(top: 8),
+                   child: _buildSeeMoreButton(isDark, false),
+                 ),
+
+              const SizedBox(height: 24),
+              
+              // ACCORDIONS
+              _buildExpansionTile(
+                icon: Icons.help_outline,
+                title: 'Help & Support',
+                isDark: isDark,
+                children: [
+                   _buildSubMenuItem('Help Center', Icons.support, isDark),
+                   _buildSubMenuItem('Support Inbox', Icons.mail_outline, isDark),
+                   _buildSubMenuItem('Report a problem', Icons.warning_amber, isDark),
+                ],
+              ),
+              _buildExpansionTile(
+                icon: Icons.settings,
+                title: 'Settings & Privacy',
+                isDark: isDark,
+                children: [
+                   _buildSubMenuItem('Settings', Icons.person, isDark),
+                   _buildSubMenuItem('Device requests', Icons.perm_device_information, isDark),
+                   _buildSubMenuItem('Recent ad activity', Icons.history, isDark),
+                ],
+              ),
+              _buildExpansionTile(
+                icon: Icons.grid_view,
+                title: 'Also from Meta',
+                isDark: isDark,
+                children: [
+                   _buildSubMenuItem('WhatsApp', Icons.chat, isDark),
+                   _buildSubMenuItem('Threads', Icons.alternate_email, isDark),
+                ],
+              ),
+
+              const SizedBox(height: 24),
+              // Log Out
+               Container(
+                 width: double.infinity,
+                 decoration: BoxDecoration(
+                   color: isDark ? const Color(0xFF242526) : Colors.white,
+                   borderRadius: BorderRadius.circular(8),
+                   border: Border.all(color: isDark ? Colors.transparent : Colors.grey[300]!),
+                 ),
+                 child: TextButton(
+                   onPressed: () {}, 
+                   child: Text(
+                     'Log Out', 
+                     style: TextStyle(
+                       color: isDark ? Colors.white : Colors.black,
+                       fontSize: 16,
+                     ),
+                   ),
+                 ),
+               ),
+               const SizedBox(height: 20),
             ],
           ),
-          const SizedBox(height: 20),
-          // Profile card
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF242526) : Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildExpansionTile({
+    required IconData icon,
+    required String title,
+    required bool isDark,
+    required List<Widget> children,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF242526) : Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [
+          if (!isDark)
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.1),
+              blurRadius: 4,
+              offset: const Offset(0, 1),
             ),
-            child: Column(
-              children: [
-                InkWell(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ProfileScreen(user: currentUser),
-                      ),
-                    );
-                  },
-                  borderRadius: BorderRadius.circular(8),
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 26,
-                        backgroundImage: CachedNetworkImageProvider(
-                          currentUser.avatarUrl,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              currentUser.name,
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 17,
-                                color: isDark ? Colors.white : AppTheme.black,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'See your profile',
-                              style: TextStyle(
-                                color: isDark 
-                                    ? const Color(0xFFB0B3B8) 
-                                    : AppTheme.mediumGrey,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Icon(
-                        Icons.arrow_forward_ios,
-                        size: 16,
-                        color: isDark 
-                            ? const Color(0xFFB0B3B8) 
-                            : AppTheme.mediumGrey,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 14),
-                Divider(
-                  color: isDark ? const Color(0xFF3A3B3C) : Colors.grey[300],
-                  height: 1,
-                ),
-                const SizedBox(height: 12),
-                InkWell(
-                  onTap: () {},
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF3A3B3C) : AppTheme.lightGrey,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.switch_account,
-                          color: isDark 
-                              ? const Color(0xFFB0B3B8) 
-                              : AppTheme.mediumGrey,
-                          size: 20,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Text(
-                        'Switch profiles',
-                        style: TextStyle(
-                          color: isDark 
-                              ? const Color(0xFFB0B3B8) 
-                              : AppTheme.mediumGrey,
-                          fontSize: 15,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-          // Shortcuts grid
-          GridView.count(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisCount: 2,
-            crossAxisSpacing: 10,
-            mainAxisSpacing: 10,
-            childAspectRatio: 1.6,
-            children: [
-              _buildShortcutCard(
-                icon: Icons.bookmark,
-                label: 'Saved',
-                color: Colors.purple,
-                isDark: isDark,
-              ),
-              _buildShortcutCard(
-                icon: Icons.group,
-                label: 'Groups',
-                color: AppTheme.facebookBlue,
-                isDark: isDark,
-              ),
-              _buildShortcutCard(
-                icon: Icons.ondemand_video,
-                label: 'Reels',
-                color: Colors.pink,
-                isDark: isDark,
-              ),
-              _buildShortcutCard(
-                icon: Icons.history,
-                label: 'Memories',
-                color: Colors.teal,
-                isDark: isDark,
-              ),
-              _buildShortcutCard(
-                icon: Icons.event,
-                label: 'Events',
-                color: Colors.red,
-                isDark: isDark,
-              ),
-              _buildShortcutCard(
-                icon: Icons.flag,
-                label: 'Pages',
-                color: Colors.orange,
-                isDark: isDark,
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          // More options
-          _buildMenuItem(Icons.help_outline, 'Help & Support', isDark),
-          _buildMenuItem(Icons.settings, 'Settings & Privacy', isDark),
-          _buildMenuItem(Icons.dark_mode, 'Dark Mode', isDark),
-          _buildMenuItem(Icons.logout, 'Log Out', isDark),
-          const SizedBox(height: 32),
-          // Meta info
-          Center(
-            child: Column(
-              children: [
-                Text(
-                  'facebook',
-                  style: TextStyle(
-                    color: AppTheme.facebookBlue,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 22,
-                    letterSpacing: -1,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'from Meta',
-                  style: TextStyle(
-                    color: isDark 
-                        ? const Color(0xFFB0B3B8) 
-                        : AppTheme.mediumGrey,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
         ],
       ),
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          shape: const Border(), // Remove default borders
+          leading: Icon(icon, color: isDark ? const Color(0xFFB0B3B8) : Colors.purple, size: 28),
+          title: Text(
+            title,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: isDark ? Colors.white : AppTheme.black,
+            ),
+          ),
+          children: children,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSubMenuItem(String title, IconData icon, bool isDark) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF3A3B3C) : Colors.grey[50],
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: ListTile(
+        leading: Icon(icon, size: 20, color: isDark ? Colors.white70 : Colors.black54),
+        title: Text(
+          title, 
+          style: TextStyle(
+            fontSize: 14, 
+            color: isDark ? Colors.white : Colors.black,
+          ),
+        ),
+        onTap: () {},
+      ),
+    );
+  }
+
+  Widget _buildHeaderButton(IconData icon, bool isDark) {
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF3A3B3C) : Colors.grey[200],
+        shape: BoxShape.circle,
+      ),
+      child: Icon(icon, size: 22, color: isDark ? Colors.white : Colors.black),
     );
   }
 
@@ -267,84 +303,74 @@ class MenuScreen extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF242526) : Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(8),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+             color: Colors.black.withOpacity(isDark ? 0.2 : 0.05),
+             blurRadius: 4,
+             offset: const Offset(0, 2),
           ),
         ],
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () {},
-          borderRadius: BorderRadius.circular(12),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.12),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, color: color, size: 26),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                label,
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: isDark ? Colors.white : AppTheme.black,
-                  fontSize: 14,
-                ),
-              ),
-            ],
+          onTap: () {
+            if (label == 'Groups') {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const GroupsScreen()),
+              );
+            } else {
+              // Other shortcuts...
+            }
+          },
+          borderRadius: BorderRadius.circular(8),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                 Icon(icon, color: color, size: 28),
+                 const Spacer(),
+                 Text(
+                   label,
+                   style: TextStyle(
+                     fontWeight: FontWeight.w600,
+                     fontSize: 14,
+                     color: isDark ? Colors.white : Colors.black,
+                   ),
+                 ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildMenuItem(IconData icon, String label, bool isDark) {
+  Widget _buildSeeMoreButton(bool isDark, bool expand) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF242526) : Colors.white,
-        borderRadius: BorderRadius.circular(10),
+        color: isDark ? const Color(0xFF3A3B3C) : Colors.grey[200],
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () {},
-          borderRadius: BorderRadius.circular(10),
-          child: ListTile(
-            leading: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF3A3B3C) : AppTheme.lightGrey,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                icon,
-                color: isDark ? Colors.white : AppTheme.black,
-                size: 22,
-              ),
-            ),
-            title: Text(
-              label,
+          onTap: () {
+            setState(() {
+              _showAllShortcuts = expand;
+            });
+          },
+          borderRadius: BorderRadius.circular(8),
+          child: Center(
+            child: Text(
+              expand ? 'See more' : 'See less',
               style: TextStyle(
                 fontWeight: FontWeight.w600,
-                color: isDark ? Colors.white : AppTheme.black,
-                fontSize: 15,
+                color: isDark ? Colors.white : Colors.black,
               ),
-            ),
-            trailing: Icon(
-              Icons.arrow_forward_ios,
-              size: 16,
-              color: isDark ? const Color(0xFFB0B3B8) : AppTheme.mediumGrey,
             ),
           ),
         ),

@@ -15,6 +15,8 @@ void main() {
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.dark,
+      statusBarBrightness: Brightness.light,
     ),
   );
   runApp(const FakebookApp());
@@ -106,6 +108,7 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
             _badgeCounts.remove(_currentIndex);
           }
         });
+        HapticFeedback.selectionClick();
       }
     });
   }
