@@ -1,0 +1,33 @@
+﻿Analyzing Facebook...                                           
+
+   info - The private field _selectedImages could be 'final' - lib\screens\create_post_screen.dart:28:14 - prefer_final_fields
+   info - Don't use 'BuildContext's across async gaps - lib\screens\messenger_screen.dart:462:29 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\messenger_screen.dart:467:7 - use_build_context_synchronously
+   info - 'scale' is deprecated and shouldn't be used. Use scaleByVector3, scaleByVector4, or scaleByDouble instead - lib\screens\photo_viewer_screen.dart:69:39 - deprecated_member_use
+   info - Unnecessary use of multiple underscores - lib\screens\profile_screen.dart:585:33 - unnecessary_underscores
+  error - Undefined name '_isSearching' - lib\screens\search_screen.dart:33:7 - undefined_identifier
+   info - Don't invoke 'print' in production code - lib\services\auth_service.dart:46:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\auth_service.dart:63:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\marketplace_service.dart:54:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\post_service.dart:139:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\storage_service.dart:49:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\story_service.dart:28:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\user_service.dart:16:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\user_service.dart:50:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\user_service.dart:104:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\user_service.dart:127:7 - avoid_print
+  error - Undefined name '_replyingToUserId' - lib\widgets\comment_bottom_sheet.dart:52:7 - undefined_identifier
+  error - Undefined name '_replyingToUserId' - lib\widgets\comment_bottom_sheet.dart:68:7 - undefined_identifier
+  error - Undefined name '_replyingToUserId' - lib\widgets\comment_bottom_sheet.dart:77:7 - undefined_identifier
+   info - 'translate' is deprecated and shouldn't be used. Use translateByVector3, translateByVector4, or translateByDouble instead - lib\widgets\reactions\reaction_button.dart:228:32 - deprecated_member_use
+   info - 'scale' is deprecated and shouldn't be used. Use scaleByVector3, scaleByVector4, or scaleByDouble instead - lib\widgets\reactions\reaction_button.dart:229:32 - deprecated_member_use
+
+flutter : 21 issues found. (ran in 9.6s)
+At line:1 char:1
++ flutter analyze 2>&1 | Out-File -FilePath analyze_final.txt 
+-Encoding ...
++ ~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (21 issues found. (ran 
+    in 9.6s):String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 

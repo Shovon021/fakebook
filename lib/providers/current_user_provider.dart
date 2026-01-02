@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
@@ -14,6 +15,7 @@ class CurrentUserProvider extends ChangeNotifier {
   
   UserModel? _currentUser;
   bool _isLoading = true;
+  StreamSubscription? _userSubscription;
 
   UserModel? get currentUser => _currentUser;
   bool get isLoading => _isLoading;
@@ -23,8 +25,9 @@ class CurrentUserProvider extends ChangeNotifier {
   void init() {
     _authService.authStateChanges.listen((user) async {
       if (user != null) {
-        await _loadCurrentUser(user.uid);
+        _listenToCurrentUser(user.uid);
       } else {
+        _userSubscription?.cancel();
         _currentUser = null;
         _isLoading = false;
         notifyListeners();
@@ -32,20 +35,23 @@ class CurrentUserProvider extends ChangeNotifier {
     });
   }
 
-  Future<void> _loadCurrentUser(String uid) async {
+  void _listenToCurrentUser(String uid) {
     _isLoading = true;
     notifyListeners();
 
-    _currentUser = await _userService.getUserById(uid);
-    _isLoading = false;
-    notifyListeners();
+    _userSubscription?.cancel();
+    _userSubscription = _userService.getUserStream(uid).listen((user) {
+      _currentUser = user;
+      _isLoading = false;
+      notifyListeners();
+    });
   }
 
-  /// Refresh current user data
-  Future<void> refresh() async {
+  /// Refresh current user data (re-subscribes to stream)
+  void refresh() {
     final uid = _authService.currentUserId;
     if (uid != null) {
-      await _loadCurrentUser(uid);
+      _listenToCurrentUser(uid);
     }
   }
 

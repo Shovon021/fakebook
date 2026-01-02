@@ -1,33 +1,47 @@
 import '../models/post_model.dart';
 
 class ReactionAssets {
-  // Using public raw github assets for standard FB reactions (GIFs)
-  static const String _baseMove = 'https://raw.githubusercontent.com/may-andro/flutter_reactions/master/example/assets/images';
-  
+  // Using reliable static emoji images - FB-style reactions from Imgur
   static String getReactionPath(ReactionType type) {
     switch (type) {
       case ReactionType.like:
-        return '$_baseMove/like.gif';
+        return 'https://i.imgur.com/O3Z5P5E.png'; // Blue thumbs up
       case ReactionType.love:
-        return '$_baseMove/love.gif';
+        return 'https://i.imgur.com/RLxqvHf.png'; // Red heart
       case ReactionType.haha:
-        return '$_baseMove/haha.gif';
+        return 'https://i.imgur.com/b8qKvds.png'; // Laughing face
       case ReactionType.wow:
-        return '$_baseMove/wow.gif';
+        return 'https://i.imgur.com/XGjBEuJ.png'; // Wow face
       case ReactionType.sad:
-        return '$_baseMove/sad.gif';
+        return 'https://i.imgur.com/P3wLdwN.png'; // Sad face
       case ReactionType.angry:
-        return '$_baseMove/angry.gif';
+        return 'https://i.imgur.com/lPb5aSD.png'; // Angry face
       case ReactionType.care:
-        // Care reaction is newer, using a specific reliable source or fallback
-        // Using a known Care animation URL
-        return 'https://media.tenor.com/_ed8aW8oJgIAAAAi/facebook-care-emoji-care.gif'; 
+        return 'https://i.imgur.com/5o8LmzX.png'; // Care hug
     }
   }
 
   static String getReactionIcon(ReactionType type) {
-    // For static icons (small), we can use the same or specific PNGs if available.
-    // For now returning the same as they scale down okay, or we could use specific PNGs.
     return getReactionPath(type);
+  }
+  
+  // Get emoji fallback if images fail
+  static String getReactionEmoji(ReactionType type) {
+    switch (type) {
+      case ReactionType.like:
+        return '👍';
+      case ReactionType.love:
+        return '❤️';
+      case ReactionType.haha:
+        return '😂';
+      case ReactionType.wow:
+        return '😮';
+      case ReactionType.sad:
+        return '😢';
+      case ReactionType.angry:
+        return '😠';
+      case ReactionType.care:
+        return '🤗';
+    }
   }
 }

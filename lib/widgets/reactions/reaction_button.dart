@@ -197,7 +197,7 @@ class _ReactionOverlayState extends State<_ReactionOverlay> with SingleTickerPro
                 borderRadius: BorderRadius.circular(50),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.15),
+                    color: Colors.black.withValues(alpha: 0.15),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -237,6 +237,21 @@ class _ReactionOverlayState extends State<_ReactionOverlay> with SingleTickerPro
                                decoration: BoxDecoration(
                                  color: Colors.grey[200],
                                  shape: BoxShape.circle,
+                               ),
+                               child: Center(
+                                 child: Text(
+                                   ReactionAssets.getReactionEmoji(type),
+                                   style: const TextStyle(fontSize: 24),
+                                 ),
+                               ),
+                             ),
+                             errorWidget: (context, url, error) => Container(
+                               width: 40, 
+                               height: 40, 
+                               alignment: Alignment.center,
+                               child: Text(
+                                 ReactionAssets.getReactionEmoji(type),
+                                 style: const TextStyle(fontSize: 28),
                                ),
                              ),
                            ),

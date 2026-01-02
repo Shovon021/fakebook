@@ -162,7 +162,7 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
   Widget _buildDivider(bool isDark) {
     return Container(
       height: 8,
-      color: isDark ? const Color(0xFF18191A) : const Color(0xFFF0F2F5),
+      color: Theme.of(context).scaffoldBackgroundColor,
     );
   }
 }

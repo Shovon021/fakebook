@@ -20,8 +20,12 @@ class CreatePostWidget extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     
     return Container(
-      color: isDark ? const Color(0xFF242526) : Colors.white,
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.fromLTRB(0, 0, 0, 6),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF242526) : Colors.white,
+        boxShadow: isDark ? null : AppTheme.cardShadow,
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Column(
         children: [
           Row(
@@ -36,7 +40,7 @@ class CreatePostWidget extends StatelessWidget {
                   );
                 },
                 child: CircleAvatar(
-                  radius: 22,
+                  radius: 20,
                   backgroundImage: ImageHelper.getImageProvider(
                     currentUser.avatarUrl,
                   ),
@@ -55,24 +59,20 @@ class CreatePostWidget extends StatelessWidget {
                   },
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
+                      horizontal: 20,
+                      vertical: 10,
                     ),
                     decoration: BoxDecoration(
-                      border: Border.all(
-                        color: isDark 
-                            ? const Color(0xFF3A3B3C) 
-                            : Colors.grey.shade300,
-                      ),
-                      borderRadius: BorderRadius.circular(25),
+                      color: isDark ? const Color(0xFF3A3B3C) : const Color(0xFFF0F2F5), // Filled style like FB
+                      borderRadius: BorderRadius.circular(30),
                     ),
                     child: Text(
                       "What's on your mind?",
                       style: TextStyle(
                         color: isDark 
                             ? const Color(0xFFB0B3B8) 
-                            : AppTheme.mediumGrey,
-                        fontSize: 15,
+                            : const Color(0xFF65676B),
+                        fontSize: 16,
                       ),
                     ),
                   ),
@@ -83,42 +83,33 @@ class CreatePostWidget extends StatelessWidget {
           const SizedBox(height: 12),
           Divider(
             height: 1,
-            color: isDark ? const Color(0xFF3A3B3C) : Colors.grey.shade200,
+            color: isDark ? const Color(0xFF3E4042) : const Color(0xFFCED0D4),
+            thickness: 0.5,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
           Row(
             children: [
               Expanded(
                 child: _buildActionButton(
                   icon: Icons.video_call,
                   label: 'Live',
-                  color: Colors.red,
+                  color: const Color(0xFFF3425F), // FB Live Red
                   isDark: isDark,
                 ),
-              ),
-              Container(
-                width: 1,
-                height: 24,
-                color: isDark ? const Color(0xFF3A3B3C) : Colors.grey.shade300,
               ),
               Expanded(
                 child: _buildActionButton(
                   icon: Icons.photo_library,
                   label: 'Photo',
-                  color: Colors.green,
+                  color: const Color(0xFF45BD62), // FB Green
                   isDark: isDark,
                 ),
               ),
-              Container(
-                width: 1,
-                height: 24,
-                color: isDark ? const Color(0xFF3A3B3C) : Colors.grey.shade300,
-              ),
               Expanded(
                 child: _buildActionButton(
-                  icon: Icons.videocam,
+                  icon: Icons.video_camera_back, // Room/Reel icon
                   label: 'Room',
-                  color: Colors.purple,
+                  color: const Color(0xFF9360F7), // FB Purple
                   isDark: isDark,
                 ),
               ),

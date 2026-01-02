@@ -5,7 +5,6 @@ import '../services/marketplace_service.dart';
 import '../services/storage_service.dart';
 import '../providers/current_user_provider.dart';
 import '../theme/app_theme.dart';
-import '../utils/image_helper.dart';
 
 class CreateMarketplaceItemScreen extends StatefulWidget {
   const CreateMarketplaceItemScreen({super.key});
@@ -285,6 +284,7 @@ class _CreateMarketplaceItemScreenState extends State<CreateMarketplaceItemScree
     required String hint,
     required bool isDark,
     TextInputType? keyboardType,
+    int maxLines = 1,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -307,6 +307,7 @@ class _CreateMarketplaceItemScreenState extends State<CreateMarketplaceItemScree
           child: TextField(
             controller: controller,
             keyboardType: keyboardType,
+            maxLines: maxLines,
             style: TextStyle(
               color: isDark ? Colors.white : Colors.black,
             ),

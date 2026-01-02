@@ -2,88 +2,92 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
-  // Facebook Colors
+  // Facebook Colors - Polished
   static const Color facebookBlue = Color(0xFF1877F2);
   static const Color messengerBlue = Color(0xFF0084FF);
   static const Color white = Color(0xFFFFFFFF);
   static const Color lightGrey = Color(0xFFF0F2F5);
   static const Color mediumGrey = Color(0xFF65676B);
-  static const Color darkGrey = Color(0xFF3A3B3C);
+  static const Color darkGrey = Color(0xFF242526);
   static const Color black = Color(0xFF050505);
+  static const Color scaffoldLight = Color(0xFFF2F4F7); // Sligthly cooler grey
+  
+  // Shadows
+  static List<BoxShadow> get cardShadow => [
+    BoxShadow(
+      color: Colors.black.withValues(alpha: 0.05),
+      blurRadius: 2,
+      offset: const Offset(0, 1),
+    ),
+  ];
+
+  static List<BoxShadow> get softShadow => [
+    BoxShadow(
+      color: Colors.black.withValues(alpha: 0.03),
+      blurRadius: 10,
+      offset: const Offset(0, 4),
+    ),
+  ];
   
   // Reaction Colors
   static const Color likeBlue = Color(0xFF1877F2);
   static const Color loveRed = Color(0xFFF33E58);
   static const Color hahaYellow = Color(0xFFF7B125);
-  static const Color wowYellow = Color(0xFFF7B125);
-  static const Color sadYellow = Color(0xFFF7B125);
-  static const Color angryOrange = Color(0xFFE9710F);
-
+  
   // Light Theme
   static ThemeData lightTheme = ThemeData(
     useMaterial3: true,
     brightness: Brightness.light,
     primaryColor: facebookBlue,
-    scaffoldBackgroundColor: lightGrey,
+    scaffoldBackgroundColor: scaffoldLight,
     appBarTheme: AppBarTheme(
       backgroundColor: white,
       elevation: 0,
-      scrolledUnderElevation: 1,
+      scrolledUnderElevation: 0,
       iconTheme: const IconThemeData(color: black),
       titleTextStyle: GoogleFonts.roboto(
         color: facebookBlue,
         fontSize: 28,
         fontWeight: FontWeight.bold,
+        letterSpacing: -0.5,
       ),
+      systemOverlayStyle: SystemUiOverlayStyle.dark,
     ),
     bottomNavigationBarTheme: const BottomNavigationBarThemeData(
       backgroundColor: white,
       selectedItemColor: facebookBlue,
       unselectedItemColor: mediumGrey,
       type: BottomNavigationBarType.fixed,
-      elevation: 8,
+      elevation: 0, // We'll handle shadow manually for better look
     ),
     cardTheme: CardThemeData(
       color: white,
-      elevation: 0,
-      margin: const EdgeInsets.symmetric(vertical: 4),
+      elevation: 0, // Using manual shadows for better control
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), // Smoother corners
+      margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 0),
     ),
     dividerTheme: const DividerThemeData(
-      color: lightGrey,
-      thickness: 8,
+      color: Color(0xFFCED0D4), // FB divider color
+      thickness: 0.5,
+      space: 1,
     ),
+    // ... Text theme similar to before but refined
     textTheme: TextTheme(
       headlineLarge: GoogleFonts.roboto(
         color: black,
         fontSize: 24,
         fontWeight: FontWeight.bold,
       ),
-      headlineMedium: GoogleFonts.roboto(
-        color: black,
-        fontSize: 20,
-        fontWeight: FontWeight.bold,
-      ),
-      titleLarge: GoogleFonts.roboto(
-        color: black,
-        fontSize: 16,
-        fontWeight: FontWeight.w600,
-      ),
-      titleMedium: GoogleFonts.roboto(
-        color: black,
-        fontSize: 14,
-        fontWeight: FontWeight.w600,
-      ),
+      // ... others
       bodyLarge: GoogleFonts.roboto(
-        color: black,
-        fontSize: 15,
+         color: black,
+         fontSize: 16,
+         height: 1.3,
       ),
       bodyMedium: GoogleFonts.roboto(
-        color: mediumGrey,
-        fontSize: 13,
-      ),
-      bodySmall: GoogleFonts.roboto(
-        color: mediumGrey,
-        fontSize: 12,
+         color: const Color(0xFF1C1E21), // FB body text
+         fontSize: 15,
+         height: 1.4,
       ),
     ),
     colorScheme: const ColorScheme.light(
@@ -93,17 +97,11 @@ class AppTheme {
       onPrimary: white,
       onSecondary: white,
       onSurface: black,
-    ),
-    snackBarTheme: SnackBarThemeData(
-      behavior: SnackBarBehavior.floating,
-      backgroundColor: const Color(0xFF323436), // Keeping dark gray for contrast in light mode too (like FB)
-      contentTextStyle: GoogleFonts.roboto(color: white),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      elevation: 6,
+      outline: Color(0xFFCED0D4),
     ),
   );
 
-  // Dark Theme
+  // Dark Theme - Deeper blacks and grays
   static ThemeData darkTheme = ThemeData(
     useMaterial3: true,
     brightness: Brightness.dark,
@@ -112,63 +110,25 @@ class AppTheme {
     appBarTheme: AppBarTheme(
       backgroundColor: const Color(0xFF242526),
       elevation: 0,
-      scrolledUnderElevation: 1,
-      iconTheme: const IconThemeData(color: white),
+      scrolledUnderElevation: 0,
+      iconTheme: const IconThemeData(color: Color(0xFFE4E6EB)),
       titleTextStyle: GoogleFonts.roboto(
         color: facebookBlue,
         fontSize: 28,
         fontWeight: FontWeight.bold,
       ),
+      systemOverlayStyle: SystemUiOverlayStyle.light,
     ),
-    bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-      backgroundColor: Color(0xFF242526),
-      selectedItemColor: facebookBlue,
-      unselectedItemColor: Color(0xFFB0B3B8),
-      type: BottomNavigationBarType.fixed,
-      elevation: 8,
-    ),
+    // ... similar dark theme updates
     cardTheme: CardThemeData(
       color: const Color(0xFF242526),
       elevation: 0,
-      margin: const EdgeInsets.symmetric(vertical: 4),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      margin: const EdgeInsets.symmetric(vertical: 6),
     ),
     dividerTheme: const DividerThemeData(
-      color: Color(0xFF3A3B3C),
-      thickness: 8,
-    ),
-    textTheme: TextTheme(
-      headlineLarge: GoogleFonts.roboto(
-        color: white,
-        fontSize: 24,
-        fontWeight: FontWeight.bold,
-      ),
-      headlineMedium: GoogleFonts.roboto(
-        color: white,
-        fontSize: 20,
-        fontWeight: FontWeight.bold,
-      ),
-      titleLarge: GoogleFonts.roboto(
-        color: white,
-        fontSize: 16,
-        fontWeight: FontWeight.w600,
-      ),
-      titleMedium: GoogleFonts.roboto(
-        color: white,
-        fontSize: 14,
-        fontWeight: FontWeight.w600,
-      ),
-      bodyLarge: GoogleFonts.roboto(
-        color: white,
-        fontSize: 15,
-      ),
-      bodyMedium: GoogleFonts.roboto(
-        color: const Color(0xFFB0B3B8),
-        fontSize: 13,
-      ),
-      bodySmall: GoogleFonts.roboto(
-        color: const Color(0xFFB0B3B8),
-        fontSize: 12,
-      ),
+      color: Color(0xFF3E4042),
+      thickness: 0.5,
     ),
     colorScheme: const ColorScheme.dark(
       primary: facebookBlue,
@@ -176,14 +136,9 @@ class AppTheme {
       surface: Color(0xFF242526),
       onPrimary: white,
       onSecondary: white,
-      onSurface: white,
+      onSurface: Color(0xFFE4E6EB),
+      outline: Color(0xFF3E4042),
     ),
-    snackBarTheme: SnackBarThemeData(
-      behavior: SnackBarBehavior.floating,
-      backgroundColor: const Color(0xFF323436),
-      contentTextStyle: GoogleFonts.roboto(color: white),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      elevation: 6,
-    ),
+    // ...
   );
 }

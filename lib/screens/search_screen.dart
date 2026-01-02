@@ -19,6 +19,7 @@ class _SearchScreenState extends State<SearchScreen> {
   
   List<UserModel> _searchResults = [];
   bool _isSearching = false;
+  bool _isLoading = false;
   String _query = '';
 
   // Mock recent searches for demo
@@ -32,18 +33,28 @@ class _SearchScreenState extends State<SearchScreen> {
     setState(() {
       _query = value;
       _isSearching = value.isNotEmpty;
+      _isLoading = value.isNotEmpty;
     });
 
     if (value.isEmpty) {
-      setState(() => _searchResults = []);
+      setState(() {
+        _searchResults = [];
+        _isLoading = false;
+      });
       return;
     }
 
-    // Debounce could be added here, but for now direct call is fine
+    // Debounce - wait a bit before searching
+    await Future.delayed(const Duration(milliseconds: 300));
+    
+    // Check if query is still the same (user might have typed more)
+    if (value != _query) return;
+
     final results = await _userService.searchUsers(value);
-    if (mounted) {
+    if (mounted && value == _query) {
       setState(() {
         _searchResults = results;
+        _isLoading = false;
       });
     }
   }
@@ -98,6 +109,12 @@ class _SearchScreenState extends State<SearchScreen> {
   Widget _buildBody(bool isDark) {
     if (_query.isEmpty) {
       return _buildRecentSearches(isDark);
+    }
+
+    if (_isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
     }
 
     if (_searchResults.isEmpty) {

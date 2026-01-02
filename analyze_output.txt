@@ -1,0 +1,82 @@
+﻿Analyzing Facebook...                                           
+
+  error - The named parameter 'category' is required, but there's no corresponding argument - lib\data\dummy_data.dart:254:5 - missing_required_argument
+  error - The named parameter 'description' is required, but there's no corresponding argument - lib\data\dummy_data.dart:254:5 - missing_required_argument
+  error - The named parameter 'sellerId' is required, but there's no corresponding argument - lib\data\dummy_data.dart:254:5 - missing_required_argument
+  error - The named parameter 'category' is required, but there's no corresponding argument - lib\data\dummy_data.dart:262:5 - missing_required_argument
+  error - The named parameter 'description' is required, but there's no corresponding argument - lib\data\dummy_data.dart:262:5 - missing_required_argument
+  error - The named parameter 'sellerId' is required, but there's no corresponding argument - lib\data\dummy_data.dart:262:5 - missing_required_argument
+  error - The named parameter 'category' is required, but there's no corresponding argument - lib\data\dummy_data.dart:270:5 - missing_required_argument
+  error - The named parameter 'description' is required, but there's no corresponding argument - lib\data\dummy_data.dart:270:5 - missing_required_argument
+  error - The named parameter 'sellerId' is required, but there's no corresponding argument - lib\data\dummy_data.dart:270:5 - missing_required_argument
+warning - Unused import: '../utils/image_helper.dart' - lib\screens\create_marketplace_item_screen.dart:8:8 - unused_import
+  error - The named parameter 'maxLines' isn't defined - lib\screens\create_marketplace_item_screen.dart:274:22 - undefined_named_parameter
+   info - The private field _selectedImages could be 'final' - lib\screens\create_post_screen.dart:28:14 - prefer_final_fields
+  error - Expected a method, getter, setter or operator declaration - lib\screens\friends_screen.dart:365:1 - expected_executable
+   info - The import of 'package:flutter/services.dart' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/material.dart' - lib\screens\login_screen.dart:2:8 - unnecessary_import
+   info - Don't use 'BuildContext's across async gaps - lib\screens\messenger_screen.dart:462:29 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\messenger_screen.dart:467:7 - use_build_context_synchronously
+   info - Don't put any logic in 'createState' - lib\screens\notifications_screen.dart:12:47 - no_logic_in_create_state
+  error - The method '_NotificationsScreenState' isn't defined for the type 'NotificationsScreen' - lib\screens\notifications_screen.dart:12:47 - undefined_method
+  error - Undefined name '_notificationService' - lib\screens\notifications_screen.dart:21:15 - undefined_identifier
+  error - Undefined name 'EmptyStates' - lib\screens\notifications_screen.dart:30:18 - undefined_identifier
+  error - Undefined name '_notificationService' - lib\screens\notifications_screen.dart:79:21 - undefined_identifier
+  error - Undefined name 'HapticFeedback' - lib\screens\notifications_screen.dart:80:21 - undefined_identifier
+  error - Undefined name '_notificationService' - lib\screens\notifications_screen.dart:149:17 - undefined_identifier
+  error - Undefined name 'HapticFeedback' - lib\screens\notifications_screen.dart:150:11 - undefined_identifier
+  error - Expected a method, getter, setter or operator declaration - lib\screens\notifications_screen.dart:299:1 - expected_executable
+   info - 'scale' is deprecated and shouldn't be used. Use scaleByVector3, scaleByVector4, or scaleByDouble instead - lib\screens\photo_viewer_screen.dart:69:39 - deprecated_member_use
+   info - Unnecessary use of multiple underscores - lib\screens\profile_screen.dart:585:33 - unnecessary_underscores
+warning - The value of the field '_isSearching' isn't used - lib\screens\search_screen.dart:21:8 - unused_field
+warning - Unused import: '../services/user_service.dart' - lib\screens\watch_screen.dart:3:8 - unused_import
+   info - Don't invoke 'print' in production code - lib\services\auth_service.dart:46:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\auth_service.dart:63:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\marketplace_service.dart:54:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\post_service.dart:139:7 - avoid_print
+  error - Undefined class 'ImagePicker' - lib\services\storage_service.dart:4:9 - undefined_class
+  error - The method 'ImagePicker' isn't defined for the type 'StorageService' - lib\services\storage_service.dart:4:31 - undefined_method
+  error - The name 'File' isn't a type, so it can't be used as a type argument - lib\services\storage_service.dart:8:10 - non_type_as_type_argument
+  error - Undefined class 'XFile' - lib\services\storage_service.dart:9:11 - undefined_class
+  error - Undefined name 'ImageSource' - lib\services\storage_service.dart:10:15 - undefined_identifier
+  error - The method 'File' isn't defined for the type 'StorageService' - lib\services\storage_service.dart:16:14 - undefined_method
+  error - The name 'File' isn't a type, so it can't be used as a type argument - lib\services\storage_service.dart:22:10 - non_type_as_type_argument
+  error - Undefined class 'XFile' - lib\services\storage_service.dart:23:11 - undefined_class
+  error - Undefined name 'ImageSource' - lib\services\storage_service.dart:24:15 - undefined_identifier
+  error - The method 'File' isn't defined for the type 'StorageService' - lib\services\storage_service.dart:30:14 - undefined_method
+  error - Undefined class 'File' - lib\services\storage_service.dart:37:14 - undefined_class
+   info - Don't invoke 'print' in production code - lib\services\storage_service.dart:47:7 - avoid_print
+  error - Undefined class 'File' - lib\services\storage_service.dart:53:55 - undefined_class
+  error - Undefined class 'File' - lib\services\storage_service.dart:57:51 - undefined_class
+  error - Undefined class 'File' - lib\services\storage_service.dart:61:50 - undefined_class
+  error - Undefined class 'File' - lib\services\storage_service.dart:65:51 - undefined_class
+   info - Don't invoke 'print' in production code - lib\services\story_service.dart:28:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\user_service.dart:16:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\user_service.dart:50:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\user_service.dart:104:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\user_service.dart:127:7 - avoid_print
+warning - The value of the field '_replyingToUserId' isn't used - lib\widgets\comment_bottom_sheet.dart:30:11 - unused_field
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\widgets\comment_bottom_sheet.dart:502:33 - deprecated_member_use
+  error - Undefined name '_showReactions' - lib\widgets\post_card.dart:499:19 - undefined_identifier
+  error - The method '_buildReactionEmoji' isn't defined for the type '_PostCardState' - lib\widgets\post_card.dart:522:25 - undefined_method
+  error - The method '_buildReactionEmoji' isn't defined for the type '_PostCardState' - lib\widgets\post_card.dart:523:25 - undefined_method
+  error - The method '_buildReactionEmoji' isn't defined for the type '_PostCardState' - lib\widgets\post_card.dart:524:25 - undefined_method
+  error - The method '_buildReactionEmoji' isn't defined for the type '_PostCardState' - lib\widgets\post_card.dart:525:25 - undefined_method
+  error - The method '_buildReactionEmoji' isn't defined for the type '_PostCardState' - lib\widgets\post_card.dart:526:25 - undefined_method
+  error - The method '_buildReactionEmoji' isn't defined for the type '_PostCardState' - lib\widgets\post_card.dart:527:25 - undefined_method
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\widgets\reactions\reaction_button.dart:200:41 - deprecated_member_use
+   info - 'translate' is deprecated and shouldn't be used. Use translateByVector3, translateByVector4, or translateByDouble instead - lib\widgets\reactions\reaction_button.dart:228:32 - deprecated_member_use
+   info - 'scale' is deprecated and shouldn't be used. Use scaleByVector3, scaleByVector4, or scaleByDouble instead - lib\widgets\reactions\reaction_button.dart:229:32 - deprecated_member_use
+warning - Unused import: '../models/user_model.dart' - lib\widgets\share_bottom_sheet.dart:3:8 - unused_import
+warning - Unused import: '../theme/app_theme.dart' - lib\widgets\share_bottom_sheet.dart:6:8 - unused_import
+warning - Unused import: 'dart:io' - lib\widgets\story_widget.dart:1:8 - unused_import
+warning - Unused import: '../models/user_model.dart' - lib\widgets\story_widget.dart:4:8 - unused_import
+
+flutter : 70 issues found. (ran in 6.4s)
+At line:1 char:1
++ flutter analyze 2>&1 | Out-File -FilePath analyze_output.txt 
+-Encodin ...
++ ~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (70 issues found. (ran 
+    in 6.4s):String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 

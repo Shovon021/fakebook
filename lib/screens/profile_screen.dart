@@ -91,9 +91,33 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                 ),
               ],
             ),
-            // Profile Header
+            // Profile Header - StreamBuilder for real-time updates
             SliverToBoxAdapter(
-              child: _buildProfileHeader(isDark, isOwnProfile),
+              child: StreamBuilder<UserModel?>(
+                stream: UserService().getUserStream(_user.id),
+                builder: (context, snapshot) {
+                  // Update local _user when stream provides new data
+                  if (snapshot.hasData && snapshot.data != null) {
+                    final newUser = snapshot.data!;
+                    // Check if any field has changed
+                    if (_user.avatarUrl != newUser.avatarUrl ||
+                        _user.coverUrl != newUser.coverUrl ||
+                        _user.name != newUser.name ||
+                        _user.bio != newUser.bio ||
+                        _user.details.length != newUser.details.length ||
+                        _user.friendsCount != newUser.friendsCount) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (mounted) {
+                          setState(() {
+                            _user = newUser;
+                          });
+                        }
+                      });
+                    }
+                  }
+                  return _buildProfileHeader(isDark, isOwnProfile);
+                },
+              ),
             ),
           ];
         },
@@ -262,6 +286,17 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                   color: isDark ? Colors.grey : Colors.grey.shade600,
                 ),
               ),
+              // Bio section
+              if (_user.bio != null && _user.bio!.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Text(
+                  _user.bio!,
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: isDark ? Colors.white70 : Colors.black87,
+                  ),
+                ),
+              ],
             ],
           ),
         ),

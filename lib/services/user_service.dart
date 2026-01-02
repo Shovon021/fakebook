@@ -80,6 +80,11 @@ class UserService {
     });
   }
 
+  // Decline/Delete friend request
+  Future<void> declineFriendRequest(String requestId) async {
+    await _firestore.collection('friendRequests').doc(requestId).delete();
+  }
+
   // Get friend requests for user
   Stream<QuerySnapshot> getFriendRequestsStream(String userId) {
     return _firestore
@@ -105,24 +110,39 @@ class UserService {
       return [];
     }
   }
-  // Search users by name (simple prefix search)
+  // Search users by name (case-insensitive contains search)
   Future<List<UserModel>> searchUsers(String query) async {
     if (query.isEmpty) return [];
 
     try {
-      // Capitalize first letter to match stored format if needed, 
-      // but ideally we'd store a lowercase 'searchName' field for better results.
-      // For now, let's assume case-sensitive or user types correctly.
+      final lowerQuery = query.toLowerCase().trim();
+      
+      // Fetch users and filter client-side for better search results
+      // For large user bases, you'd want to use Algolia or similar
       final snapshot = await _firestore
           .collection('users')
-          .where('name', isGreaterThanOrEqualTo: query)
-          .where('name', isLessThan: '${query}z')
-          .limit(20)
+          .limit(100) // Fetch more to filter
           .get();
 
-      return snapshot.docs
+      final allUsers = snapshot.docs
           .map((doc) => UserModel.fromMap(doc.data()))
           .toList();
+      
+      // Filter by name containing query (case-insensitive)
+      final results = allUsers.where((user) {
+        return user.name.toLowerCase().contains(lowerQuery);
+      }).toList();
+
+      // Sort by relevance (starts with query first, then contains)
+      results.sort((a, b) {
+        final aStartsWith = a.name.toLowerCase().startsWith(lowerQuery);
+        final bStartsWith = b.name.toLowerCase().startsWith(lowerQuery);
+        if (aStartsWith && !bStartsWith) return -1;
+        if (!aStartsWith && bStartsWith) return 1;
+        return a.name.compareTo(b.name);
+      });
+
+      return results.take(20).toList();
     } catch (e) {
       print('Search Users Error: $e');
       return [];

@@ -65,12 +65,125 @@ class _PostCardState extends State<PostCard> with SingleTickerProviderStateMixin
     super.dispose();
   }
 
+  void _showOptions(BuildContext context) {
+    final currentUser = currentUserProvider.currentUserOrDefault;
+    final isAuthor = currentUser.id == widget.post.author.id;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF242526) : Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+        ),
+        padding: const EdgeInsets.only(bottom: 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                color: isDark ? Colors.grey[700] : Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            if (isAuthor)
+              ListTile(
+                leading: CircleAvatar(
+                  radius: 18,
+                  backgroundColor: isDark ? const Color(0xFF3A3B3C) : Colors.grey[200],
+                  child: Icon(Icons.delete, color: isDark ? Colors.white : Colors.black, size: 22),
+                ),
+                title: Text(
+                  'Move to Trash',
+                  style: TextStyle(
+                    color: isDark ? Colors.white : Colors.black,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                subtitle: Text(
+                  'Items in your trash are deleted after 30 days',
+                  style: TextStyle(
+                    color: isDark ? Colors.grey[400] : Colors.grey[600],
+                    fontSize: 12,
+                  ),
+                ),
+                onTap: () async {
+                  Navigator.pop(context); // Close sheet
+                  // Confirm dialog
+                  final confirm = await showDialog<bool>(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      backgroundColor: isDark ? const Color(0xFF242526) : Colors.white,
+                      title: Text('Move to Trash?', style: TextStyle(color: isDark ? Colors.white : Colors.black)),
+                      content: Text('Do you really want to delete this post?', style: TextStyle(color: isDark ? Colors.grey[300] : Colors.grey[800])),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, false),
+                          child: const Text('Cancel', style: TextStyle(color: Colors.blue)),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, true),
+                          child: const Text('Move', style: TextStyle(color: Colors.red)),
+                        ),
+                      ],
+                    ),
+                  );
+
+                  if (confirm == true) {
+                     await PostService().deletePost(widget.post.id);
+                  }
+                },
+              )
+            else
+               ListTile(
+                 leading: CircleAvatar(
+                  radius: 18,
+                  backgroundColor: isDark ? const Color(0xFF3A3B3C) : Colors.grey[200],
+                  child: Icon(Icons.bookmark_border, color: isDark ? Colors.white : Colors.black, size: 22),
+                ),
+                 title: Text(
+                   'Save Post',
+                   style: TextStyle(
+                    color: isDark ? Colors.white : Colors.black,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                 ),
+                 subtitle: Text(
+                  'Add this to your saved items.',
+                  style: TextStyle(
+                    color: isDark ? Colors.grey[400] : Colors.grey[600],
+                    fontSize: 12,
+                  ),
+                ),
+                 onTap: () { Navigator.pop(context); },
+               ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     
     return Container(
-      color: isDark ? const Color(0xFF242526) : Colors.white,
+      margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 0),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF242526) : Colors.white,
+        // Only apply standard FB shadow in light mode, or none for flat look depending on preference. 
+        // Modern FB mobile is slightly elevated or flat with spacer.
+        // Let's go with flat but separated by Spacer (handled by margin)
+        // But the user requested "glowcy" so we add a subtle shadow
+        boxShadow: isDark ? null : AppTheme.cardShadow, 
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -151,7 +264,7 @@ class _PostCardState extends State<PostCard> with SingleTickerProviderStateMixin
                     Icons.more_horiz,
                     color: isDark ? Colors.white : AppTheme.black,
                   ),
-                  onPressed: () {},
+                  onPressed: () => _showOptions(context),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                 ),
@@ -418,10 +531,11 @@ class _PostCardState extends State<PostCard> with SingleTickerProviderStateMixin
           ),
           // Divider
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Divider(
               height: 1,
-              color: isDark ? const Color(0xFF3A3B3C) : Colors.grey[300],
+              color: isDark ? const Color(0xFF3E4042) : const Color(0xFFCED0D4), // Polished divider color
+              thickness: 0.5,
             ),
           ),
           // Action buttons
@@ -429,8 +543,9 @@ class _PostCardState extends State<PostCard> with SingleTickerProviderStateMixin
             clipBehavior: Clip.none,
             children: [
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 2),
+                padding: const EdgeInsets.symmetric(vertical: 4), // Better vertical spacing
                 child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly, // Better distribution
                   children: [
                     Expanded(
                       child: ReactionButton(
@@ -495,40 +610,6 @@ class _PostCardState extends State<PostCard> with SingleTickerProviderStateMixin
                   ],
                 ),
               ),
-              // Reaction popup
-              if (_showReactions)
-                Positioned(
-                  left: 8,
-                  bottom: 48,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF3A3B3C) : Colors.white,
-                      borderRadius: BorderRadius.circular(25),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.2),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _buildReactionEmoji('👍', ReactionType.like),
-                        _buildReactionEmoji('❤️', ReactionType.love),
-                        _buildReactionEmoji('😂', ReactionType.haha),
-                        _buildReactionEmoji('😮', ReactionType.wow),
-                        _buildReactionEmoji('😢', ReactionType.sad),
-                        _buildReactionEmoji('😡', ReactionType.angry),
-                      ],
-                    ),
-                  ),
-                ),
             ],
           ),
         ],
@@ -551,7 +632,6 @@ class _PostCardState extends State<PostCard> with SingleTickerProviderStateMixin
     // 2. Add defaults if not present
     if (!reactionsToShow.contains(ReactionType.like)) reactionsToShow.add(ReactionType.like);
     if (!reactionsToShow.contains(ReactionType.love)) reactionsToShow.add(ReactionType.love);
-    if (!reactionsToShow.contains(ReactionType.haha)) reactionsToShow.add(ReactionType.haha);
     
     // Take top 3
     final visibleReactions = reactionsToShow.take(3).toList();
@@ -565,11 +645,16 @@ class _PostCardState extends State<PostCard> with SingleTickerProviderStateMixin
           return Positioned(
             left: index * 16.0,
             child: Container(
-              width: 20,
-              height: 20,
+              width: 18, // Slightly smaller icons for sharper look
+              height: 18,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 2),
+                border: Border.all(
+                  color: Theme.of(context).brightness == Brightness.dark 
+                      ? const Color(0xFF242526) 
+                      : Colors.white, 
+                  width: 1.5
+                ), // Cutout effect matching bg
                 color: Colors.white,
               ),
               child: ClipOval(

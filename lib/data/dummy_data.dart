@@ -258,6 +258,9 @@ class DummyData {
       imageUrl: 'https://source.unsplash.com/random/400x400?iphone',
       location: 'Dhaka, Bangladesh',
       createdAt: DateTime.now().subtract(const Duration(hours: 2)),
+      category: 'Electronics',
+      description: 'Like new condition, no scratches.',
+      sellerId: 'dummySeller1',
     ),
     MarketplaceItemModel(
       id: 'm2',
@@ -266,6 +269,9 @@ class DummyData {
       imageUrl: 'https://source.unsplash.com/random/400x400?motorcycle',
       location: 'Chittagong',
       createdAt: DateTime.now().subtract(const Duration(hours: 5)),
+      category: 'Vehicles',
+      description: 'Sports bike in excellent condition.',
+      sellerId: 'dummySeller2',
     ),
     MarketplaceItemModel(
       id: 'm3',
@@ -275,6 +281,9 @@ class DummyData {
       location: 'Sylhet',
       createdAt: DateTime.now().subtract(const Duration(days: 1)),
       isSaved: true,
+      category: 'Electronics',
+      description: 'Gaming console with one controller.',
+      sellerId: 'dummySeller3',
     ),
   ];
 

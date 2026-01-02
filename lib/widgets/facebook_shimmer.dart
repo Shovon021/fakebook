@@ -47,6 +47,7 @@ class _StoryFeedShimmer extends StatelessWidget {
       child: Shimmer.fromColors(
         baseColor: baseColor,
         highlightColor: highlightColor,
+        period: const Duration(milliseconds: 1500), // Slower, smoother shimmer
         child: ListView.builder(
           scrollDirection: Axis.horizontal,
           itemCount: 5,
@@ -56,7 +57,7 @@ class _StoryFeedShimmer extends StatelessWidget {
               margin: const EdgeInsets.symmetric(horizontal: 4),
               decoration: BoxDecoration(
                 color: Colors.white, // This is the color that will shimmer
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(16), // Match new rounded feel
               ),
             );
           },

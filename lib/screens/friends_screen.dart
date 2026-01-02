@@ -304,7 +304,26 @@ class _FriendsScreenState extends State<FriendsScreen> {
                         onPressed: () async {
                           final currentUser = currentUserProvider.currentUser;
                           if (currentUser != null) {
-                            await _userService.acceptFriendRequest(requestId, user.id, currentUser.id);
+                            try {
+                              await _userService.acceptFriendRequest(requestId, user.id, currentUser.id);
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('You are now friends with ${user.name}!'),
+                                    backgroundColor: Colors.green,
+                                  ),
+                                );
+                              }
+                            } catch (e) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Failed to accept request: $e'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                            }
                           }
                         },
                         style: ElevatedButton.styleFrom(
@@ -325,8 +344,26 @@ class _FriendsScreenState extends State<FriendsScreen> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: () {
-                          // Handle Delete
+                        onPressed: () async {
+                          try {
+                            await _userService.declineFriendRequest(requestId);
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Friend request removed'),
+                                ),
+                              );
+                            }
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Failed to delete: $e'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          }
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: isDark 
@@ -354,7 +391,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
       ),
     );
   }
-}
+
   Widget _buildSuggestionCard(UserModel user, bool isDark) {
     // Local state for the button could be handled better by extracting this to a StatefulWidget,
     // but for now we'll use a local set of 'sent' IDs if we want instant feedback,

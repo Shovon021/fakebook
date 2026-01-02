@@ -38,7 +38,6 @@ class StoryService {
         .collection('stories')
         .where('expiresAt', isGreaterThan: Timestamp.fromDate(now))
         .orderBy('expiresAt')
-        .orderBy('createdAt', descending: true)
         .snapshots()
         .asyncMap((snapshot) async {
           List<StoryModel> stories = [];

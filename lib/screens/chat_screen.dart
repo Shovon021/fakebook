@@ -60,6 +60,68 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
+  void _showAttachmentOptions(BuildContext context, bool isDark) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: isDark ? const Color(0xFF242526) : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildAttachmentOption(Icons.camera_alt, 'Camera', Colors.pink, isDark, () {
+                  Navigator.pop(context);
+                }),
+                _buildAttachmentOption(Icons.photo, 'Gallery', Colors.purple, isDark, () {
+                  Navigator.pop(context);
+                }),
+                _buildAttachmentOption(Icons.mic, 'Voice', Colors.orange, isDark, () {
+                  Navigator.pop(context);
+                }),
+                _buildAttachmentOption(Icons.location_on, 'Location', Colors.green, isDark, () {
+                  Navigator.pop(context);
+                }),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAttachmentOption(IconData icon, String label, Color color, bool isDark, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.15),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: color, size: 26),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: TextStyle(
+              color: isDark ? Colors.white70 : Colors.black87,
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -172,50 +234,62 @@ class _ChatScreenState extends State<ChatScreen> {
 
           // Message Input
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1C1C1C) : Colors.grey[100],
-              border: Border(
-                top: BorderSide(
-                  color: isDark ? Colors.grey[800]! : Colors.grey[300]!,
+              color: isDark ? const Color(0xFF1C1C1C) : Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, -2),
                 ),
-              ),
+              ],
             ),
             child: SafeArea(
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  IconButton(
-                    icon: Icon(Icons.add_circle, color: AppTheme.facebookBlue, size: 28),
-                    onPressed: () {},
+                  // Attachment button
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: AppTheme.facebookBlue.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: IconButton(
+                      icon: Icon(Icons.add, color: AppTheme.facebookBlue, size: 22),
+                      onPressed: () {
+                        // Show attachment options
+                        _showAttachmentOptions(context, isDark);
+                      },
+                      padding: EdgeInsets.zero,
+                    ),
                   ),
-                  IconButton(
-                    icon: Icon(Icons.camera_alt, color: AppTheme.facebookBlue),
-                    onPressed: () {},
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.photo, color: AppTheme.facebookBlue),
-                    onPressed: () {},
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.mic, color: AppTheme.facebookBlue),
-                    onPressed: () {},
-                  ),
+                  const SizedBox(width: 8),
+                  // Message input field
                   Expanded(
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      constraints: const BoxConstraints(minHeight: 40, maxHeight: 120),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
                       decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF3A3B3C) : Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: isDark ? Colors.grey[700]! : Colors.grey[300]!,
-                        ),
+                        color: isDark ? const Color(0xFF3A3B3C) : Colors.grey[100],
+                        borderRadius: BorderRadius.circular(22),
                       ),
                       child: TextField(
                         controller: _messageController,
-                        style: TextStyle(color: isDark ? Colors.white : Colors.black),
+                        style: TextStyle(
+                          color: isDark ? Colors.white : Colors.black,
+                          fontSize: 16,
+                        ),
+                        maxLines: null,
+                        textCapitalization: TextCapitalization.sentences,
                         decoration: InputDecoration(
-                          hintText: 'Aa',
-                          hintStyle: TextStyle(color: Colors.grey),
+                          hintText: 'Message...',
+                          hintStyle: TextStyle(
+                            color: isDark ? Colors.grey[400] : Colors.grey[500],
+                            fontSize: 16,
+                          ),
                           border: InputBorder.none,
                           contentPadding: const EdgeInsets.symmetric(vertical: 10),
                         ),
@@ -223,9 +297,20 @@ class _ChatScreenState extends State<ChatScreen> {
                       ),
                     ),
                   ),
-                  IconButton(
-                    icon: Icon(Icons.send, color: AppTheme.facebookBlue),
-                    onPressed: _sendMessage,
+                  const SizedBox(width: 8),
+                  // Send button
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: AppTheme.facebookBlue,
+                      shape: BoxShape.circle,
+                    ),
+                    child: IconButton(
+                      icon: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+                      onPressed: _sendMessage,
+                      padding: EdgeInsets.zero,
+                    ),
                   ),
                 ],
               ),

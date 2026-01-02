@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../models/notification_model.dart';
 import '../theme/app_theme.dart';
@@ -12,22 +13,65 @@ class NotificationsScreen extends StatefulWidget {
   State<NotificationsScreen> createState() => _NotificationsScreenState();
 }
 
+class _NotificationsScreenState extends State<NotificationsScreen> {
+  final NotificationService _notificationService = NotificationService();
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final currentUser = currentUserProvider.currentUserOrDefault;
+    final currentUser = currentUserProvider.currentUser;
+    
+    // If not logged in, show empty state
+    if (currentUser == null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.notifications_none, size: 64, color: Colors.grey[400]),
+            const SizedBox(height: 16),
+            Text('Please log in to see notifications', style: TextStyle(color: Colors.grey[600], fontSize: 16)),
+          ],
+        ),
+      );
+    }
     
     return StreamBuilder<List<NotificationModel>>(
       stream: _notificationService.getNotificationsStream(currentUser.id),
       builder: (context, snapshot) {
-        if (!snapshot.hasData) {
-           return const Center(child: CircularProgressIndicator());
+        // Handle errors first
+        if (snapshot.hasError) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
+                const SizedBox(height: 16),
+                Text('Failed to load notifications', style: TextStyle(color: Colors.grey[600], fontSize: 16)),
+                const SizedBox(height: 8),
+                Text('${snapshot.error}', style: TextStyle(color: Colors.grey[400], fontSize: 12)),
+              ],
+            ),
+          );
+        }
+        
+        // Show loading only when waiting and no data yet
+        if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
         }
 
-        final notifications = snapshot.data!;
+        final notifications = snapshot.data ?? [];
 
         if (notifications.isEmpty) {
-          return EmptyStates.noNotifications();
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.notifications_none, size: 64, color: Colors.grey[400]),
+                const SizedBox(height: 16),
+                Text('No notifications yet', style: TextStyle(color: Colors.grey[600], fontSize: 16)),
+              ],
+            ),
+          );
         }
 
         // Separate new and earlier

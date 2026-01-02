@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/post_model.dart';
-import '../models/user_model.dart';
 import '../services/post_service.dart';
 import '../providers/current_user_provider.dart';
-import '../theme/app_theme.dart';
 import 'shared_ui.dart';
 
 class ShareBottomSheet extends StatefulWidget {

@@ -1,7 +1,5 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import '../models/story_model.dart';
-import '../models/user_model.dart';
 import '../theme/app_theme.dart';
 import '../utils/image_helper.dart';
 import '../screens/story_viewer_screen.dart';
@@ -75,20 +73,29 @@ class StoryWidget extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final currentUser = currentUserProvider.currentUser;
     
-    // Build list with Create Story card first
+    // Build list with Create Story card first, then other stories
     final displayStories = <StoryModel>[];
     
-    // Add create story card placeholder
+    // Find if current user has any stories
+    final userOwnStories = stories.where((s) => s.user.id == currentUser?.id).toList();
+    
+    // Add "Create Story" card (or user's own story if they have one)
     if (currentUser != null) {
-      displayStories.add(StoryModel(
-        id: 'create',
-        user: currentUser,
-        isOwnStory: true,
-        createdAt: DateTime.now(),
-      ));
+      if (userOwnStories.isNotEmpty) {
+        // Show user's own story with "Your Story" indicator
+        displayStories.add(userOwnStories.first.copyWith(isOwnStory: true));
+      } else {
+        // Show "Create Story" placeholder
+        displayStories.add(StoryModel(
+          id: 'create',
+          user: currentUser,
+          isOwnStory: true,
+          createdAt: DateTime.now(),
+        ));
+      }
     }
     
-    // Add other stories (filter out duplicates of current user)
+    // Add other users' stories
     for (final story in stories) {
       if (story.user.id != currentUser?.id) {
         displayStories.add(story);

@@ -20,14 +20,21 @@ class PostService {
             final data = doc.data();
             
             // 1. Fetch author data
-            final authorDoc = await _firestore
-                .collection('users')
-                .doc(data['authorId'])
-                .get();
+            final authorId = data['authorId'];
+            UserModel author;
             
-            final author = authorDoc.exists
-                ? UserModel.fromMap(authorDoc.data()!)
-                : UserModel(id: data['authorId'], name: 'Unknown', avatarUrl: '');
+            if (authorId != null) {
+              final authorDoc = await _firestore
+                  .collection('users')
+                  .doc(authorId)
+                  .get();
+              
+              author = authorDoc.exists
+                  ? UserModel.fromMap(authorDoc.data()!)
+                  : UserModel(id: authorId, name: 'Unknown User', avatarUrl: '');
+            } else {
+              author = UserModel(id: 'unknown', name: 'Unknown User', avatarUrl: '');
+            }
 
             // 2. Check if current user liked this post
             ReactionType? userReaction;
@@ -249,5 +256,15 @@ class PostService {
         .collection('comments')
         .orderBy('createdAt', descending: false)
         .snapshots();
+  }
+
+  // Delete post
+  Future<void> deletePost(String postId) async {
+    try {
+      await _firestore.collection('posts').doc(postId).delete();
+    } catch (e) {
+      print('Delete Post Error: $e');
+      throw e;
+    }
   }
 }

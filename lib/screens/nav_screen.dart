@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../theme/app_theme.dart';
+import '../providers/current_user_provider.dart';
+import '../services/user_service.dart';
+import '../services/notification_service.dart';
 import 'home_screen.dart';
 import 'friends_screen.dart';
 import 'watch_screen.dart';
@@ -26,6 +30,12 @@ class NavScreen extends StatefulWidget {
 class _NavScreenState extends State<NavScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   int _currentIndex = 0;
+  final UserService _userService = UserService();
+  
+  // Real-time badge counts
+  int _friendRequestCount = 0;
+  int _notificationCount = 0;
+  int _messageCount = 0;
 
   final List<IconData> _tabIcons = [
     Icons.home_outlined,
@@ -45,14 +55,6 @@ class _NavScreenState extends State<NavScreen> with SingleTickerProviderStateMix
     Icons.menu,
   ];
 
-  // Badge counts for tabs: Index -> Count
-  final Map<int, int> _badgeCounts = {
-    1: 9,  // Friends
-    2: 5,  // Watch
-    3: 2,  // Marketplace
-    4: 7,  // Notifications
-  };
-
   @override
   void initState() {
     super.initState();
@@ -61,14 +63,49 @@ class _NavScreenState extends State<NavScreen> with SingleTickerProviderStateMix
       if (!_tabController.indexIsChanging) {
         setState(() {
           _currentIndex = _tabController.index;
-          // Clear badge when tab is selected
-          if (_badgeCounts.containsKey(_currentIndex)) {
-            _badgeCounts.remove(_currentIndex);
-          }
         });
         HapticFeedback.selectionClick();
       }
     });
+    _loadBadgeCounts();
+  }
+
+  void _loadBadgeCounts() {
+    final userId = currentUserProvider.userId;
+    if (userId == null) return;
+
+    // Listen to friend requests
+    _userService.getFriendRequestsStream(userId).listen((snapshot) {
+      if (mounted) {
+        setState(() {
+          _friendRequestCount = snapshot.docs.length;
+        });
+      }
+    });
+
+    // Listen to unread notifications
+    FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .collection('notifications')
+        .where('isRead', isEqualTo: false)
+        .snapshots()
+        .listen((snapshot) {
+      if (mounted) {
+        setState(() {
+          _notificationCount = snapshot.docs.length;
+        });
+      }
+    });
+  }
+
+  // Get badge count for a tab index
+  int _getBadgeCount(int index) {
+    switch (index) {
+      case 1: return _friendRequestCount; // Friends tab
+      case 4: return _notificationCount;  // Notifications tab
+      default: return 0;
+    }
   }
 
   @override
@@ -76,6 +113,7 @@ class _NavScreenState extends State<NavScreen> with SingleTickerProviderStateMix
     _tabController.dispose();
     super.dispose();
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -150,14 +188,9 @@ class _NavScreenState extends State<NavScreen> with SingleTickerProviderStateMix
               indicatorSize: TabBarIndicatorSize.tab,
               labelPadding: EdgeInsets.zero,
               dividerColor: Colors.transparent,
-              onTap: (index) {
-                setState(() {
-                  _badgeCounts.remove(index);
-                });
-              },
               tabs: List.generate(6, (index) {
                 final isSelected = _currentIndex == index;
-                final badgeCount = _badgeCounts[index] ?? 0;
+                final badgeCount = _getBadgeCount(index);
                 
                 return Tab(
                   child: SizedBox(
