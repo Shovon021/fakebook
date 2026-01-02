@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../data/dummy_data.dart';
+import '../services/marketplace_service.dart';
+import '../models/marketplace_item_model.dart';
 import '../theme/app_theme.dart';
 import 'marketplace_detail_screen.dart';
 
@@ -93,9 +94,10 @@ class MarketplaceScreen extends StatelessWidget {
               crossAxisSpacing: 10,
               mainAxisSpacing: 10,
             ),
-            itemCount: DummyData.marketplaceItems.length,
+            itemCount: MarketplaceService().getPlaceholderItems().length,
             itemBuilder: (context, index) {
-              final item = DummyData.marketplaceItems[index];
+              final items = MarketplaceService().getPlaceholderItems();
+              final item = items[index];
               return GestureDetector(
                 onTap: () {
                   Navigator.push(

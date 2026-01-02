@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../data/dummy_data.dart';
+import '../providers/current_user_provider.dart';
 import '../theme/app_theme.dart';
+import '../services/auth_service.dart';
 import 'profile_screen.dart';
 import 'groups_screen.dart';
+import 'login_screen.dart';
 
 class MenuScreen extends StatefulWidget {
   const MenuScreen({super.key});
@@ -32,7 +34,7 @@ class _MenuScreenState extends State<MenuScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final currentUser = DummyData.currentUser;
+    final currentUser = currentUserProvider.currentUserOrDefault;
 
     return Scaffold(
       backgroundColor: isDark ? const Color(0xFF18191A) : const Color(0xFFF0F2F5),

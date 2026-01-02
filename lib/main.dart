@@ -5,6 +5,7 @@ import 'theme/app_theme.dart';
 import 'screens/nav_screen.dart';
 import 'screens/login_screen.dart';
 import 'services/auth_service.dart';
+import 'providers/current_user_provider.dart';
 // import 'firebase_options.dart'; // Uncomment after running flutterfire configure
 
 void main() async {
@@ -24,6 +25,9 @@ void main() async {
   } catch (e) {
     print("⚠️ INITIALIZATION WARNING: Firebase init failed. Did you add google-services.json? \nError: $e");
   }
+
+  // Initialize current user provider
+  currentUserProvider.init();
 
   runApp(const FakebookApp());
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../data/dummy_data.dart';
+import '../services/post_service.dart';
+import '../models/post_model.dart';
 import '../theme/app_theme.dart';
 import '../widgets/post_card.dart';
 
@@ -77,19 +78,29 @@ class GroupsScreen extends StatelessWidget {
             // naturally we'd need a GroupModel, but for UI fidelity we can just list posts.
             // In a real app we'd map "Posted in GroupName" text.
             
-            ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: DummyData.posts.length,
-              itemBuilder: (context, index) {
-                // Hack: Pass a modified post model or just show regular posts for now to simulate feed
-                // Ideally we wrap it in a Column to show a "Suggested for you" or "Group Activity" header
-                final post = DummyData.posts[index];
-                return Column(
-                   children: [
-                     PostCard(post: post),
-                     const SizedBox(height: 8),
-                   ],
+            StreamBuilder<List<PostModel>>(
+              stream: PostService().getPostsStream(),
+              builder: (context, snapshot) {
+                final posts = snapshot.data ?? [];
+                if (posts.isEmpty) {
+                  return const Padding(
+                    padding: EdgeInsets.all(40),
+                    child: Center(child: Text('No group posts yet')),
+                  );
+                }
+                return ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: posts.length,
+                  itemBuilder: (context, index) {
+                    final post = posts[index];
+                    return Column(
+                       children: [
+                         PostCard(post: post),
+                         const SizedBox(height: 8),
+                       ],
+                    );
+                  },
                 );
               },
             ),

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../models/post_model.dart';
-import '../data/dummy_data.dart';
+import '../providers/current_user_provider.dart';
 import '../theme/app_theme.dart';
 import 'shared_ui.dart';
 import '../utils/image_helper.dart';
@@ -42,7 +42,7 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
       'replies': <Map<String, dynamic>>[
         {
           'user': 'Post Author',
-          'avatar': DummyData.currentUser.avatarUrl,
+          'avatar': currentUserProvider.currentUserOrDefault.avatarUrl,
           'text': 'At the national park! 🌲',
           'time': '1h',
           'likes': 2,
@@ -85,8 +85,8 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
 
     setState(() {
       final newComment = {
-        'user': DummyData.currentUser.name,
-        'avatar': DummyData.currentUser.avatarUrl,
+        'user': currentUserProvider.currentUserOrDefault.name,
+        'avatar': currentUserProvider.currentUserOrDefault.avatarUrl,
         'text': _controller.text,
         'time': 'Just now',
         'likes': 0,

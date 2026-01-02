@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../data/dummy_data.dart';
+import '../services/user_service.dart';
+import '../models/user_model.dart';
 import '../theme/app_theme.dart';
 
 class WatchScreen extends StatefulWidget {
@@ -131,7 +132,13 @@ class _WatchScreenState extends State<WatchScreen> {
   }
 
   Widget _buildVideoPost(BuildContext context, int index, bool isDark) {
-    final user = DummyData.users[index % DummyData.users.length];
+    // Use placeholder users for now
+    final placeholderUsers = [
+      UserModel(id: '1', name: 'Video Creator', avatarUrl: 'https://picsum.photos/seed/vid1/150'),
+      UserModel(id: '2', name: 'Content Producer', avatarUrl: 'https://picsum.photos/seed/vid2/150'),
+      UserModel(id: '3', name: 'Film Maker', avatarUrl: 'https://picsum.photos/seed/vid3/150'),
+    ];
+    final user = placeholderUsers[index % placeholderUsers.length];
     final videoImages = [
       'https://picsum.photos/seed/video1/800/450',
       'https://picsum.photos/seed/video2/800/450',

@@ -1,15 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../data/dummy_data.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../providers/current_user_provider.dart';
 import '../theme/app_theme.dart';
-import '../widgets/shared_ui.dart';
+import '../services/messenger_service.dart';
+import '../services/user_service.dart';
+import '../models/user_model.dart';
+import 'chat_screen.dart';
 
-class MessengerScreen extends StatelessWidget {
+class MessengerScreen extends StatefulWidget {
   const MessengerScreen({super.key});
+
+  @override
+  State<MessengerScreen> createState() => _MessengerScreenState();
+}
+
+class _MessengerScreenState extends State<MessengerScreen> {
+  final MessengerService _messengerService = MessengerService();
+  final UserService _userService = UserService();
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final currentUser = currentUserProvider.currentUserOrDefault;
 
     return Scaffold(
       backgroundColor: isDark ? Colors.black : Colors.white,
@@ -21,9 +34,7 @@ class MessengerScreen extends StatelessWidget {
           children: [
             CircleAvatar(
               radius: 16,
-              backgroundImage: CachedNetworkImageProvider(
-                DummyData.currentUser.avatarUrl,
-              ),
+              backgroundImage: CachedNetworkImageProvider(currentUser.avatarUrl),
             ),
             const SizedBox(width: 12),
             Text(
@@ -43,7 +54,7 @@ class MessengerScreen extends StatelessWidget {
           ),
           IconButton(
             icon: Icon(Icons.edit, color: isDark ? Colors.white : Colors.black),
-            onPressed: () {},
+            onPressed: () => _showNewChatDialog(context),
           ),
         ],
       ),
@@ -74,137 +85,226 @@ class MessengerScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
-            // Active Now
-            SizedBox(
-              height: 90,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: DummyData.users.length,
-                itemBuilder: (context, index) {
-                  final user = DummyData.users[index];
+            // Active Now - Show all users
+            FutureBuilder<List<UserModel>>(
+              future: _userService.getAllUsers(),
+              builder: (context, snapshot) {
+                final users = snapshot.data ?? [];
+                if (users.isEmpty) {
+                  return const SizedBox.shrink();
+                }
+                return SizedBox(
+                  height: 90,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: users.length,
+                    itemBuilder: (context, index) {
+                      final user = users[index];
+                      if (user.id == currentUser.id) return const SizedBox.shrink();
+                      return GestureDetector(
+                        onTap: () => _openChat(context, user),
+                        child: Padding(
+                          padding: const EdgeInsets.only(right: 16),
+                          child: Column(
+                            children: [
+                              Stack(
+                                children: [
+                                  CircleAvatar(
+                                    radius: 28,
+                                    backgroundImage: CachedNetworkImageProvider(user.avatarUrl),
+                                  ),
+                                  if (user.isOnline)
+                                    Positioned(
+                                      right: 2,
+                                      bottom: 2,
+                                      child: Container(
+                                        width: 14,
+                                        height: 14,
+                                        decoration: BoxDecoration(
+                                          color: Colors.green,
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                            color: isDark ? Colors.black : Colors.white,
+                                            width: 2,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                user.name.split(' ')[0],
+                                style: TextStyle(
+                                  color: isDark ? Colors.grey[300] : Colors.grey[600],
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                );
+              },
+            ),
+
+            // Chat List - Real chat rooms
+            StreamBuilder<QuerySnapshot>(
+              stream: _messengerService.getChatRoomsStream(currentUser.id),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                final chatRooms = snapshot.data?.docs ?? [];
+
+                if (chatRooms.isEmpty) {
                   return Padding(
-                    padding: const EdgeInsets.only(right: 16),
+                    padding: const EdgeInsets.all(40),
                     child: Column(
                       children: [
-                        Stack(
-                          children: [
-                            CircleAvatar(
-                              radius: 28,
-                              backgroundImage: CachedNetworkImageProvider(user.avatarUrl),
-                            ),
-                            if (index % 2 == 0) // random active status
-                               Positioned(
-                                 right: 2,
-                                 bottom: 2,
-                                 child: Container(
-                                   width: 14,
-                                   height: 14,
-                                   decoration: BoxDecoration(
-                                     color: Colors.green,
-                                     shape: BoxShape.circle,
-                                     border: Border.all(
-                                       color: isDark ? Colors.black : Colors.white,
-                                       width: 2,
-                                     ),
-                                   ),
-                                 ),
-                               ),
-                          ],
+                        Icon(
+                          Icons.chat_bubble_outline,
+                          size: 64,
+                          color: isDark ? Colors.white54 : Colors.grey,
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 16),
                         Text(
-                          user.name.split(' ')[0], // First name
+                          'No chats yet',
                           style: TextStyle(
-                            color: isDark ? Colors.grey[300] : Colors.grey[600],
-                            fontSize: 12,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: isDark ? Colors.white : Colors.black,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Start a conversation by tapping the edit icon',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: isDark ? Colors.white54 : Colors.grey,
                           ),
                         ),
                       ],
                     ),
                   );
-                },
-              ),
-            ),
-            
-            // Chat List
-            ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: DummyData.users.length,
-              itemBuilder: (context, index) {
-                final user = DummyData.users[index];
-                final isUnread = index < 3;
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 20),
-                  child: Row(
-                    children: [
-                       CircleAvatar(
-                         radius: 28,
-                         backgroundImage: CachedNetworkImageProvider(user.avatarUrl),
-                       ),
-                       const SizedBox(width: 12),
-                       Expanded(
-                         child: Column(
-                           crossAxisAlignment: CrossAxisAlignment.start,
-                           children: [
-                             Text(
-                               user.name,
-                               style: TextStyle(
-                                 color: isDark ? Colors.white : Colors.black,
-                                 fontWeight: FontWeight.w600,
-                                 fontSize: 16,
-                               ),
-                             ),
-                             const SizedBox(height: 2),
-                             Row(
-                               children: [
-                                 Expanded(
-                                   child: index == 0
-                                     ? const TypingIndicator()
-                                     : Text(
-                                         isUnread 
-                                            ? 'You: Hey, are we still on for later?' 
-                                            : 'Sent a photo.',
-                                         maxLines: 1,
-                                         overflow: TextOverflow.ellipsis,
-                                         style: TextStyle(
-                                           color: isDark 
-                                               ? (isUnread ? Colors.white : Colors.grey)
-                                               : (isUnread ? Colors.black : Colors.grey[600]),
-                                           fontWeight: isUnread ? FontWeight.bold : FontWeight.normal,
-                                           fontSize: 14,
-                                         ),
-                                       ),
-                                 ),
-                                 const SizedBox(width: 8),
-                                 Text(
-                                   '${index + 1}h',
-                                   style: TextStyle(
-                                     color: isDark ? Colors.grey : Colors.grey[600],
-                                     fontSize: 12,
-                                   ),
-                                 ),
-                               ],
-                             ),
-                           ],
-                         ),
-                       ),
-                       if (isUnread)
-                         Container(
-                           width: 12,
-                           height: 12,
-                           decoration: const BoxDecoration(
-                             color: AppTheme.facebookBlue,
-                             shape: BoxShape.circle,
-                           ),
-                         ),
-                    ],
-                  ),
+                }
+
+                return ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: chatRooms.length,
+                  itemBuilder: (context, index) {
+                    final roomData = chatRooms[index].data() as Map<String, dynamic>;
+                    final participants = List<String>.from(roomData['participants'] ?? []);
+                    final otherUserId = participants.firstWhere(
+                      (id) => id != currentUser.id,
+                      orElse: () => '',
+                    );
+
+                    return FutureBuilder<UserModel?>(
+                      future: _userService.getUserById(otherUserId),
+                      builder: (context, userSnapshot) {
+                        final otherUser = userSnapshot.data;
+                        if (otherUser == null) return const SizedBox.shrink();
+
+                        return _buildChatTile(
+                          context,
+                          otherUser,
+                          roomData['lastMessage'] ?? '',
+                          isDark,
+                        );
+                      },
+                    );
+                  },
                 );
               },
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildChatTile(BuildContext context, UserModel user, String lastMessage, bool isDark) {
+    return GestureDetector(
+      onTap: () => _openChat(context, user),
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 20),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 28,
+              backgroundImage: CachedNetworkImageProvider(user.avatarUrl),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    user.name,
+                    style: TextStyle(
+                      color: isDark ? Colors.white : Colors.black,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    lastMessage.isEmpty ? 'Tap to start chatting' : lastMessage,
+                    style: TextStyle(
+                      color: isDark ? Colors.grey : Colors.grey[600],
+                      fontSize: 14,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _openChat(BuildContext context, UserModel otherUser) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ChatScreen(otherUser: otherUser),
+      ),
+    );
+  }
+
+  void _showNewChatDialog(BuildContext context) async {
+    final users = await _userService.getAllUsers();
+    final currentUser = currentUserProvider.currentUserOrDefault;
+
+    if (!mounted) return;
+
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: users.length,
+        itemBuilder: (context, index) {
+          final user = users[index];
+          if (user.id == currentUser.id) return const SizedBox.shrink();
+          return ListTile(
+            leading: CircleAvatar(
+              backgroundImage: CachedNetworkImageProvider(user.avatarUrl),
+            ),
+            title: Text(user.name),
+            onTap: () {
+              Navigator.pop(context);
+              _openChat(context, user);
+            },
+          );
+        },
       ),
     );
   }

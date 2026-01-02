@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../data/dummy_data.dart';
 import '../models/notification_model.dart';
 import '../theme/app_theme.dart';
+import '../services/notification_service.dart';
+import '../providers/current_user_provider.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -12,13 +13,13 @@ class NotificationsScreen extends StatefulWidget {
 }
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
-  // Local state for notifications to handle read/unread updates
-  late List<NotificationModel> _notifications;
+  final NotificationService _notificationService = NotificationService();
+  List<NotificationModel> _notifications = [];
 
   @override
   void initState() {
     super.initState();
-    _notifications = List.from(DummyData.notifications);
+    // Notifications will come from stream
   }
 
   void _markAsRead(NotificationModel notification) {

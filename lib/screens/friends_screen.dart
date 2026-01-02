@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../data/dummy_data.dart';
 import '../models/user_model.dart';
 import '../theme/app_theme.dart';
+import '../services/user_service.dart';
 
 class FriendsScreen extends StatefulWidget {
   const FriendsScreen({super.key});
@@ -12,14 +12,25 @@ class FriendsScreen extends StatefulWidget {
 }
 
 class _FriendsScreenState extends State<FriendsScreen> {
-  // Local state to track actions
-  final Map<String, String> _requestStatus = {}; // userId -> 'accepted' | 'removed'
-  late List<UserModel> _requests;
+  final UserService _userService = UserService();
+  final Map<String, String> _requestStatus = {};
+  List<UserModel> _requests = [];
+  List<UserModel> _suggestions = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _requests = List.from(DummyData.friendRequests);
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    final users = await _userService.getAllUsers();
+    setState(() {
+      _requests = users.take(3).toList();
+      _suggestions = users.skip(3).toList();
+      _isLoading = false;
+    });
   }
 
   @override
@@ -140,7 +151,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
               ),
             ),
           ),
-          ...DummyData.friendSuggestions.map(
+          ..._suggestions.map(
             (user) => _buildSuggestionCard(user, isDark),
           ),
           const SizedBox(height: 20),

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../models/user_model.dart';
+import '../models/post_model.dart';
 import '../theme/app_theme.dart';
-import '../data/dummy_data.dart';
+import '../services/user_service.dart';
+import '../services/post_service.dart';
 import '../widgets/post_card.dart';
 import '../utils/image_helper.dart';
 import 'edit_profile_screen.dart';
@@ -337,34 +339,48 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
               crossAxisSpacing: 8,
               mainAxisSpacing: 8,
             ),
-            itemCount: 9, // Demo count
+            itemCount: 9,
             itemBuilder: (context, index) {
-              final friend = DummyData.users[index % DummyData.users.length];
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: ImageHelper.getNetworkImage(
-                        imageUrl: friend.avatarUrl,
-                        fit: BoxFit.cover,
-                        width: double.infinity,
+              // Show placeholder friends grid
+              return FutureBuilder<List<UserModel>>(
+                future: UserService().getAllUsers(limit: 9),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData || index >= snapshot.data!.length) {
+                    return Container(
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                    ),
-                  ),
-                  const SizedBox(height: 5),
-                  Text(
-                    friend.name,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                      color: isDark ? Colors.white : AppTheme.black,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
+                    );
+                  }
+                  final friend = snapshot.data![index];
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: ImageHelper.getNetworkImage(
+                            imageUrl: friend.avatarUrl,
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        friend.name,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                          color: isDark ? Colors.white : AppTheme.black,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  );
+                },
               );
             },
           ),
@@ -427,25 +443,33 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   }
 
   Widget _buildUserPosts(bool isDark) {
-    // If viewing Current User, show all posts where author is currentUser
-    // If viewing another user (e.g. from search), show their posts
-    final userPosts = DummyData.posts.where((p) => p.author.id == widget.user.id).toList();
-    
-    // Fallback: If no specific posts for this user in DummyData, show a generic one or empty
-    if (userPosts.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.all(20),
-        child: Text('No posts yet', style: TextStyle(color: isDark ? Colors.grey : Colors.black)),
-      );
-    }
+    return StreamBuilder<List<PostModel>>(
+      stream: PostService().getPostsStream(),
+      builder: (context, snapshot) {
+        final allPosts = snapshot.data ?? [];
+        final userPosts = allPosts.where((p) => p.author.id == widget.user.id).toList();
 
-    return Column(
-      children: userPosts.map((post) => Column(
-        children: [
-          PostCard(post: post),
-          Container(height: 8, color: isDark ? const Color(0xFF18191A) : const Color(0xFFF0F2F5)),
-        ],
-      )).toList(),
+        if (userPosts.isEmpty) {
+          return Padding(
+            padding: const EdgeInsets.all(20),
+            child: Center(
+              child: Text(
+                'No posts yet',
+                style: TextStyle(color: isDark ? Colors.grey : Colors.black),
+              ),
+            ),
+          );
+        }
+
+        return Column(
+          children: userPosts.map((post) => Column(
+            children: [
+              PostCard(post: post),
+              Container(height: 8, color: isDark ? const Color(0xFF18191A) : const Color(0xFFF0F2F5)),
+            ],
+          )).toList(),
+        );
+      },
     );
   }
 }
