@@ -40,6 +40,11 @@ This project demonstrates a modern mobile UI implementation featuring:
    flutter run
    ```
 
+
+## 📘 Documentation
+- [**Developer Guidelines**](C:\Users\HP\.gemini\antigravity\brain\669d468c-4bf5-4f17-8193-b9ce453022ec\developer_guideline.md) - **READ THIS to understand the Database Image System.**
+- [Firebase Setup Guide](C:\Users\HP\.gemini\antigravity\brain\669d468c-4bf5-4f17-8193-b9ce453022ec\firebase_setup_guide.md)
+
 ## Features
 
 - **Rich UI Components**: Custom widgets for Stories, Post Cards, and Navigation.

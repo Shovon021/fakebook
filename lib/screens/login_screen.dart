@@ -149,7 +149,7 @@ class _LoginScreenState extends State<LoginScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.infinity, size: 20, color: Colors.grey[600]),
+                  Icon(Icons.all_inclusive, size: 20, color: Colors.grey[600]),
                   const SizedBox(width: 4),
                   Text(
                     'Meta',

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../providers/current_user_provider.dart';
 import '../theme/app_theme.dart';
 import '../services/messenger_service.dart';
 import '../services/user_service.dart';
 import '../models/user_model.dart';
+import '../utils/image_helper.dart';
 import 'chat_screen.dart';
 
 class MessengerScreen extends StatefulWidget {
@@ -34,7 +34,7 @@ class _MessengerScreenState extends State<MessengerScreen> {
           children: [
             CircleAvatar(
               radius: 16,
-              backgroundImage: CachedNetworkImageProvider(currentUser.avatarUrl),
+              backgroundImage: ImageHelper.getImageProvider(currentUser.avatarUrl),
             ),
             const SizedBox(width: 12),
             Text(
@@ -111,7 +111,7 @@ class _MessengerScreenState extends State<MessengerScreen> {
                                 children: [
                                   CircleAvatar(
                                     radius: 28,
-                                    backgroundImage: CachedNetworkImageProvider(user.avatarUrl),
+                                    backgroundImage: ImageHelper.getImageProvider(user.avatarUrl),
                                   ),
                                   if (user.isOnline)
                                     Positioned(
@@ -237,7 +237,7 @@ class _MessengerScreenState extends State<MessengerScreen> {
           children: [
             CircleAvatar(
               radius: 28,
-              backgroundImage: CachedNetworkImageProvider(user.avatarUrl),
+              backgroundImage: ImageHelper.getImageProvider(user.avatarUrl),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -296,7 +296,7 @@ class _MessengerScreenState extends State<MessengerScreen> {
           if (user.id == currentUser.id) return const SizedBox.shrink();
           return ListTile(
             leading: CircleAvatar(
-              backgroundImage: CachedNetworkImageProvider(user.avatarUrl),
+              backgroundImage: ImageHelper.getImageProvider(user.avatarUrl),
             ),
             title: Text(user.name),
             onTap: () {

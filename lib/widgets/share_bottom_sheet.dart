@@ -101,7 +101,6 @@ class _ShareBottomSheetState extends State<ShareBottomSheet> {
                        label: 'Write Post',
                        subtitle: 'Share with your thoughts',
                        onTap: () {
-                         // TODO: Navigate to create post with context
                          Navigator.pop(context);
                          ScaffoldMessenger.of(context).showSnackBar(
                            const SnackBar(content: Text('Write Post sharing coming soon!')),

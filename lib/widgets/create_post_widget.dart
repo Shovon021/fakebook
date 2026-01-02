@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../models/user_model.dart';
 import '../theme/app_theme.dart';
 import '../screens/create_post_screen.dart';
+import '../utils/image_helper.dart';
 
 class CreatePostWidget extends StatelessWidget {
   final UserModel currentUser;
@@ -27,7 +27,7 @@ class CreatePostWidget extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 22,
-                backgroundImage: CachedNetworkImageProvider(
+                backgroundImage: ImageHelper.getImageProvider(
                   currentUser.avatarUrl,
                 ),
               ),

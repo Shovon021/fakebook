@@ -11,6 +11,7 @@ import '../providers/current_user_provider.dart';
 import '../models/post_model.dart';
 import '../models/story_model.dart';
 import '../models/reel_model.dart';
+import '../models/user_model.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -158,11 +159,18 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
     return [
       ReelModel(
         id: '1',
+        user: UserModel(
+          id: 'placeholder',
+          name: 'User',
+          avatarUrl: 'https://i.imgur.com/K3Z3gM9.jpeg',
+        ),
         videoUrl: 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4',
-        thumbnailUrl: 'https://images.unsplash.com/photo-1611162616475-46b635cb6868',
+        thumbUrl: 'https://images.unsplash.com/photo-1611162616475-46b635cb6868',
+        description: 'Sample Reel',
+        likesCount: 100,
+        commentsCount: 10,
+        sharesCount: 5,
         viewsCount: 1000,
-        userName: 'User',
-        userAvatar: 'https://i.imgur.com/K3Z3gM9.jpeg',
       ),
     ];
   }

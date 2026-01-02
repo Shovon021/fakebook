@@ -60,8 +60,8 @@ class _CreateMarketplaceItemScreenState extends State<CreateMarketplaceItemScree
 
       // Upload image
       final imageUrl = await StorageService().uploadImage(
-        _imageFile!, 
-        'marketplace/$userId'
+        file: _imageFile!, 
+        path: 'marketplace/$userId'
       );
       
       if (imageUrl == null) throw Exception('Image upload failed');

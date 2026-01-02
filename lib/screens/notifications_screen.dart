@@ -47,7 +47,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           avatarUrl: n.avatarUrl,
           title: n.title,
           body: n.body,
-          timeAgo: n.timeAgo,
+          createdAt: n.createdAt,
           isRead: true,
       )).toList();
     });

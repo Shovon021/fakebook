@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../providers/current_user_provider.dart';
 import '../theme/app_theme.dart';
 import '../services/auth_service.dart';
+import '../utils/image_helper.dart';
 import 'profile_screen.dart';
 import 'groups_screen.dart';
 import 'login_screen.dart';
@@ -81,7 +81,7 @@ class _MenuScreenState extends State<MenuScreen> {
                   children: [
                     CircleAvatar(
                       radius: 24,
-                      backgroundImage: CachedNetworkImageProvider(currentUser.avatarUrl),
+                      backgroundImage: ImageHelper.getImageProvider(currentUser.avatarUrl),
                     ),
                     const SizedBox(width: 12),
                     Column(
