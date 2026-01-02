@@ -16,18 +16,36 @@ class PhotoViewerScreen extends StatefulWidget {
   State<PhotoViewerScreen> createState() => _PhotoViewerScreenState();
 }
 
-class _PhotoViewerScreenState extends State<PhotoViewerScreen> {
+class _PhotoViewerScreenState extends State<PhotoViewerScreen> with SingleTickerProviderStateMixin {
   bool _showOverlay = true;
   double _dragDistance = 0;
-  double _scale = 1.0;
   double _opacity = 1.0;
+  final TransformationController _transformationController = TransformationController();
+  late AnimationController _animationController;
+  Animation<Matrix4>? _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 200),
+    )..addListener(() {
+        _transformationController.value = _animation!.value;
+      });
+  }
+
+  @override
+  void dispose() {
+    _transformationController.dispose();
+    _animationController.dispose();
+    super.dispose();
+  }
 
   void _onVerticalDragUpdate(DragUpdateDetails details) {
+    if (_transformationController.value.getMaxScaleOnAxis() > 1.0) return;
     setState(() {
       _dragDistance += details.delta.dy;
-      // Scale down as user drags (0.5 is minimum scale at 200px drag)
-      _scale = (1.0 - (_dragDistance.abs() / 400)).clamp(0.5, 1.0);
-      // Fade background as user drags
       _opacity = (1.0 - (_dragDistance.abs() / 200)).clamp(0.0, 1.0);
     });
   }
@@ -38,10 +56,28 @@ class _PhotoViewerScreenState extends State<PhotoViewerScreen> {
     } else {
       setState(() {
         _dragDistance = 0;
-        _scale = 1.0;
         _opacity = 1.0;
       });
     }
+  }
+
+  void _handleDoubleTap() {
+    Matrix4 endMatrix;
+    if (_transformationController.value.getMaxScaleOnAxis() > 1.0) {
+      endMatrix = Matrix4.identity();
+    } else {
+      endMatrix = Matrix4.identity()..scale(2.0);
+    }
+
+    _animation = Matrix4Tween(
+      begin: _transformationController.value,
+      end: endMatrix,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
+    ));
+
+    _animationController.forward(from: 0);
   }
 
   @override
@@ -50,18 +86,20 @@ class _PhotoViewerScreenState extends State<PhotoViewerScreen> {
       backgroundColor: Colors.black.withValues(alpha: _opacity),
       body: GestureDetector(
         onTap: () => setState(() => _showOverlay = !_showOverlay),
+        onDoubleTap: _handleDoubleTap,
         onVerticalDragUpdate: _onVerticalDragUpdate,
         onVerticalDragEnd: _onVerticalDragEnd,
         child: Stack(
           children: [
-            // Main Image with Scale Animation
+            // Main Image
             Center(
-              child: Transform.scale(
-                scale: _scale,
-                child: Transform.translate(
-                  offset: Offset(0, _dragDistance),
+              child: Transform.translate(
+                offset: Offset(0, _dragDistance),
+                child: Hero(
+                  tag: widget.imageUrl,
                   child: InteractiveViewer(
-                    minScale: 0.5,
+                    transformationController: _transformationController,
+                    minScale: 1.0,
                     maxScale: 4.0,
                     child: CachedNetworkImage(
                       imageUrl: widget.imageUrl,
@@ -78,7 +116,7 @@ class _PhotoViewerScreenState extends State<PhotoViewerScreen> {
             ),
             
             // Top Bar
-            if (_showOverlay && _scale == 1.0)
+            if (_showOverlay)
               Positioned(
                 top: 0,
                 left: 0,
@@ -88,14 +126,26 @@ class _PhotoViewerScreenState extends State<PhotoViewerScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                     child: Row(
                       children: [
-                        IconButton(
-                          icon: const Icon(Icons.close, color: Colors.white),
-                          onPressed: () => Navigator.pop(context),
+                        Container(
+                          decoration: const BoxDecoration(
+                            color: Colors.black45,
+                            shape: BoxShape.circle,
+                          ),
+                          child: IconButton(
+                            icon: const Icon(Icons.close, color: Colors.white),
+                            onPressed: () => Navigator.pop(context),
+                          ),
                         ),
                         const Spacer(),
-                        IconButton(
-                          icon: const Icon(Icons.more_horiz, color: Colors.white),
-                          onPressed: () {},
+                        Container(
+                          decoration: const BoxDecoration(
+                            color: Colors.black45,
+                            shape: BoxShape.circle,
+                          ),
+                          child: IconButton(
+                            icon: const Icon(Icons.more_horiz, color: Colors.white),
+                            onPressed: () {},
+                          ),
                         ),
                       ],
                     ),
@@ -104,7 +154,7 @@ class _PhotoViewerScreenState extends State<PhotoViewerScreen> {
               ),
 
             // Bottom Actions
-            if (_showOverlay && widget.post != null && _scale == 1.0)
+            if (_showOverlay && widget.post != null)
               Positioned(
                 bottom: 0,
                 left: 0,

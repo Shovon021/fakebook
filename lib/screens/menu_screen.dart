@@ -202,7 +202,15 @@ class _MenuScreenState extends State<MenuScreen> {
                    border: Border.all(color: isDark ? Colors.transparent : Colors.grey[300]!),
                  ),
                  child: TextButton(
-                   onPressed: () {}, 
+                   onPressed: () async {
+                    await AuthService().signOut();
+                    if (context.mounted) {
+                       Navigator.of(context).pushAndRemoveUntil(
+                         MaterialPageRoute(builder: (_) => const LoginScreen()),
+                         (route) => false,
+                       );
+                    }
+                  }, 
                    child: Text(
                      'Log Out', 
                      style: TextStyle(

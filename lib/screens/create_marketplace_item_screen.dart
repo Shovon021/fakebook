@@ -18,14 +18,26 @@ class _CreateMarketplaceItemScreenState extends State<CreateMarketplaceItemScree
   final _titleController = TextEditingController();
   final _priceController = TextEditingController();
   final _locationController = TextEditingController();
+  final _descriptionController = TextEditingController();
   File? _imageFile;
+  String? _selectedCategory;
   bool _isUploading = false;
+  
+  final List<String> _categories = [
+    'Electronics',
+    'Vehicles',
+    'Furniture',
+    'Property',
+    'Clothing',
+    'Miscellaneous',
+  ];
 
   @override
   void dispose() {
     _titleController.dispose();
     _priceController.dispose();
     _locationController.dispose();
+    _descriptionController.dispose();
     super.dispose();
   }
 
@@ -43,6 +55,8 @@ class _CreateMarketplaceItemScreenState extends State<CreateMarketplaceItemScree
     if (_titleController.text.isEmpty || 
         _priceController.text.isEmpty || 
         _locationController.text.isEmpty || 
+        _selectedCategory == null ||
+        _descriptionController.text.isEmpty ||
         _imageFile == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please fill all fields and add an image')),
@@ -74,6 +88,8 @@ class _CreateMarketplaceItemScreenState extends State<CreateMarketplaceItemScree
         price: price,
         imageUrl: imageUrl,
         location: _locationController.text,
+        category: _selectedCategory!,
+        description: _descriptionController.text,
       );
 
       if (mounted) {
@@ -192,11 +208,70 @@ class _CreateMarketplaceItemScreenState extends State<CreateMarketplaceItemScree
                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
                    ),
                    const SizedBox(height: 16),
+                   
+                   // Category Dropdown
+                   Column(
+                     crossAxisAlignment: CrossAxisAlignment.start,
+                     children: [
+                       Text(
+                         'Category',
+                         style: TextStyle(
+                           color: isDark ? Colors.grey[400] : Colors.grey[700],
+                           fontWeight: FontWeight.bold,
+                           fontSize: 14,
+                         ),
+                       ),
+                       const SizedBox(height: 8),
+                       Container(
+                         padding: const EdgeInsets.symmetric(horizontal: 12),
+                         decoration: BoxDecoration(
+                           color: isDark ? const Color(0xFF3A3B3C) : Colors.grey[100],
+                           borderRadius: BorderRadius.circular(8),
+                         ),
+                         child: DropdownButtonHideUnderline(
+                           child: DropdownButton<String>(
+                             value: _selectedCategory,
+                             isExpanded: true,
+                             dropdownColor: isDark ? const Color(0xFF3A3B3C) : Colors.white,
+                             hint: Text(
+                               'Select Category', 
+                               style: TextStyle(color: isDark ? Colors.grey[500] : Colors.grey[500])
+                             ),
+                             items: _categories.map((String value) {
+                               return DropdownMenuItem<String>(
+                                 value: value,
+                                 child: Text(
+                                   value,
+                                   style: TextStyle(color: isDark ? Colors.white : Colors.black),
+                                 ),
+                               );
+                             }).toList(),
+                             onChanged: (newValue) {
+                               setState(() {
+                                 _selectedCategory = newValue;
+                               });
+                             },
+                           ),
+                         ),
+                       ),
+                     ],
+                   ),
+                   const SizedBox(height: 16),
+
                    _buildTextField(
                      controller: _locationController,
                      label: 'Location',
                      hint: 'City, Neighborhood',
                      isDark: isDark,
+                   ),
+                   const SizedBox(height: 16),
+                   
+                   _buildTextField(
+                     controller: _descriptionController,
+                     label: 'Description',
+                     hint: 'Describe your item...',
+                     isDark: isDark,
+                     maxLines: 4,
                    ),
                 ],
               ),

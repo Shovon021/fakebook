@@ -1,11 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/post_model.dart';
 import '../models/user_model.dart';
+import 'notification_service.dart';
 
 class PostService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final NotificationService _notificationService = NotificationService();
 
-  // Get posts stream (real-time updates)
   // Get posts stream (real-time updates)
   Stream<List<PostModel>> getPostsStream({String? currentUserId}) {
     return _firestore
@@ -38,7 +39,17 @@ class PostService {
                   .doc(currentUserId)
                   .get();
               if (likeDoc.exists) {
-                userReaction = ReactionType.like; // Default to like for now
+                final data = likeDoc.data();
+                if (data != null && data.containsKey('reaction')) {
+                   // Parse string to enum
+                   final reactionStr = data['reaction'] as String;
+                   userReaction = ReactionType.values.firstWhere(
+                     (e) => e.name == reactionStr, 
+                     orElse: () => ReactionType.like
+                   );
+                } else {
+                  userReaction = ReactionType.like; // Backward compatibility
+                }
               }
             }
 
@@ -130,30 +141,65 @@ class PostService {
     }
   }
 
-  // Toggle like
-  Future<void> toggleLike(String postId, String userId) async {
+  // Update reaction (null means remove)
+  Future<void> updateReaction({
+    required String postId,
+    required String userId,
+    required String postAuthorId,
+    required ReactionType? reactionType,
+  }) async {
     final likeRef = _firestore
         .collection('posts')
         .doc(postId)
         .collection('likes')
         .doc(userId);
 
-    final doc = await likeRef.get();
-
-    if (doc.exists) {
-      // Unlike
-      await likeRef.delete();
-      await _firestore.collection('posts').doc(postId).update({
-        'likesCount': FieldValue.increment(-1),
-      });
+    if (reactionType == null) {
+      // Remove reaction
+      final doc = await likeRef.get();
+      if (doc.exists) {
+        await likeRef.delete();
+        await _firestore.collection('posts').doc(postId).update({
+          'likesCount': FieldValue.increment(-1),
+        });
+      }
     } else {
-      // Like
-      await likeRef.set({
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-      await _firestore.collection('posts').doc(postId).update({
-        'likesCount': FieldValue.increment(1),
-      });
+      // Add or Update reaction
+      final doc = await likeRef.get();
+      if (doc.exists) {
+        final currentData = doc.data();
+        final currentReactionStr = currentData?['reaction'] as String?;
+        if (currentReactionStr != reactionType.name) {
+             await likeRef.update({
+              'reaction': reactionType.name,
+              'createdAt': FieldValue.serverTimestamp(),
+            });
+        }
+      } else {
+        // New reaction
+        await likeRef.set({
+          'reaction': reactionType.name,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+        await _firestore.collection('posts').doc(postId).update({
+          'likesCount': FieldValue.increment(1),
+        });
+
+        // Send Notification
+        if (userId != postAuthorId) {
+          final likerDoc = await _firestore.collection('users').doc(userId).get();
+          final likerName = likerDoc.data()?['name'] ?? 'Someone';
+          final likerAvatar = likerDoc.data()?['avatarUrl'] ?? '';
+
+          await _notificationService.createNotification(
+            forUserId: postAuthorId,
+            type: 'like', // Could map reactionType to specific notification icons if model supported it
+            avatarUrl: likerAvatar,
+            title: likerName,
+            body: 'reacted ${reactionType.name} to your post',
+          );
+        }
+      }
     }
   }
 
@@ -162,6 +208,7 @@ class PostService {
     required String postId,
     required String userId,
     required String content,
+    required String postAuthorId,
   }) async {
     await _firestore
         .collection('posts')
@@ -176,6 +223,22 @@ class PostService {
     await _firestore.collection('posts').doc(postId).update({
       'commentsCount': FieldValue.increment(1),
     });
+
+    // Send Notification (if not commenting on own post)
+    if (userId != postAuthorId) {
+      // Fetch commenter details
+      final commenterDoc = await _firestore.collection('users').doc(userId).get();
+      final commenterName = commenterDoc.data()?['name'] ?? 'Someone';
+      final commenterAvatar = commenterDoc.data()?['avatarUrl'] ?? '';
+
+      await _notificationService.createNotification(
+        forUserId: postAuthorId,
+        type: 'comment',
+        avatarUrl: commenterAvatar,
+        title: commenterName,
+        body: 'commented on your post: "$content"',
+      );
+    }
   }
 
   // Get comments for a post

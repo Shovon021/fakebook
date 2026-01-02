@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cached_network_image/cached_network_image.dart'; // Added
 import '../models/post_model.dart';
 import '../providers/current_user_provider.dart';
 import '../theme/app_theme.dart';
@@ -9,6 +10,7 @@ import '../utils/image_helper.dart';
 import '../services/post_service.dart';
 import '../services/user_service.dart';
 import '../models/user_model.dart';
+import '../utils/reaction_assets.dart'; // Added
 
 class CommentBottomSheet extends StatefulWidget {
   final PostModel post;
@@ -56,6 +58,7 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
       postId: widget.post.id,
       userId: userId,
       content: content,
+      postAuthorId: widget.post.author.id,
     );
     
     HapticFeedback.lightImpact();
@@ -465,28 +468,28 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
 
   Widget _buildReactionIcons() {
     return SizedBox(
-      width: 50,
+      width: 56,
       height: 22,
       child: Stack(
         children: [
           Positioned(
             left: 0,
-            child: _buildReactionBubble('👍', AppTheme.facebookBlue),
+            child: _buildReactionBubble(ReactionType.like, Colors.blue),
           ),
           Positioned(
-            left: 14,
-            child: _buildReactionBubble('❤️', Colors.red),
+            left: 15,
+            child: _buildReactionBubble(ReactionType.love, Colors.red),
           ),
           Positioned(
-            left: 28,
-            child: _buildReactionBubble('😆', Colors.amber),
+            left: 30,
+            child: _buildReactionBubble(ReactionType.haha, Colors.amber),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildReactionBubble(String emoji, Color borderColor) {
+  Widget _buildReactionBubble(ReactionType type, Color color) {
     return Container(
       width: 22,
       height: 22,
@@ -496,13 +499,18 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
         border: Border.all(color: Colors.white, width: 2),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
+            color: Colors.black.withOpacity(0.1),
             blurRadius: 2,
           ),
         ],
       ),
-      child: Center(
-        child: Text(emoji, style: const TextStyle(fontSize: 12)),
+      child: ClipOval(
+        child: CachedNetworkImage(
+           imageUrl: ReactionAssets.getReactionIcon(type),
+           placeholder: (context, url) => Container(color: Colors.grey[200]),
+           errorWidget: (context, url, err) => Container(color: color),
+           fit: BoxFit.cover,
+        ),
       ),
     );
   }

@@ -12,126 +12,109 @@ class NotificationsScreen extends StatefulWidget {
   State<NotificationsScreen> createState() => _NotificationsScreenState();
 }
 
-class _NotificationsScreenState extends State<NotificationsScreen> {
-  final NotificationService _notificationService = NotificationService();
-  List<NotificationModel> _notifications = [];
-
-  @override
-  void initState() {
-    super.initState();
-    // Notifications will come from stream
-  }
-
-  void _markAsRead(NotificationModel notification) {
-    setState(() {
-      final index = _notifications.indexOf(notification);
-      if (index != -1) {
-        _notifications[index] = NotificationModel(
-          id: notification.id,
-          type: notification.type,
-          avatarUrl: notification.avatarUrl,
-          title: notification.title,
-          body: notification.body,
-          createdAt: notification.createdAt,
-          isRead: true, 
-        );
-      }
-    });
-  }
-
-  void _markAllAsRead() {
-    setState(() {
-      _notifications = _notifications.map((n) => NotificationModel(
-          id: n.id,
-          type: n.type,
-          avatarUrl: n.avatarUrl,
-          title: n.title,
-          body: n.body,
-          createdAt: n.createdAt,
-          isRead: true,
-      )).toList();
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final newNotifications = _notifications.where((n) => !n.isRead).toList();
-    final earlierNotifications = _notifications.where((n) => n.isRead).toList();
+    final currentUser = currentUserProvider.currentUserOrDefault;
     
-    return ListView(
-      children: [
-        // Header
-        Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Notifications',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: isDark ? Colors.white : AppTheme.black,
-                ),
-              ),
-              Row(
-                children: [
-                   Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF3A3B3C) : AppTheme.lightGrey,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.search,
-                      color: isDark ? Colors.white : AppTheme.black,
-                      size: 22,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-        // Mark all as read button
-        if (newNotifications.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: GestureDetector(
-              onTap: _markAllAsRead,
+    return StreamBuilder<List<NotificationModel>>(
+      stream: _notificationService.getNotificationsStream(currentUser.id),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+           return const Center(child: CircularProgressIndicator());
+        }
+
+        final notifications = snapshot.data!;
+
+        if (notifications.isEmpty) {
+          return EmptyStates.noNotifications();
+        }
+
+        // Separate new and earlier
+        final newNotifications = notifications.where((n) => !n.isRead).toList();
+        final earlierNotifications = notifications.where((n) => n.isRead).toList();
+
+        return ListView(
+          children: [
+            // Header
+            Padding(
+              padding: const EdgeInsets.all(16),
               child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Icon(
-                    Icons.done_all,
-                    color: AppTheme.facebookBlue,
-                    size: 18,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Mark all as read',
+                   Text(
+                    'Notifications',
                     style: TextStyle(
-                      color: AppTheme.facebookBlue,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? Colors.white : AppTheme.black,
                     ),
+                  ),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: isDark ? const Color(0xFF3A3B3C) : AppTheme.lightGrey,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.search,
+                          color: isDark ? Colors.white : AppTheme.black,
+                          size: 22,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
-          ),
-        const SizedBox(height: 16),
-        // New section
-        if (newNotifications.isNotEmpty) ...[
-           _buildSectionHeader('New', isDark),
-           ...newNotifications.map((n) => _buildNotificationTile(n, isDark)),
-        ],
-        // Earlier section
-        if (earlierNotifications.isNotEmpty) ...[
-           _buildSectionHeader('Earlier', isDark),
-           ...earlierNotifications.map((n) => _buildNotificationTile(n, isDark)),
-        ],
-        const SizedBox(height: 20),
-      ],
+            
+            // "Mark all as read" button (only if new exists)
+            if (newNotifications.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: GestureDetector(
+                  onTap: () {
+                    _notificationService.markAllAsRead(currentUser.id);
+                    HapticFeedback.lightImpact();
+                  },
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.done_all,
+                        color: AppTheme.facebookBlue,
+                        size: 18,
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Mark all as read',
+                        style: TextStyle(
+                          color: AppTheme.facebookBlue,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+            // New Section
+            if (newNotifications.isNotEmpty) ...[
+              _buildSectionHeader('New', isDark),
+              ...newNotifications.map((n) => _buildNotificationTile(n, isDark, currentUser.id)),
+            ],
+
+            // Earlier Section
+            if (earlierNotifications.isNotEmpty) ...[
+              _buildSectionHeader('Earlier', isDark),
+              ...earlierNotifications.map((n) => _buildNotificationTile(n, isDark, currentUser.id)),
+            ],
+            
+            const SizedBox(height: 20),
+          ],
+        );
+      },
     );
   }
 
@@ -149,7 +132,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     );
   }
 
-  Widget _buildNotificationTile(NotificationModel notification, bool isDark) {
+  Widget _buildNotificationTile(NotificationModel notification, bool isDark, String currentUserId) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -162,8 +145,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: () {
-          _markAsRead(notification);
+        onTap: () async {
+          await _notificationService.markAsRead(currentUserId, notification.id);
+          HapticFeedback.lightImpact();
         },
         child: Padding(
           padding: const EdgeInsets.all(12),

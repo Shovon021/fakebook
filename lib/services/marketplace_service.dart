@@ -4,24 +4,28 @@ import '../models/marketplace_model.dart';
 class MarketplaceService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Get marketplace items
-  Stream<List<MarketplaceItemModel>> getItemsStream() {
-    return _firestore
-        .collection('marketplace')
-        .orderBy('createdAt', descending: true)
-        .limit(50)
-        .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) {
-              final data = doc.data();
-              return MarketplaceItemModel(
-                id: doc.id,
-                title: data['title'] ?? '',
-                price: (data['price'] ?? 0).toDouble(),
-                imageUrl: data['imageUrl'] ?? '',
-                location: data['location'] ?? '',
-                createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-              );
-            }).toList());
+  // Get marketplace items (with optional category filter)
+  Stream<List<MarketplaceItemModel>> getItemsStream({String? category}) {
+    Query query = _firestore.collection('marketplace').orderBy('createdAt', descending: true).limit(50);
+    
+    if (category != null && category != 'All') {
+      query = query.where('category', isEqualTo: category);
+    }
+
+    return query.snapshots().map((snapshot) => snapshot.docs.map((doc) {
+      final data = doc.data() as Map<String, dynamic>;
+      return MarketplaceItemModel(
+        id: doc.id,
+        title: data['title'] ?? '',
+        price: (data['price'] ?? 0).toDouble(),
+        imageUrl: data['imageUrl'] ?? '',
+        location: data['location'] ?? '',
+        createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+        category: data['category'] ?? 'Miscellaneous',
+        description: data['description'] ?? 'No description provided.',
+        sellerId: data['sellerId'] ?? '',
+      );
+    }).toList());
   }
 
   // Create marketplace item
@@ -31,6 +35,8 @@ class MarketplaceService {
     required double price,
     required String imageUrl,
     required String location,
+    required String category,
+    required String description,
   }) async {
     try {
       final docRef = await _firestore.collection('marketplace').add({
@@ -39,6 +45,8 @@ class MarketplaceService {
         'price': price,
         'imageUrl': imageUrl,
         'location': location,
+        'category': category,
+        'description': description,
         'createdAt': FieldValue.serverTimestamp(),
       });
       return docRef.id;
@@ -53,27 +61,15 @@ class MarketplaceService {
     return [
       MarketplaceItemModel(
         id: '1', title: 'iPhone 13 Pro', price: 899, imageUrl: 'https://picsum.photos/300/300?random=1', location: 'New York',
-        createdAt: DateTime.now(),
+        createdAt: DateTime.now(), category: 'Electronics', description: 'Like new, no scratches.', sellerId: 'dummy1',
       ),
       MarketplaceItemModel(
         id: '2', title: 'Leather Sofa', price: 450, imageUrl: 'https://picsum.photos/300/300?random=2', location: 'Los Angeles',
-        createdAt: DateTime.now(),
+        createdAt: DateTime.now(), category: 'Furniture', description: 'Comfortable leather sofa.', sellerId: 'dummy2',
       ),
       MarketplaceItemModel(
         id: '3', title: 'Mountain Bike', price: 350, imageUrl: 'https://picsum.photos/300/300?random=3', location: 'Chicago',
-        createdAt: DateTime.now(),
-      ),
-      MarketplaceItemModel(
-        id: '4', title: 'MacBook Pro', price: 1299, imageUrl: 'https://picsum.photos/300/300?random=4', location: 'San Francisco',
-        createdAt: DateTime.now(),
-      ),
-      MarketplaceItemModel(
-        id: '5', title: 'Gaming Console', price: 399, imageUrl: 'https://picsum.photos/300/300?random=5', location: 'Miami',
-        createdAt: DateTime.now(),
-      ),
-      MarketplaceItemModel(
-        id: '6', title: 'Office Desk', price: 199, imageUrl: 'https://picsum.photos/300/300?random=6', location: 'Seattle',
-        createdAt: DateTime.now(),
+        createdAt: DateTime.now(), category: 'Vehicles', description: 'Great for trails.', sellerId: 'dummy3',
       ),
     ];
   }

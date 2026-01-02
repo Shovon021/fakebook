@@ -6,8 +6,25 @@ import '../theme/app_theme.dart';
 import 'marketplace_detail_screen.dart';
 import 'create_marketplace_item_screen.dart';
 
-class MarketplaceScreen extends StatelessWidget {
+class MarketplaceScreen extends StatefulWidget {
   const MarketplaceScreen({super.key});
+
+  @override
+  State<MarketplaceScreen> createState() => _MarketplaceScreenState();
+}
+
+class _MarketplaceScreenState extends State<MarketplaceScreen> {
+  String? _selectedCategory;
+
+  void _selectCategory(String category) {
+    setState(() {
+      if (_selectedCategory == category) {
+        _selectedCategory = null; // Deselect
+      } else {
+        _selectedCategory = category;
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -75,6 +92,7 @@ class MarketplaceScreen extends StatelessWidget {
                   Icons.sell, 
                   'Sell', 
                   isDark, 
+                  isActive: false,
                   onTap: () {
                     Navigator.push(
                       context,
@@ -84,10 +102,12 @@ class MarketplaceScreen extends StatelessWidget {
                     );
                   }
                 ),
-                _buildCategoryButton(Icons.category, 'Categories', isDark),
-                _buildCategoryButton(Icons.local_offer, 'Today\'s Picks', isDark),
-                _buildCategoryButton(Icons.directions_car, 'Vehicles', isDark),
-                _buildCategoryButton(Icons.home, 'Property', isDark),
+                _buildCategoryButton(Icons.category, 'All', isDark, isActive: _selectedCategory == null, onTap: () => setState(() => _selectedCategory = null)),
+                _buildCategoryButton(Icons.directions_car, 'Vehicles', isDark, isActive: _selectedCategory == 'Vehicles', onTap: () => _selectCategory('Vehicles')),
+                _buildCategoryButton(Icons.home, 'Property', isDark, isActive: _selectedCategory == 'Property', onTap: () => _selectCategory('Property')),
+                _buildCategoryButton(Icons.checkroom, 'Clothing', isDark, isActive: _selectedCategory == 'Clothing', onTap: () => _selectCategory('Clothing')),
+                _buildCategoryButton(Icons.phone_iphone, 'Electronics', isDark, isActive: _selectedCategory == 'Electronics', onTap: () => _selectCategory('Electronics')),
+                _buildCategoryButton(Icons.weekend, 'Furniture', isDark, isActive: _selectedCategory == 'Furniture', onTap: () => _selectCategory('Furniture')),
               ],
             ),
           ),
@@ -100,7 +120,7 @@ class MarketplaceScreen extends StatelessWidget {
         // Product grid
         Expanded(
           child: StreamBuilder<List<MarketplaceItemModel>>(
-            stream: MarketplaceService().getItemsStream(),
+            stream: MarketplaceService().getItemsStream(category: _selectedCategory),
             builder: (context, snapshot) {
               if (snapshot.hasError) {
                 return Center(child: Text('Error: ${snapshot.error}'));
@@ -119,7 +139,10 @@ class MarketplaceScreen extends StatelessWidget {
                      children: [
                        Icon(Icons.storefront, size: 60, color: Colors.grey[400]),
                        const SizedBox(height: 16),
-                       Text('No items for sale yet', style: TextStyle(color: Colors.grey[600])),
+                       Text(
+                         _selectedCategory == null ? 'No items for sale yet' : 'No items in $_selectedCategory', 
+                         style: TextStyle(color: Colors.grey[600])
+                       ),
                      ],
                    ),
                  );
@@ -147,6 +170,9 @@ class MarketplaceScreen extends StatelessWidget {
                               'price': item.formattedPrice,
                               'image': item.imageUrl,
                               'location': item.location,
+                              'description': item.description,
+                              'sellerId': item.sellerId,
+                              'category': item.category,
                             },
                           ),
                         ),
@@ -163,7 +189,10 @@ class MarketplaceScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCategoryButton(IconData icon, String label, bool isDark, {VoidCallback? onTap}) {
+  Widget _buildCategoryButton(IconData icon, String label, bool isDark, {bool isActive = false, VoidCallback? onTap}) {
+    final activeColor = Colors.blueAccent.withValues(alpha: 0.1);
+    final activeIconColor = Colors.blueAccent;
+    
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -174,12 +203,12 @@ class MarketplaceScreen extends StatelessWidget {
               width: 56,
               height: 56,
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF3A3B3C) : AppTheme.lightGrey,
+                color: isActive ? activeColor : (isDark ? const Color(0xFF3A3B3C) : AppTheme.lightGrey),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 icon,
-                color: isDark ? Colors.white : AppTheme.black,
+                color: isActive ? activeIconColor : (isDark ? Colors.white : AppTheme.black),
                 size: 26,
               ),
             ),
@@ -188,8 +217,8 @@ class MarketplaceScreen extends StatelessWidget {
               label,
               style: TextStyle(
                 fontSize: 12,
-                color: isDark ? Colors.white : AppTheme.black,
-                fontWeight: FontWeight.w500,
+                color: isActive ? activeIconColor : (isDark ? Colors.white : AppTheme.black),
+                fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
               ),
             ),
           ],
@@ -229,7 +258,7 @@ class MarketplaceScreen extends StatelessWidget {
                     placeholder: (context, url) => Container(
                       color: Colors.grey[300],
                     ),
-                    errorWidget: (context, url, error) => Container( // Fallback for bad URLs
+                    errorWidget: (context, url, error) => Container(
                       color: Colors.grey[300],
                       child: Icon(Icons.image_not_supported, color: Colors.grey[500]),
                     ),

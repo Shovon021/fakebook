@@ -5,6 +5,9 @@ class MarketplaceItemModel {
   final String imageUrl;
   final String location;
   final DateTime createdAt;
+  final String category;
+  final String description;
+  final String sellerId;
   final bool isSaved;
 
   MarketplaceItemModel({
@@ -14,6 +17,9 @@ class MarketplaceItemModel {
     required this.imageUrl,
     required this.location,
     required this.createdAt,
+    required this.category,
+    required this.description,
+    required this.sellerId,
     this.isSaved = false,
   });
 

@@ -1,17 +1,16 @@
-import 'dart:io';
-import 'dart:convert';
-import 'package:image_picker/image_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 class StorageService {
   final ImagePicker _picker = ImagePicker();
+  final FirebaseStorage _storage = FirebaseStorage.instance;
 
-  // Pick image from gallery (Compressed for Firestore)
+  // Pick image from gallery
   Future<File?> pickImageFromGallery() async {
     final XFile? image = await _picker.pickImage(
       source: ImageSource.gallery,
-      maxWidth: 800,  // Reduced size to fit in database
-      maxHeight: 800,
-      imageQuality: 60, // Reduced quality
+      maxWidth: 1920, // Higher quality for storage
+      maxHeight: 1080,
+      imageQuality: 80,
     );
     if (image != null) {
       return File(image.path);
@@ -23,9 +22,9 @@ class StorageService {
   Future<File?> pickImageFromCamera() async {
     final XFile? image = await _picker.pickImage(
       source: ImageSource.camera,
-      maxWidth: 800,
-      maxHeight: 800,
-      imageQuality: 60,
+      maxWidth: 1920,
+      maxHeight: 1080,
+      imageQuality: 80,
     );
     if (image != null) {
       return File(image.path);
@@ -33,36 +32,37 @@ class StorageService {
     return null;
   }
 
-  // Convert image to Base64 String (No Upload needed)
+  // Upload image to Firebase Storage
   Future<String?> uploadImage({
     required File file,
     required String path, 
   }) async {
     try {
-      final bytes = await file.readAsBytes();
-      final base64String = base64Encode(bytes);
-      // Return Data URI
-      return 'data:image/jpeg;base64,$base64String';
+      final ref = _storage.ref().child(path).child('${DateTime.now().millisecondsSinceEpoch}.jpg');
+      final uploadTask = ref.putFile(file);
+      final snapshot = await uploadTask;
+      final downloadUrl = await snapshot.ref.getDownloadURL();
+      return downloadUrl;
     } catch (e) {
-      print('Encoding Error: $e');
+      print('Upload Error: $e');
       return null;
     }
   }
 
   // Helper getters/wrappers
   Future<String?> uploadProfilePicture(String userId, File file) async {
-    return uploadImage(file: file, path: 'ignored');
+    return uploadImage(file: file, path: 'users/$userId/profile');
   }
 
   Future<String?> uploadCoverPhoto(String userId, File file) async {
-    return uploadImage(file: file, path: 'ignored');
+    return uploadImage(file: file, path: 'users/$userId/cover');
   }
 
   Future<String?> uploadPostImage(String userId, File file) async {
-    return uploadImage(file: file, path: 'ignored');
+    return uploadImage(file: file, path: 'posts/$userId');
   }
 
   Future<String?> uploadStoryImage(String userId, File file) async {
-    return uploadImage(file: file, path: 'ignored');
+    return uploadImage(file: file, path: 'stories/$userId');
   }
 }

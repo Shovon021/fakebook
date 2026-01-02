@@ -441,18 +441,20 @@ class _PostCardState extends State<PostCard> with SingleTickerProviderStateMixin
 
                           // Optimistic update
                           setState(() {
-                            _currentReaction = reaction;
-                            if (reaction == ReactionType.like) {
+                             _currentReaction = reaction;
+                             if (reaction == ReactionType.like) {
                               _showHeartAnimation = true;
-                              _animationController.forward().then((_) {
-                                _animationController.reverse();
-                              });
-                              HapticFeedback.lightImpact();
-                            }
+                              _animationController.forward();
+                             }
                           });
 
                           // Call service
-                          await PostService().toggleLike(widget.post.id, userId);
+                          await PostService().updateReaction(
+                            postId: widget.post.id, 
+                            userId: userId,
+                            postAuthorId: widget.post.author.id,
+                            reactionType: reaction,
+                          );
                         },
                       ),
                     ),
@@ -702,11 +704,14 @@ class _PostCardState extends State<PostCard> with SingleTickerProviderStateMixin
           ),
         );
       },
-      child: ImageHelper.getNetworkImage(
-        imageUrl: url,
-        fit: BoxFit.cover,
-        width: double.infinity,
-        height: double.infinity,
+      child: Hero(
+        tag: url,
+        child: ImageHelper.getNetworkImage(
+          imageUrl: url,
+          fit: BoxFit.cover,
+          width: double.infinity,
+          height: double.infinity,
+        ),
       ),
     );
   }

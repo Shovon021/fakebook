@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../theme/app_theme.dart';
+import '../utils/image_helper.dart';
 
 class MarketplaceDetailScreen extends StatelessWidget {
   final Map<String, dynamic> product;
@@ -108,7 +110,7 @@ class MarketplaceDetailScreen extends StatelessWidget {
 
                   // Description
                   Text(
-                     "Condition: Good",
+                     "Category: ${product['category'] ?? 'Miscellaneous'}",
                      style: TextStyle(
                          fontWeight: FontWeight.bold,
                          fontSize: 16,
@@ -117,7 +119,7 @@ class MarketplaceDetailScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'This is a great item that I am selling because I no longer need it. It has been well taken care of and comes from a smoke-free home. Message me for more details!',
+                    product['description'] ?? 'No description provided.',
                     style: TextStyle(
                       fontSize: 15,
                       color: isDark ? const Color(0xFFB0B3B8) : Colors.grey[800],
@@ -139,34 +141,46 @@ class MarketplaceDetailScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  Row(
-                    children: [
-                       CircleAvatar(
-                         radius: 24,
-                         backgroundImage: CachedNetworkImageProvider('https://picsum.photos/seed/seller/100/100'),
-                       ),
-                       const SizedBox(width: 12),
-                       Column(
-                         crossAxisAlignment: CrossAxisAlignment.start,
-                         children: [
-                           Text(
-                             'John Doe',
-                             style: TextStyle(
-                               fontWeight: FontWeight.bold,
-                               fontSize: 16,
-                               color: isDark ? Colors.white : AppTheme.black,
-                             ),
+                  FutureBuilder<DocumentSnapshot>(
+                    future: FirebaseFirestore.instance.collection('users').doc(product['sellerId']).get(),
+                    builder: (context, snapshot) {
+                       if (!snapshot.hasData) {
+                         return const SizedBox.shrink(); 
+                       }
+                       final userData = snapshot.data!.data() as Map<String, dynamic>?;
+                       final name = userData?['name'] ?? 'Unknown Seller';
+                       final avatarUrl = userData?['avatarUrl'];
+
+                       return Row(
+                        children: [
+                           CircleAvatar(
+                             radius: 24,
+                             backgroundImage: ImageHelper.getImageProvider(avatarUrl),
                            ),
-                           Text(
-                             'Joined Facebook in 2015',
-                             style: TextStyle(
-                               color: isDark ? const Color(0xFFB0B3B8) : Colors.grey[600],
-                               fontSize: 13,
-                             ),
+                           const SizedBox(width: 12),
+                           Column(
+                             crossAxisAlignment: CrossAxisAlignment.start,
+                             children: [
+                               Text(
+                                 name,
+                                 style: TextStyle(
+                                   fontWeight: FontWeight.bold,
+                                   fontSize: 16,
+                                   color: isDark ? Colors.white : AppTheme.black,
+                                 ),
+                               ),
+                               Text(
+                                 'Seller on Fakebook',
+                                 style: TextStyle(
+                                   color: isDark ? const Color(0xFFB0B3B8) : Colors.grey[600],
+                                   fontSize: 13,
+                                 ),
+                               ),
+                             ],
                            ),
-                         ],
-                       ),
-                    ],
+                        ],
+                      );
+                    }
                   ),
                    
                   const SizedBox(height: 24),
