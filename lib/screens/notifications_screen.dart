@@ -4,12 +4,59 @@ import '../data/dummy_data.dart';
 import '../models/notification_model.dart';
 import '../theme/app_theme.dart';
 
-class NotificationsScreen extends StatelessWidget {
+class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
+
+  @override
+  State<NotificationsScreen> createState() => _NotificationsScreenState();
+}
+
+class _NotificationsScreenState extends State<NotificationsScreen> {
+  // Local state for notifications to handle read/unread updates
+  late List<NotificationModel> _notifications;
+
+  @override
+  void initState() {
+    super.initState();
+    _notifications = List.from(DummyData.notifications);
+  }
+
+  void _markAsRead(NotificationModel notification) {
+    setState(() {
+      final index = _notifications.indexOf(notification);
+      if (index != -1) {
+        _notifications[index] = NotificationModel(
+          id: notification.id,
+          type: notification.type,
+          avatarUrl: notification.avatarUrl,
+          title: notification.title,
+          body: notification.body,
+          createdAt: notification.createdAt,
+          isRead: true, 
+        );
+      }
+    });
+  }
+
+  void _markAllAsRead() {
+    setState(() {
+      _notifications = _notifications.map((n) => NotificationModel(
+          id: n.id,
+          type: n.type,
+          avatarUrl: n.avatarUrl,
+          title: n.title,
+          body: n.body,
+          timeAgo: n.timeAgo,
+          isRead: true,
+      )).toList();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final newNotifications = _notifications.where((n) => !n.isRead).toList();
+    final earlierNotifications = _notifications.where((n) => n.isRead).toList();
     
     return ListView(
       children: [
@@ -29,7 +76,7 @@ class NotificationsScreen extends StatelessWidget {
               ),
               Row(
                 children: [
-                  Container(
+                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       color: isDark ? const Color(0xFF3A3B3C) : AppTheme.lightGrey,
@@ -47,37 +94,41 @@ class NotificationsScreen extends StatelessWidget {
           ),
         ),
         // Mark all as read button
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Row(
-            children: [
-              Icon(
-                Icons.done_all,
-                color: AppTheme.facebookBlue,
-                size: 18,
+        if (newNotifications.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: GestureDetector(
+              onTap: _markAllAsRead,
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.done_all,
+                    color: AppTheme.facebookBlue,
+                    size: 18,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Mark all as read',
+                    style: TextStyle(
+                      color: AppTheme.facebookBlue,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 8),
-              Text(
-                'Mark all as read',
-                style: TextStyle(
-                  color: AppTheme.facebookBlue,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
         const SizedBox(height: 16),
         // New section
-        _buildSectionHeader('New', isDark),
-        ...DummyData.notifications
-            .where((n) => !n.isRead)
-            .map((n) => _buildNotificationTile(n, isDark)),
+        if (newNotifications.isNotEmpty) ...[
+           _buildSectionHeader('New', isDark),
+           ...newNotifications.map((n) => _buildNotificationTile(n, isDark)),
+        ],
         // Earlier section
-        _buildSectionHeader('Earlier', isDark),
-        ...DummyData.notifications
-            .where((n) => n.isRead)
-            .map((n) => _buildNotificationTile(n, isDark)),
+        if (earlierNotifications.isNotEmpty) ...[
+           _buildSectionHeader('Earlier', isDark),
+           ...earlierNotifications.map((n) => _buildNotificationTile(n, isDark)),
+        ],
         const SizedBox(height: 20),
       ],
     );
@@ -105,7 +156,7 @@ class NotificationsScreen extends StatelessWidget {
             ? Colors.transparent 
             : (isDark 
                 ? AppTheme.facebookBlue.withValues(alpha: 0.15)
-                : AppTheme.facebookBlue.withValues(alpha: 0.08)),
+                : AppTheme.facebookBlue.withValues(alpha: 0.1)),
         borderRadius: BorderRadius.circular(12),
       ),
       child: ListTile(
@@ -192,7 +243,10 @@ class NotificationsScreen extends StatelessWidget {
           ),
           onPressed: () {},
         ),
-        onTap: () {},
+        onTap: () {
+          _markAsRead(notification);
+          // Navigate to content if needed
+        },
       ),
     );
   }

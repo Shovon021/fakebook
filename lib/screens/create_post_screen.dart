@@ -1,7 +1,10 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../models/user_model.dart';
 import '../theme/app_theme.dart';
+import '../services/post_service.dart';
+import '../services/storage_service.dart';
 
 class CreatePostScreen extends StatefulWidget {
   final UserModel currentUser;
@@ -17,22 +20,126 @@ class CreatePostScreen extends StatefulWidget {
 
 class _CreatePostScreenState extends State<CreatePostScreen> {
   final TextEditingController _controller = TextEditingController();
-  bool _isPostButtonEnabled = false;
+  final PostService _postService = PostService();
+  final StorageService _storageService = StorageService();
+  
+  bool _isPosting = false;
+  File? _selectedImage;
+  List<File> _selectedImages = [];
 
   @override
   void initState() {
     super.initState();
-    _controller.addListener(() {
-      setState(() {
-        _isPostButtonEnabled = _controller.text.isNotEmpty;
-      });
-    });
+    _controller.addListener(() => setState(() {}));
   }
 
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
+  }
+
+  bool get _canPost => _controller.text.isNotEmpty || _selectedImage != null || _selectedImages.isNotEmpty;
+
+  Future<void> _pickImage() async {
+    final file = await _storageService.pickImageFromGallery();
+    if (file != null) {
+      setState(() {
+        _selectedImage = file;
+      });
+    }
+  }
+
+  Future<void> _takePhoto() async {
+    final file = await _storageService.pickImageFromCamera();
+    if (file != null) {
+      setState(() {
+        _selectedImage = file;
+      });
+    }
+  }
+
+  Future<void> _handlePost() async {
+    if (!_canPost) return;
+
+    setState(() => _isPosting = true);
+
+    try {
+      String? imageUrl;
+      List<String>? imagesUrls;
+
+      // Upload single image if selected
+      if (_selectedImage != null) {
+        imageUrl = await _storageService.uploadPostImage(
+          widget.currentUser.id,
+          _selectedImage!,
+        );
+      }
+
+      // Upload multiple images if selected
+      if (_selectedImages.isNotEmpty) {
+        imagesUrls = [];
+        for (var img in _selectedImages) {
+          final url = await _storageService.uploadPostImage(
+            widget.currentUser.id,
+            img,
+          );
+          if (url != null) imagesUrls.add(url);
+        }
+      }
+
+      // Create the post
+      await _postService.createPost(
+        authorId: widget.currentUser.id,
+        content: _controller.text,
+        imageUrl: imageUrl,
+        imagesUrl: imagesUrls,
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Post created successfully!')),
+        );
+        Navigator.pop(context, true); // Return true to indicate post created
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to create post: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isPosting = false);
+    }
+  }
+
+  void _showImageOptions() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library, color: Colors.green),
+              title: const Text('Choose from Gallery'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImage();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt, color: Colors.blue),
+              title: const Text('Take a Photo'),
+              onTap: () {
+                Navigator.pop(context);
+                _takePhoto();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -61,17 +168,12 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             child: ElevatedButton(
-              onPressed: _isPostButtonEnabled
-                  ? () {
-                      // Logic to post would go here
-                      Navigator.pop(context);
-                    }
-                  : null,
+              onPressed: _canPost && !_isPosting ? _handlePost : null,
               style: ElevatedButton.styleFrom(
-                backgroundColor: _isPostButtonEnabled
+                backgroundColor: _canPost
                     ? AppTheme.facebookBlue
                     : (isDark ? const Color(0xFF4E4F50) : const Color(0xFFE4E6EB)),
-                foregroundColor: _isPostButtonEnabled
+                foregroundColor: _canPost
                     ? Colors.white
                     : (isDark ? const Color(0xFFAAB0B8) : const Color(0xFFBCC0C4)),
                 elevation: 0,
@@ -80,10 +182,19 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                 ),
                 padding: const EdgeInsets.symmetric(horizontal: 16),
               ),
-              child: const Text(
-                'Post',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-              ),
+              child: _isPosting
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Text(
+                      'Post',
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                    ),
             ),
           ),
         ],
@@ -173,12 +284,49 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                       color: isDark ? Colors.white : AppTheme.black,
                     ),
                   ),
+
+                  // Selected Image Preview
+                  if (_selectedImage != null) ...[
+                    const SizedBox(height: 16),
+                    Stack(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.file(
+                            _selectedImage!,
+                            width: double.infinity,
+                            height: 200,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: GestureDetector(
+                            onTap: () => setState(() => _selectedImage = null),
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(
+                                color: Colors.black54,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.close,
+                                color: Colors.white,
+                                size: 20,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),
           ),
           
-          // Bottom Sliding Panel (Simplified)
+          // Bottom Action Panel
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
@@ -191,11 +339,27 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
             ),
             child: Column(
               children: [
-                _buildActionRow(Icons.photo_library, Colors.green, "Photo/video", isDark),
+                _buildActionRow(
+                  Icons.photo_library,
+                  Colors.green,
+                  "Photo/video",
+                  isDark,
+                  onTap: _showImageOptions,
+                ),
                 const SizedBox(height: 12),
-                _buildActionRow(Icons.person_add, AppTheme.facebookBlue, "Tag people", isDark),
+                _buildActionRow(
+                  Icons.person_add,
+                  AppTheme.facebookBlue,
+                  "Tag people",
+                  isDark,
+                ),
                 const SizedBox(height: 12),
-                _buildActionRow(Icons.emoji_emotions, Colors.orange, "Feeling/activity", isDark),
+                _buildActionRow(
+                  Icons.emoji_emotions,
+                  Colors.orange,
+                  "Feeling/activity",
+                  isDark,
+                ),
               ],
             ),
           ),
@@ -204,21 +368,24 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     );
   }
 
-  Widget _buildActionRow(IconData icon, Color iconColor, String label, bool isDark) {
-    return Row(
-      children: [
-        Icon(icon, color: iconColor, size: 24),
-        const SizedBox(width: 12),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w500,
-            color: isDark ? Colors.white : AppTheme.black,
+  Widget _buildActionRow(IconData icon, Color iconColor, String label, bool isDark, {VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Row(
+        children: [
+          Icon(icon, color: iconColor, size: 24),
+          const SizedBox(width: 12),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
+              color: isDark ? Colors.white : AppTheme.black,
+            ),
           ),
-        ),
-        const Spacer(),
-      ],
+          const Spacer(),
+        ],
+      ),
     );
   }
 }

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../models/story_model.dart';
 import '../theme/app_theme.dart';
+import '../utils/image_helper.dart';
 import '../screens/story_viewer_screen.dart';
 
 class StoryWidget extends StatelessWidget {
@@ -72,14 +72,11 @@ class StoryWidget extends StatelessWidget {
           // Top part with user photo
           Expanded(
             flex: 7,
-            child: CachedNetworkImage(
+            child: ImageHelper.getNetworkImage(
               imageUrl: story.user.avatarUrl,
               fit: BoxFit.cover,
               width: double.infinity,
-              placeholder: (context, url) => Container(
-                color: Colors.grey[300],
-              ),
-              errorWidget: (context, url, error) => Container(
+              errorBuilder: (context, error, stackTrace) => Container(
                 color: Colors.grey[300],
                 child: const Icon(Icons.person),
               ),
@@ -138,13 +135,10 @@ class StoryWidget extends StatelessWidget {
       fit: StackFit.expand,
       children: [
         // Story image
-        CachedNetworkImage(
+        ImageHelper.getNetworkImage(
           imageUrl: story.imageUrl ?? story.user.avatarUrl,
           fit: BoxFit.cover,
-          placeholder: (context, url) => Container(
-            color: Colors.grey[300],
-          ),
-          errorWidget: (context, url, error) => Container(
+          errorBuilder: (context, error, stackTrace) => Container(
             color: Colors.grey[300],
             child: const Icon(Icons.image),
           ),
@@ -188,7 +182,7 @@ class StoryWidget extends StatelessWidget {
               ),
               child: CircleAvatar(
                 radius: 18,
-                backgroundImage: CachedNetworkImageProvider(
+                backgroundImage: ImageHelper.getImageProvider(
                   story.user.avatarUrl,
                 ),
               ),

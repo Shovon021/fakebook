@@ -4,7 +4,9 @@ import '../models/user_model.dart';
 import '../theme/app_theme.dart';
 import '../data/dummy_data.dart';
 import '../widgets/post_card.dart';
-import '../widgets/create_post_widget.dart';
+import '../utils/image_helper.dart';
+import 'edit_profile_screen.dart';
+import 'create_story_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   final UserModel user;
@@ -20,7 +22,7 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final List<String> _tabs = ['Posts', 'Photos', 'Reels', 'Life Events'];
+  final List<String> _tabs = ['Posts', 'Photos', 'Reels'];
 
   @override
   void initState() {
@@ -51,155 +53,98 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                 style: TextStyle(
                   color: isDark ? Colors.white : Colors.black,
                   fontWeight: FontWeight.bold,
-                  fontSize: 16, // FB style is smaller title in pinned appbar
+                  fontSize: 18,
                 ),
+              ),
+              leading: IconButton(
+                icon: Icon(Icons.arrow_back, color: isDark ? Colors.white : Colors.black),
+                onPressed: () => Navigator.pop(context),
               ),
               centerTitle: false,
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.search),
-                  onPressed: () {},
-                ),
-              ],
             ),
-            SliverToBoxAdapter(
-              child: ColoredBox(
-                color: isDark ? const Color(0xFF242526) : Colors.white,
-                child: Column(
-                  children: [
-                    _buildProfileHeader(context, isDark),
-                    const Divider(height: 1),
-                    _buildInfoSection(isDark),
-                    const Divider(height: 1),
-                    _buildFriendsList(context, isDark),
-                    const SizedBox(height: 10),
-                  ],
-                ),
-              ),
-            ),
-            SliverPersistentHeader(
-              delegate: _StickyTabBarDelegate(
-                child: Container(
-                  color: isDark ? const Color(0xFF242526) : Colors.white,
-                  child: TabBar(
-                    controller: _tabController,
-                    labelColor: AppTheme.facebookBlue,
-                    unselectedLabelColor: isDark ? Colors.grey : Colors.grey[600],
-                    indicatorColor: AppTheme.facebookBlue,
-                    indicatorWeight: 3,
-                    labelPadding: const EdgeInsets.symmetric(horizontal: 12),
-                    isScrollable: true, 
-                    tabs: _tabs.map((tab) => Tab(text: tab)).toList(),
-                  ),
-                ),
-              ),
-              pinned: true,
+            SliverList(
+              delegate: SliverChildListDelegate([
+                _buildHeader(isDark),
+                const Divider(height: 20, thickness: 1),
+                if (widget.user.details.isNotEmpty) _buildDetailsSection(isDark),
+                if (widget.user.details.isNotEmpty) const Divider(height: 20, thickness: 1),
+                _buildFriendsList(context, isDark),
+              ]),
             ),
           ];
         },
-        body: TabBarView(
-          controller: _tabController,
+        body: Column(
           children: [
-            // Posts Tab
-            _buildPostsTab(isDark),
-            // Photos Tab (Placeholder)
-            Center(child: Text('Photos', style: TextStyle(color: isDark ? Colors.white : Colors.black))),
-             // Reels Tab (Placeholder)
-            Center(child: Text('Reels', style: TextStyle(color: isDark ? Colors.white : Colors.black))),
-             // Life Events Tab (Placeholder)
-            Center(child: Text('Life Events', style: TextStyle(color: isDark ? Colors.white : Colors.black))),
+            Container(
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF18191A) : Colors.white,
+                border: Border(
+                  bottom: BorderSide(
+                    color: isDark ? const Color(0xFF3A3B3C) : const Color(0xFFCCCDD2),
+                    width: 1,
+                  ),
+                ),
+              ),
+              child: TabBar(
+                controller: _tabController,
+                indicatorColor: AppTheme.facebookBlue,
+                labelColor: AppTheme.facebookBlue,
+                unselectedLabelColor: isDark ? const Color(0xFFB0B3B8) : const Color(0xFF65676B),
+                tabs: _tabs.map((t) => Tab(text: t)).toList(),
+              ),
+            ),
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  _buildPostsTab(context, isDark),
+                  _buildPhotosTab(context, isDark),
+                  const Center(child: Text('Reels Content')),
+                ],
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildPostsTab(bool isDark) {
-    return Container(
-      color: isDark ? const Color(0xFF18191A) : const Color(0xFFF0F2F5),
-      child: CustomScrollView(
-        slivers: [
-          SliverToBoxAdapter(
-            child: Column(
-              children: [
-                const SizedBox(height: 8),
-                CreatePostWidget(currentUser: widget.user),
-                _buildDivider(isDark),
-                _buildUserPosts(isDark),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProfileHeader(BuildContext context, bool isDark) {
+  Widget _buildHeader(bool isDark) {
     return Column(
       children: [
         Stack(
           clipBehavior: Clip.none,
           alignment: Alignment.center,
           children: [
-            // Cover Photo
-            Container(
+             Container(
               height: 200,
               width: double.infinity,
-              color: Colors.grey[300],
-              child: CachedNetworkImage(
-                imageUrl: 'https://picsum.photos/seed/cover${widget.user.id}/800/400',
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+              ),
+              child: ImageHelper.getNetworkImage(
+                imageUrl: 'https://images.unsplash.com/photo-1596486095368-f9e4f50998d8?q=80&w=2070&auto=format&fit=crop', // Brick wall/abstract cover
                 fit: BoxFit.cover,
-                 placeholder: (context, url) => Container(color: Colors.grey[300]),
+               // placeholder: (context, url) => Container(color: Colors.grey[300]), // ImageHelper handles this
               ),
-            ),
-            // Camera Icon for Cover
-            Positioned(
-              bottom: 10,
-              right: 10,
-              child: Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.6),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.camera_alt, color: Colors.white, size: 20),
-              ),
-            ),
-            // Profile Picture
-            Positioned(
-              bottom: -60,
-              child: Stack(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF242526) : Colors.white,
-                      shape: BoxShape.circle,
-                    ),
-                    child: CircleAvatar(
-                      radius: 70,
-                      backgroundImage: CachedNetworkImageProvider(widget.user.avatarUrl),
-                    ),
-                  ),
-                  Positioned(
-                    bottom: 5,
-                    right: 5,
-                    child: Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFE4E6EB),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.camera_alt, color: Colors.black, size: 20),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+             ),
+             Positioned(
+               bottom: -60,
+               child: Container(
+                 padding: const EdgeInsets.all(4),
+                 decoration: BoxDecoration(
+                   color: isDark ? const Color(0xFF242526) : Colors.white,
+                   shape: BoxShape.circle,
+                 ),
+                 child: CircleAvatar(
+                   radius: 70,
+                   backgroundImage: ImageHelper.getImageProvider(widget.user.avatarUrl),
+                 ),
+               ),
+             ),
           ],
         ),
         const SizedBox(height: 70),
-        // Name and Bio
         Text(
           widget.user.name,
           style: TextStyle(
@@ -220,56 +165,128 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
               ),
             ),
           ),
-        
-        // Action Buttons
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Row(
-            children: [
-              Expanded(
-                flex: 4,
-                child: ElevatedButton.icon(
-                  onPressed: () {},
-                  icon: const Icon(Icons.add, color: Colors.white, size: 18),
-                  label: const Text('Add to Story'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.facebookBlue,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    padding: const EdgeInsets.symmetric(vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
+              children: [
+                Expanded(
+                  flex: 4,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const CreateStoryScreen()),
+                      );
+                    },
+                    icon: const Icon(Icons.add, color: Colors.white, size: 18),
+                    label: const Text('Add to Story'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.facebookBlue,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                flex: 4,
-                child: ElevatedButton.icon(
-                  onPressed: () {},
-                  icon: Icon(Icons.edit, color: isDark ? Colors.white : Colors.black, size: 18),
-                  label: const Text('Edit Profile'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: isDark ? const Color(0xFF3A3B3C) : const Color(0xFFE4E6EB),
-                    foregroundColor: isDark ? Colors.white : Colors.black,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(vertical: 10),
+                const SizedBox(width: 8),
+                Expanded(
+                  flex: 4,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => EditProfileScreen(user: widget.user)),
+                      );
+                    },
+                    icon: Icon(Icons.edit, color: isDark ? Colors.white : Colors.black, size: 18),
+                    label: const Text('Edit Profile'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isDark ? const Color(0xFF3A3B3C) : const Color(0xFFE4E6EB),
+                      foregroundColor: isDark ? Colors.white : Colors.black,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF3A3B3C) : const Color(0xFFE4E6EB),
-                  borderRadius: BorderRadius.circular(8),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF3A3B3C) : const Color(0xFFE4E6EB),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(Icons.more_horiz, color: isDark ? Colors.white : Colors.black),
                 ),
-                child: Icon(Icons.more_horiz, color: isDark ? Colors.white : Colors.black),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
       ],
     );
+  }
+
+  Widget _buildDetailsSection(bool isDark) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+             Text(
+              'Details',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white : AppTheme.black,
+              ),
+            ),
+            const SizedBox(height: 12),
+            ...widget.user.details.map((detail) {
+              IconData icon = Icons.info_outline;
+              if (detail.contains('Works') || detail.contains('Assistant') || detail.contains('Member')) {
+                icon = Icons.work;
+              } else if (detail.contains('Studied') || detail.contains('School') || detail.contains('College')) {
+                icon = Icons.school;
+              } else if (detail.contains('Lives') || detail.contains('From')) {
+                icon = Icons.home;
+              }
+              
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(icon, color: isDark ? Colors.grey[400] : Colors.grey[600], size: 20),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        detail,
+                        style: TextStyle(
+                          fontSize: 15,
+                          color: isDark ? Colors.white : AppTheme.black,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+            Container(
+              width: double.infinity,
+              margin: const EdgeInsets.only(top: 8),
+              child: ElevatedButton(
+                onPressed: () {},
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: isDark ? const Color(0xFF3A3B3C).withValues(alpha: 0.5) : const Color(0xFFE7F3FF),
+                  foregroundColor: AppTheme.facebookBlue,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                ),
+                child: const Text('Edit public details'),
+              ),
+            ),
+          ],
+        ),
+      );
   }
 
   Widget _buildFriendsList(BuildContext context, bool isDark) {
@@ -311,7 +328,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             ],
           ),
           const SizedBox(height: 16),
-          // 3x3 Grid
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -321,9 +337,8 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
               crossAxisSpacing: 8,
               mainAxisSpacing: 8,
             ),
-            itemCount: 9, // Showing 9 friends
+            itemCount: 9, // Demo count
             itemBuilder: (context, index) {
-              // Cycle through users for demo
               final friend = DummyData.users[index % DummyData.users.length];
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -331,7 +346,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                   Expanded(
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(8),
-                      child: CachedNetworkImage(
+                      child: ImageHelper.getNetworkImage(
                         imageUrl: friend.avatarUrl,
                         fit: BoxFit.cover,
                         width: double.infinity,
@@ -377,105 +392,60 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     );
   }
 
-  Widget _buildInfoSection(bool isDark) {
-    return Container(
-      padding: const EdgeInsets.all(16),
+  Widget _buildPostsTab(BuildContext context, bool isDark) {
+    return SingleChildScrollView(
       child: Column(
         children: [
-          _buildInfoRow(Icons.work, 'Works at Flutter Developer', isDark),
-          const SizedBox(height: 16),
-          _buildInfoRow(Icons.school, 'Studied at Tech University', isDark),
-          const SizedBox(height: 16),
-          _buildInfoRow(Icons.home, 'Lives in San Francisco, CA', isDark),
-          const SizedBox(height: 16),
-          _buildInfoRow(Icons.location_on, 'From New York, NY', isDark),
-          const SizedBox(height: 16),
-          _buildInfoRow(Icons.rss_feed, 'Followed by 1,234 people', isDark),
-          const SizedBox(height: 16),
-          _buildInfoRow(Icons.more_horiz, 'See your About Info', isDark),
-          const SizedBox(height: 16),
-          SizedBox(
-             width: double.infinity,
-             child: ElevatedButton(
-               onPressed: () {}, 
-               style: ElevatedButton.styleFrom(
-                 backgroundColor: const Color(0xFFE7F3FF),
-                 elevation: 0,
-                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-               ),
-               child: Text(
-                 'Edit Public Details',
-                  style: TextStyle(
-                    color: AppTheme.facebookBlue,
-                    fontWeight: FontWeight.bold,
-                  ),
-               ),
-             ),
-          ),
+          _buildUserPosts(isDark),
         ],
       ),
     );
   }
 
-  Widget _buildInfoRow(IconData icon, String text, bool isDark) {
-    return Row(
-      children: [
-        Icon(icon, color: isDark ? const Color(0xFFB0B3B8) : Colors.grey[600], size: 22),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Text(
-            text,
-            style: TextStyle(
-              fontSize: 16,
-              color: isDark ? Colors.white : AppTheme.black,
-              fontWeight: FontWeight.w400,
+  Widget _buildPhotosTab(BuildContext context, bool isDark) {
+    return GridView.builder(
+      padding: const EdgeInsets.all(8),
+      itemCount: 12,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: 8,
+        mainAxisSpacing: 8,
+      ),
+      itemBuilder: (context, index) {
+        return Container(
+          decoration: BoxDecoration(
+            color: Colors.grey[300],
+            borderRadius: BorderRadius.circular(4),
+            image: DecorationImage(
+            image: ImageHelper.getImageProvider('https://picsum.photos/seed/photo$index/400/400'),
+              fit: BoxFit.cover,
             ),
           ),
-        ),
-      ],
+        );
+      },
     );
   }
 
   Widget _buildUserPosts(bool isDark) {
+    // If viewing Current User, show all posts where author is currentUser
+    // If viewing another user (e.g. from search), show their posts
     final userPosts = DummyData.posts.where((p) => p.author.id == widget.user.id).toList();
     
+    // Fallback: If no specific posts for this user in DummyData, show a generic one or empty
+    if (userPosts.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.all(20),
+        child: Text('No posts yet', style: TextStyle(color: isDark ? Colors.grey : Colors.black)),
+      );
+    }
+
     return Column(
       children: userPosts.map((post) => Column(
         children: [
-           // We need to remove the top/bottom spacing from post card for better list feel
           PostCard(post: post),
-          _buildDivider(isDark),
+          Container(height: 8, color: isDark ? const Color(0xFF18191A) : const Color(0xFFF0F2F5)),
         ],
       )).toList(),
     );
-  }
-
-  Widget _buildDivider(bool isDark) {
-    return Container(
-      height: 8,
-      color: isDark ? const Color(0xFF18191A) : const Color(0xFFF0F2F5),
-    );
-  }
-}
-
-class _StickyTabBarDelegate extends SliverPersistentHeaderDelegate {
-  final Widget child;
-
-  _StickyTabBarDelegate({required this.child});
-
-  @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return child;
-  }
-
-  @override
-  double get maxExtent => 48.0;
-
-  @override
-  double get minExtent => 48.0;
-
-  @override
-  bool shouldRebuild(covariant SliverPersistentHeaderDelegate oldDelegate) {
-    return false;
   }
 }

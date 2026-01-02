@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import '../utils/image_helper.dart';
 
 /// Avatar widget with optional online indicator (green dot).
 class OnlineAvatar extends StatelessWidget {
@@ -22,7 +22,7 @@ class OnlineAvatar extends StatelessWidget {
       children: [
         CircleAvatar(
           radius: radius,
-          backgroundImage: CachedNetworkImageProvider(imageUrl),
+          backgroundImage: ImageHelper.getImageProvider(imageUrl),
         ),
         if (isOnline)
           Positioned(

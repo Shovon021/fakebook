@@ -3,8 +3,11 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../models/post_model.dart';
 import '../theme/app_theme.dart';
 import 'package:flutter/services.dart';
+import '../utils/image_helper.dart';
 import 'comment_bottom_sheet.dart';
 import '../screens/photo_viewer_screen.dart';
+import '../screens/profile_screen.dart';
+import 'reactions/reaction_button.dart';
 
 class PostCard extends StatefulWidget {
   final PostModel post;
@@ -73,10 +76,16 @@ class _PostCardState extends State<PostCard> with SingleTickerProviderStateMixin
             padding: const EdgeInsets.fromLTRB(12, 12, 8, 8),
             child: Row(
               children: [
-                CircleAvatar(
-                  radius: 21,
-                  backgroundImage: CachedNetworkImageProvider(
-                    widget.post.author.avatarUrl,
+                GestureDetector(
+                  onTap: () => Navigator.push(
+                    context, 
+                    MaterialPageRoute(builder: (_) => ProfileScreen(user: widget.post.author))
+                  ),
+                  child: CircleAvatar(
+                    radius: 21,
+                    backgroundImage: ImageHelper.getImageProvider(
+                      widget.post.author.avatarUrl,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -84,12 +93,18 @@ class _PostCardState extends State<PostCard> with SingleTickerProviderStateMixin
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        widget.post.author.name,
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                          color: isDark ? Colors.white : AppTheme.black,
+                      GestureDetector(
+                        onTap: () => Navigator.push(
+                          context, 
+                          MaterialPageRoute(builder: (_) => ProfileScreen(user: widget.post.author))
+                        ),
+                        child: Text(
+                          widget.post.author.name,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                            color: isDark ? Colors.white : AppTheme.black,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -287,7 +302,7 @@ class _PostCardState extends State<PostCard> with SingleTickerProviderStateMixin
                       ),
                     ),
                   if (widget.post.sharedPost!.imageUrl != null)
-                    CachedNetworkImage(
+                    ImageHelper.getNetworkImage(
                       imageUrl: widget.post.sharedPost!.imageUrl!,
                       width: double.infinity,
                       height: 200,
@@ -325,25 +340,11 @@ class _PostCardState extends State<PostCard> with SingleTickerProviderStateMixin
               child: Stack(
                 alignment: Alignment.center,
                 children: [
-                  CachedNetworkImage(
+                  ImageHelper.getNetworkImage(
                     imageUrl: widget.post.imageUrl!,
                     width: double.infinity,
                     height: 300,
                     fit: BoxFit.cover,
-                    placeholder: (context, url) => Container(
-                      height: 300,
-                      color: isDark ? const Color(0xFF3A3B3C) : Colors.grey[200],
-                      child: const Center(
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                        ),
-                      ),
-                    ),
-                    errorWidget: (context, url, error) => Container(
-                      height: 300,
-                      color: Colors.grey[300],
-                      child: const Icon(Icons.error),
-                    ),
                   ),
                   // Heart Animation Overlay
                   if (_showHeartAnimation)
@@ -429,33 +430,20 @@ class _PostCardState extends State<PostCard> with SingleTickerProviderStateMixin
                 child: Row(
                   children: [
                     Expanded(
-                      child: GestureDetector(
-                        onLongPress: () {
-                          setState(() => _showReactions = true);
+                      child: ReactionButton(
+                        initialReaction: _currentReaction,
+                        onReactionChanged: (reaction) {
+                          setState(() {
+                            _currentReaction = reaction;
+                            if (reaction == ReactionType.like) {
+                              _showHeartAnimation = true;
+                              _animationController.forward().then((_) {
+                                _animationController.reverse();
+                              });
+                              HapticFeedback.lightImpact();
+                            }
+                          });
                         },
-                        onLongPressEnd: (_) {
-                          setState(() => _showReactions = false);
-                        },
-                        child: _buildActionButton(
-                          icon: _getReactionIcon(_currentReaction),
-                          label: _getReactionLabel(_currentReaction),
-                          color: _getReactionColor(_currentReaction),
-                          onTap: () {
-                            setState(() {
-                              if (_currentReaction != null) {
-                                _currentReaction = null;
-                              } else {
-                                _currentReaction = ReactionType.like;
-                              }
-                            });
-                            _animationController.forward().then((_) {
-                              _animationController.reverse();
-                            });
-                             // Feature #1 (Polish): Haptic Feedback on Like
-                            HapticFeedback.lightImpact();
-                          },
-                          isDark: isDark,
-                        ),
                       ),
                     ),
                     Expanded(
@@ -628,75 +616,7 @@ class _PostCardState extends State<PostCard> with SingleTickerProviderStateMixin
     );
   }
 
-  Widget _buildReactionEmoji(String emoji, ReactionType type) {
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _currentReaction = type;
-          _showReactions = false;
-        });
-      },
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 5),
-        child: Text(
-          emoji,
-          style: const TextStyle(fontSize: 30),
-        ),
-      ),
-    );
-  }
 
-  IconData _getReactionIcon(ReactionType? reaction) {
-    switch (reaction) {
-      case ReactionType.like:
-        return Icons.thumb_up;
-      case ReactionType.love:
-        return Icons.favorite;
-      case ReactionType.haha:
-      case ReactionType.wow:
-      case ReactionType.sad:
-      case ReactionType.angry:
-        return Icons.emoji_emotions;
-      default:
-        return Icons.thumb_up_outlined;
-    }
-  }
-
-  String _getReactionLabel(ReactionType? reaction) {
-    switch (reaction) {
-      case ReactionType.like:
-        return 'Like';
-      case ReactionType.love:
-        return 'Love';
-      case ReactionType.haha:
-        return 'Haha';
-      case ReactionType.wow:
-        return 'Wow';
-      case ReactionType.sad:
-        return 'Sad';
-      case ReactionType.angry:
-        return 'Angry';
-      default:
-        return 'Like';
-    }
-  }
-
-  Color _getReactionColor(ReactionType? reaction) {
-    switch (reaction) {
-      case ReactionType.like:
-        return AppTheme.facebookBlue;
-      case ReactionType.love:
-        return AppTheme.loveRed;
-      case ReactionType.haha:
-      case ReactionType.wow:
-      case ReactionType.sad:
-        return AppTheme.hahaYellow;
-      case ReactionType.angry:
-        return AppTheme.angryOrange;
-      default:
-        return Colors.grey;
-    }
-  }
 
   Widget _buildImageGrid(List<String> images, bool isDark) {
     if (images.length == 1) {
@@ -775,18 +695,11 @@ class _PostCardState extends State<PostCard> with SingleTickerProviderStateMixin
           ),
         );
       },
-      child: CachedNetworkImage(
+      child: ImageHelper.getNetworkImage(
         imageUrl: url,
         fit: BoxFit.cover,
         width: double.infinity,
         height: double.infinity,
-        placeholder: (context, url) => Container(
-          color: isDark ? const Color(0xFF3A3B3C) : Colors.grey[200],
-        ),
-        errorWidget: (context, url, error) => Container(
-          color: Colors.grey[300],
-          child: const Icon(Icons.error),
-        ),
       ),
     );
   }
@@ -798,5 +711,33 @@ class _PostCardState extends State<PostCard> with SingleTickerProviderStateMixin
       return '${(count / 1000).toStringAsFixed(1)}K';
     }
     return count.toString();
+  }
+
+  Widget _buildReactionEmoji(String emoji, ReactionType type) {
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _currentReaction = type;
+          _showReactions = false;
+        });
+        HapticFeedback.lightImpact();
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: Text(emoji, style: const TextStyle(fontSize: 28)),
+      ),
+    );
+  }
+
+  String _getReactionLabel(ReactionType? reaction) {
+    switch (reaction) {
+      case ReactionType.like: return 'Like';
+      case ReactionType.love: return 'Love';
+      case ReactionType.haha: return 'Haha';
+      case ReactionType.wow: return 'Wow';
+      case ReactionType.sad: return 'Sad';
+      case ReactionType.angry: return 'Angry';
+      default: return 'Like';
+    }
   }
 }

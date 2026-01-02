@@ -10,37 +10,69 @@ class DummyData {
   // Current User
   static final UserModel currentUser = UserModel(
     id: '0',
-    name: 'John Doe',
-    avatarUrl: 'https://picsum.photos/seed/user0/150/150',
+    name: 'Sarfaraz Ahamed Shovon',
+    avatarUrl: 'https://i.imgur.com/K3Z3gM9.jpeg', // Adjusted to look like red shirt Profile
     isOnline: true,
-    bio: 'Living my best life 🌟',
-    friendsCount: 847,
+    bio: 'Alhamdulillah🤲',
+    friendsCount: 767,
+    details: [
+      'Undergraduate Teaching Assistant (UTA) at East West University',
+      'General Member at East West University Robotics Club',
+      'Studied at East West University',
+      'Went to Government Science College',
+      'Lives in Dhaka, Bangladesh',
+    ],
   );
 
-  // Sample Users
+  // Specific Friends from User's Feed/Story
+  static final UserModel tareq = UserModel(
+    id: '100',
+    name: 'Tareq Aziz',
+    avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=1887&auto=format&fit=crop', // Male portrait
+    isOnline: false,
+    friendsCount: 1052,
+    isFriend: true,
+  );
+
+  static final UserModel ankon = UserModel(
+    id: '101',
+    name: 'Ankon Baroi',
+    avatarUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=1887&auto=format&fit=crop', // Male portrait
+    isOnline: true,
+    friendsCount: 420,
+    isFriend: true,
+  );
+
+  static final UserModel esme = UserModel(
+    id: '102',
+    name: 'Esme Azam Rifat',
+    avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=1887&auto=format&fit=crop', // Male portrait
+    isOnline: true,
+    friendsCount: 890,
+    isFriend: true,
+  );
+  
+  static final UserModel zamil = UserModel(
+    id: '103',
+    name: 'Zamil Zani',
+    avatarUrl: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=1887&auto=format&fit=crop', // Groom/Wedding attire
+    isOnline: false,
+    friendsCount: 1560,
+    isFriend: true,
+  );
+
+  // Original Sample Users (keeping some for variety)
   static final List<UserModel> users = [
+    tareq,
+    ankon,
+    esme,
+    zamil,
     UserModel(
       id: '1',
       name: 'Sarah Johnson',
       avatarUrl: 'https://picsum.photos/seed/user1/150/150',
       isOnline: true,
       friendsCount: 523,
-      isFriend: true,
-    ),
-    UserModel(
-      id: '2',
-      name: 'Mike Wilson',
-      avatarUrl: 'https://picsum.photos/seed/user2/150/150',
-      isOnline: false,
-      friendsCount: 892,
-      isFriend: true,
-    ),
-    UserModel(
-      id: '3',
-      name: 'Emily Davis',
-      avatarUrl: 'https://picsum.photos/seed/user3/150/150',
-      isOnline: true,
-      friendsCount: 1205,
       isFriend: true,
     ),
     UserModel(
@@ -59,116 +91,69 @@ class DummyData {
       friendsCount: 678,
       isFriend: false,
     ),
-    UserModel(
-      id: '6',
-      name: 'James Miller',
-      avatarUrl: 'https://picsum.photos/seed/user6/150/150',
-      isOnline: false,
-      friendsCount: 234,
-      isFriend: false,
-    ),
-    UserModel(
-      id: '7',
-      name: 'Amanda Taylor',
-      avatarUrl: 'https://picsum.photos/seed/user7/150/150',
-      isOnline: true,
-      friendsCount: 1567,
-      isFriend: true,
-    ),
-    UserModel(
-      id: '8',
-      name: 'Chris Martinez',
-      avatarUrl: 'https://picsum.photos/seed/user8/150/150',
-      isOnline: true,
-      friendsCount: 890,
-      isFriend: true,
-    ),
   ];
 
   // Sample Posts
   static final List<PostModel> posts = [
+    // 1. Tareq's Cover Photo Update (From Screenshot)
     PostModel(
-      id: '1',
-      author: users[0],
-      content: 'Just had an amazing brunch with friends! 🥞☕ Nothing beats good food and great company. #WeekendVibes #BrunchTime',
-      imageUrl: 'https://picsum.photos/seed/food1/800/600',
-      createdAt: DateTime.now().subtract(const Duration(hours: 2)),
-      likesCount: 234,
-      commentsCount: 45,
-      sharesCount: 12,
-      userReaction: ReactionType.like,
-    ),
-    PostModel(
-      id: '2',
-      author: users[1],
-      content: 'Excited to announce that I just got promoted! 🎉 Hard work really pays off. Thank you everyone for your support!',
-      createdAt: DateTime.now().subtract(const Duration(hours: 5)),
-      likesCount: 892,
-      commentsCount: 156,
-      sharesCount: 23,
-    ),
-    PostModel(
-      id: '3',
-      author: users[2],
-      content: 'Beautiful sunset at the beach today 🌅',
-      imageUrl: 'https://picsum.photos/seed/beach1/800/600',
-      createdAt: DateTime.now().subtract(const Duration(hours: 8)),
-      likesCount: 567,
-      commentsCount: 89,
-      sharesCount: 34,
-      userReaction: ReactionType.love,
-    ),
-    PostModel(
-      id: '4',
-      author: users[3],
-      content: 'Who else is watching the game tonight? 🏈 Let\'s go team!',
+      id: 'p1',
+      author: tareq,
+      content: 'updated his cover photo.',
+      imageUrl: 'https://images.unsplash.com/photo-1542362567-b07e54358753?q=80&w=2070&auto=format&fit=crop', // Car interior
       createdAt: DateTime.now().subtract(const Duration(days: 1)),
-      likesCount: 123,
-      commentsCount: 67,
-      sharesCount: 5,
+      likesCount: 124,
+      commentsCount: 32,
+      sharesCount: 2,
+      userReaction: ReactionType.like,
+      isShared: false,
     ),
+    // 2. Ankon's Life Update
     PostModel(
-      id: '5',
-      author: users[4],
-      content: 'New adventure begins! Starting my road trip across the country 🚗✨',
-      imageUrl: 'https://picsum.photos/seed/road1/800/600',
-      createdAt: DateTime.now().subtract(const Duration(days: 1, hours: 3)),
-      likesCount: 445,
-      commentsCount: 78,
-      sharesCount: 21,
+      id: 'p2',
+      author: ankon,
+      content: 'New year, new resolution! 2025 will be great. ✨',
+      imageUrl: 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?q=80&w=2069&auto=format&fit=crop', // Celebration/Party
+      createdAt: DateTime.now().subtract(const Duration(hours: 4)),
+      likesCount: 89,
+      commentsCount: 15,
+      sharesCount: 0,
     ),
+    // 3. User's Own Post (Cover Photo Update simulation)
     PostModel(
-      id: '6',
-      author: users[6],
-      content: 'Coffee and coding - perfect Monday combo ☕💻',
-      imageUrl: 'https://picsum.photos/seed/coffee1/800/600',
-      createdAt: DateTime.now().subtract(const Duration(days: 2)),
-      likesCount: 321,
-      commentsCount: 45,
-      sharesCount: 8,
-      userReaction: ReactionType.haha,
-    ),
-    // New: Multi-image post
-    PostModel(
-      id: '7',
-      author: users[0],
-      content: 'Weekend getaway photo dump! 📸🌲 had so much fun exploring nature.',
-      imagesUrl: [
-        'https://picsum.photos/seed/nature1/800/800',
-        'https://picsum.photos/seed/nature2/800/800',
-        'https://picsum.photos/seed/nature3/800/800',
-        'https://picsum.photos/seed/nature4/800/800',
-      ],
-      createdAt: DateTime.now().subtract(const Duration(days: 2, hours: 5)),
-      likesCount: 560,
-      commentsCount: 88,
-      sharesCount: 15,
-      userReaction: ReactionType.love,
-    ),
-    // New: Colored background post
-    PostModel(
-      id: '8',
+      id: 'p3',
       author: currentUser,
+      content: 'Singing along to 🎤',
+      imageUrl: 'https://images.unsplash.com/photo-1516280440614-6697288d5d38?q=80&w=2070&auto=format&fit=crop', // Music/Mic theme
+      createdAt: DateTime.now().subtract(const Duration(hours: 6)),
+      likesCount: 45,
+      commentsCount: 12,
+      sharesCount: 1,
+    ),
+    // 4. Esme's Shared Post
+    PostModel(
+      id: 'p4',
+      author: esme,
+      content: 'Couldn\'t agree more!',
+      createdAt: DateTime.now().subtract(const Duration(hours: 8)),
+      likesCount: 210,
+      commentsCount: 56,
+      sharesCount: 5,
+      isShared: true,
+      sharedPost: PostModel(
+        id: 'p5',
+        author: zamil,
+        content: 'Wedding season vibes! 💍🤵',
+        imageUrl: 'https://images.unsplash.com/photo-1519741497674-611481863552?q=80&w=2070&auto=format&fit=crop',
+        createdAt: DateTime.now().subtract(const Duration(days: 2)),
+        likesCount: 890,
+        commentsCount: 230,
+        sharesCount: 45,
+      ),
+    ),
+    PostModel(
+      id: 'p6',
+      author: users[5], // David Brown
       content: 'Does anyone know a good place to fix a laptop screen? Urgent! 💻🔧',
       backgroundColor: const Color(0xFFE41E3F),
       createdAt: DateTime.now().subtract(const Duration(days: 3)),
@@ -176,176 +161,119 @@ class DummyData {
       commentsCount: 32,
       sharesCount: 0,
     ),
-    // New: Shared Post
-    PostModel(
-      id: '9',
-      author: users[2],
-      content: 'This is so true! 😂',
-      createdAt: DateTime.now().subtract(const Duration(hours: 1)),
-      likesCount: 15,
-      commentsCount: 2,
-      sharesCount: 0,
-      isShared: true,
-      sharedPost: PostModel(
-        id: '10',
-        author: users[0],
-        content: 'Just had an amazing brunch with friends! 🥞☕ Nothing beats good food and great company. #WeekendVibes #BrunchTime',
-        imageUrl: 'https://picsum.photos/seed/food1/800/600',
-        createdAt: DateTime.now().subtract(const Duration(hours: 3)),
-        likesCount: 234,
-        commentsCount: 45,
-        sharesCount: 12,
-      ),
-    ),
   ];
 
-  // Sample Stories
+  // Sample Stories (Matching Screenshot order)
   static final List<StoryModel> stories = [
+    // 1. Current User
     StoryModel(
-      id: '0',
+      id: 's0',
       user: currentUser,
       createdAt: DateTime.now(),
       isOwnStory: true,
     ),
+    // 2. Ankon Baroi
     StoryModel(
-      id: '1',
-      user: users[0],
-      imageUrl: 'https://picsum.photos/seed/story1/400/600',
-      createdAt: DateTime.now().subtract(const Duration(hours: 1)),
+      id: 's1',
+      user: ankon,
+      imageUrl: 'https://images.unsplash.com/photo-1705646543088-3729e2730248?q=80&w=1964&auto=format&fit=crop', // Tall building/City
+      createdAt: DateTime.now().subtract(const Duration(minutes: 30)),
     ),
+    // 3. Esme Azam Rifat
     StoryModel(
-      id: '2',
-      user: users[2],
-      imageUrl: 'https://picsum.photos/seed/story2/400/600',
+      id: 's2',
+      user: esme,
+      imageUrl: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=1887&auto=format&fit=crop', // Friends group
       createdAt: DateTime.now().subtract(const Duration(hours: 2)),
       isViewed: true,
     ),
+    // 4. Zamil Zani
     StoryModel(
-      id: '3',
-      user: users[4],
-      imageUrl: 'https://picsum.photos/seed/story3/400/600',
+      id: 's3',
+      user: zamil,
+      imageUrl: 'https://images.unsplash.com/photo-1606800052052-a08af7148866?q=80&w=2070&auto=format&fit=crop', // Wedding decor
       createdAt: DateTime.now().subtract(const Duration(hours: 4)),
     ),
+    // 5. Tareq Aziz
     StoryModel(
-      id: '4',
-      user: users[6],
-      imageUrl: 'https://picsum.photos/seed/story4/400/600',
-      createdAt: DateTime.now().subtract(const Duration(hours: 6)),
-    ),
-    StoryModel(
-      id: '5',
-      user: users[7],
-      imageUrl: 'https://picsum.photos/seed/story5/400/600',
-      createdAt: DateTime.now().subtract(const Duration(hours: 8)),
-      isViewed: true,
+      id: 's4',
+      user: tareq,
+      imageUrl: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=2021&auto=format&fit=crop', // Travel
+      createdAt: DateTime.now().subtract(const Duration(hours: 5)),
     ),
   ];
 
   // Sample Notifications
   static final List<NotificationModel> notifications = [
     NotificationModel(
-      id: '1',
-      title: 'Sarah Johnson',
+      id: 'n1',
+      title: 'Esme Azam Rifat',
       body: 'liked your photo.',
-      avatarUrl: 'https://picsum.photos/seed/user1/150/150',
+      avatarUrl: esme.avatarUrl,
       createdAt: DateTime.now().subtract(const Duration(minutes: 15)),
       type: NotificationType.like,
     ),
     NotificationModel(
-      id: '2',
-      title: 'Mike Wilson',
-      body: 'commented on your post: "This is awesome!"',
-      avatarUrl: 'https://picsum.photos/seed/user2/150/150',
+      id: 'n2',
+      title: 'Tareq Aziz',
+      body: 'commented on your post: "Congrats!"',
+      avatarUrl: tareq.avatarUrl,
       createdAt: DateTime.now().subtract(const Duration(hours: 1)),
       type: NotificationType.comment,
     ),
     NotificationModel(
-      id: '3',
-      title: 'Emily Davis',
+      id: 'n3',
+      title: 'Ankon Baroi',
       body: 'sent you a friend request.',
-      avatarUrl: 'https://picsum.photos/seed/user3/150/150',
+      avatarUrl: ankon.avatarUrl,
       createdAt: DateTime.now().subtract(const Duration(hours: 3)),
       type: NotificationType.friendRequest,
       isRead: true,
     ),
     NotificationModel(
-      id: '4',
-      title: 'David Brown',
-      body: 'shared your post.',
-      avatarUrl: 'https://picsum.photos/seed/user4/150/150',
+      id: 'n4',
+      title: 'Zamil Zani',
+      body: 'invited you to join a group.',
+      avatarUrl: zamil.avatarUrl,
       createdAt: DateTime.now().subtract(const Duration(hours: 5)),
-      type: NotificationType.share,
+      type: NotificationType.groupActivity,
       isRead: true,
     ),
     NotificationModel(
-      id: '5',
-      title: "Lisa Anderson's birthday is today!",
-      body: 'Write on her timeline to wish her a happy birthday.',
-      avatarUrl: 'https://picsum.photos/seed/user5/150/150',
+      id: 'n5',
+      title: "Tamim Iqbal's birthday is today!",
+      body: 'Write on his timeline.',
+      avatarUrl: 'https://picsum.photos/seed/tamim/150/150',
       createdAt: DateTime.now().subtract(const Duration(hours: 8)),
       type: NotificationType.birthday,
-    ),
-    NotificationModel(
-      id: '6',
-      title: 'You have memories to look back on today',
-      body: 'See your memories from 1 year ago.',
-      avatarUrl: 'https://picsum.photos/seed/user0/150/150',
-      createdAt: DateTime.now().subtract(const Duration(days: 1)),
-      type: NotificationType.memory,
-      isRead: true,
     ),
   ];
 
   // Sample Marketplace Items
   static final List<MarketplaceItemModel> marketplaceItems = [
     MarketplaceItemModel(
-      id: '1',
+      id: 'm1',
       title: 'iPhone 14 Pro Max - Like New',
       price: 899,
-      imageUrl: 'https://picsum.photos/seed/phone1/400/400',
-      location: 'New York, NY',
+      imageUrl: 'https://source.unsplash.com/random/400x400?iphone',
+      location: 'Dhaka, Bangladesh',
       createdAt: DateTime.now().subtract(const Duration(hours: 2)),
     ),
     MarketplaceItemModel(
-      id: '2',
-      title: 'Vintage Leather Sofa',
-      price: 450,
-      imageUrl: 'https://picsum.photos/seed/sofa1/400/400',
-      location: 'Los Angeles, CA',
+      id: 'm2',
+      title: 'Yamaha R15 v3',
+      price: 2500,
+      imageUrl: 'https://source.unsplash.com/random/400x400?motorcycle',
+      location: 'Chittagong',
       createdAt: DateTime.now().subtract(const Duration(hours: 5)),
     ),
     MarketplaceItemModel(
-      id: '3',
-      title: 'Mountain Bike - Trek',
-      price: 650,
-      imageUrl: 'https://picsum.photos/seed/bike1/400/400',
-      location: 'Chicago, IL',
+      id: 'm3',
+      title: 'Sony PlayStation 5',
+      price: 450,
+      imageUrl: 'https://source.unsplash.com/random/400x400?ps5',
+      location: 'Sylhet',
       createdAt: DateTime.now().subtract(const Duration(days: 1)),
-      isSaved: true,
-    ),
-    MarketplaceItemModel(
-      id: '4',
-      title: 'Gaming PC Setup',
-      price: 1200,
-      imageUrl: 'https://picsum.photos/seed/pc1/400/400',
-      location: 'Houston, TX',
-      createdAt: DateTime.now().subtract(const Duration(days: 1)),
-    ),
-    MarketplaceItemModel(
-      id: '5',
-      title: 'Acoustic Guitar - Fender',
-      price: 280,
-      imageUrl: 'https://picsum.photos/seed/guitar1/400/400',
-      location: 'Phoenix, AZ',
-      createdAt: DateTime.now().subtract(const Duration(days: 2)),
-    ),
-    MarketplaceItemModel(
-      id: '6',
-      title: 'Drone DJI Mini 3',
-      price: 550,
-      imageUrl: 'https://picsum.photos/seed/drone1/400/400',
-      location: 'Philadelphia, PA',
-      createdAt: DateTime.now().subtract(const Duration(days: 2)),
       isSaved: true,
     ),
   ];
@@ -359,81 +287,42 @@ class DummyData {
   // Friend Suggestions
   static final List<UserModel> friendSuggestions = [
     UserModel(
-      id: '10',
-      name: 'Jessica White',
-      avatarUrl: 'https://picsum.photos/seed/user10/150/150',
+      id: 'fs1',
+      name: 'Rahim Islam',
+      avatarUrl: 'https://picsum.photos/seed/rahim/150/150',
       friendsCount: 345,
     ),
     UserModel(
-      id: '11',
-      name: 'Robert Clark',
-      avatarUrl: 'https://picsum.photos/seed/user11/150/150',
+      id: 'fs2',
+      name: 'Karim Uddin',
+      avatarUrl: 'https://picsum.photos/seed/karim/150/150',
       friendsCount: 567,
-    ),
-    UserModel(
-      id: '12',
-      name: 'Michelle Lee',
-      avatarUrl: 'https://picsum.photos/seed/user12/150/150',
-      friendsCount: 234,
     ),
   ];
 
   // Sample Reels
   static final List<ReelModel> reels = [
     ReelModel(
-      id: '1',
+      id: 'r1',
       user: users[0],
       videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-girl-in-neon-sign-1232-large.mp4',
       thumbUrl: 'https://picsum.photos/seed/reel1/400/800',
-      description: 'Neon vibes only ✨ #neon #nightlife',
+      description: 'Dhaka nightlife ✨ #dhaka #night',
       likesCount: 1200,
       commentsCount: 300,
       sharesCount: 50,
       viewsCount: 5000,
     ),
     ReelModel(
-      id: '2',
-      user: users[2],
+      id: 'r2',
+      user: zamil,
       videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-tree-with-yellow-flowers-1173-large.mp4',
       thumbUrl: 'https://picsum.photos/seed/reel2/400/800',
-      description: 'Spring is here! 🌸 #nature #spring',
+      description: 'Cox\'s Bazar trip 🌊 #beach #fun',
       likesCount: 890,
       commentsCount: 150,
       sharesCount: 30,
       viewsCount: 3000,
-    ),
-    ReelModel(
-      id: '3',
-      user: users[4],
-      videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-mother-with-her-little-daughter-eating-a-marshmallow-in-nature-39764-large.mp4',
-      thumbUrl: 'https://picsum.photos/seed/reel3/400/800',
-      description: 'Family time ❤️ #family #love',
-      likesCount: 2300,
-      commentsCount: 450,
-      sharesCount: 100,
-      viewsCount: 8000,
-    ),
-    ReelModel(
-      id: '4',
-      user: users[6],
-      videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-taking-photos-from-different-angles-of-a-model-34421-large.mp4',
-      thumbUrl: 'https://picsum.photos/seed/reel4/400/800',
-      description: 'Behind the scenes 📸 #photography #bts',
-      likesCount: 1500,
-      commentsCount: 200,
-      sharesCount: 80,
-      viewsCount: 6000,
-    ),
-    ReelModel(
-      id: '5',
-      user: users[1],
-      videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-young-mother-with-her-little-daughter-decorating-a-christmas-tree-39745-large.mp4',
-      thumbUrl: 'https://picsum.photos/seed/reel5/400/800',
-      description: 'Getting ready for Christmas! 🎄 #christmas #holidays',
-      likesCount: 3000,
-      commentsCount: 600,
-      sharesCount: 150,
-      viewsCount: 10000,
     ),
   ];
 }

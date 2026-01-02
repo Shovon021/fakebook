@@ -4,6 +4,7 @@ import '../models/post_model.dart';
 import '../data/dummy_data.dart';
 import '../theme/app_theme.dart';
 import 'shared_ui.dart';
+import '../utils/image_helper.dart';
 
 class CommentBottomSheet extends StatefulWidget {
   final PostModel post;
@@ -19,8 +20,10 @@ class CommentBottomSheet extends StatefulWidget {
 
 class _CommentBottomSheetState extends State<CommentBottomSheet> {
   final TextEditingController _controller = TextEditingController();
+  final FocusNode _focusNode = FocusNode();
+  int? _replyingToIndex; // Index of the comment being replied to
 
-  // Mock comments
+  // Mock comments with replies
   final List<Map<String, dynamic>> _comments = [
     {
       'user': 'Sarah Johnson',
@@ -28,6 +31,7 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
       'text': 'This looks amazing! 😍',
       'time': '2h',
       'likes': 12,
+      'replies': <Map<String, dynamic>>[],
     },
     {
       'user': 'Mike Wilson',
@@ -35,6 +39,15 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
       'text': 'Great shot! Where was this taken?',
       'time': '5h',
       'likes': 5,
+      'replies': <Map<String, dynamic>>[
+        {
+          'user': 'Post Author',
+          'avatar': DummyData.currentUser.avatarUrl,
+          'text': 'At the national park! 🌲',
+          'time': '1h',
+          'likes': 2,
+        }
+      ],
     },
     {
       'user': 'Emily Davis',
@@ -42,8 +55,55 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
       'text': 'Best vibes ever 🔥',
       'time': '1d',
       'likes': 24,
+      'replies': <Map<String, dynamic>>[],
     },
   ];
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  void _handleReply(int index) {
+    setState(() {
+      _replyingToIndex = index;
+    });
+    _focusNode.requestFocus();
+  }
+
+  void _cancelReply() {
+    setState(() {
+      _replyingToIndex = null;
+    });
+    _focusNode.unfocus();
+  }
+
+  void _submitComment() {
+    if (_controller.text.isEmpty) return;
+
+    setState(() {
+      final newComment = {
+        'user': DummyData.currentUser.name,
+        'avatar': DummyData.currentUser.avatarUrl,
+        'text': _controller.text,
+        'time': 'Just now',
+        'likes': 0,
+        'replies': <Map<String, dynamic>>[],
+      };
+
+      if (_replyingToIndex != null) {
+        // Add as reply
+        _comments[_replyingToIndex!]['replies'].add(newComment);
+        _replyingToIndex = null; // Reset
+      } else {
+        // Add as main comment
+        _comments.add(newComment);
+      }
+      _controller.clear();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -104,109 +164,31 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
               padding: const EdgeInsets.all(16),
               itemCount: _comments.length,
               itemBuilder: (context, index) {
-                final comment = _comments[index];
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      CircleAvatar(
-                        radius: 18,
-                        backgroundImage: CachedNetworkImageProvider(comment['avatar']),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(10),
-                              decoration: BoxDecoration(
-                                color: isDark ? const Color(0xFF3A3B3C) : const Color(0xFFF0F2F5),
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    comment['user'],
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 13,
-                                      color: isDark ? Colors.white : AppTheme.black,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    comment['text'],
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: isDark ? Colors.white : AppTheme.black,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Row(
-                              children: [
-                                const SizedBox(width: 10),
-                                Text(
-                                  comment['time'],
-                                  style: TextStyle(
-                                    color: isDark ? const Color(0xFFB0B3B8) : Colors.grey[600],
-                                    fontSize: 12,
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-                                Text(
-                                  'Like',
-                                  style: TextStyle(
-                                    color: isDark ? const Color(0xFFB0B3B8) : Colors.grey[600],
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-                                Text(
-                                  'Reply',
-                                  style: TextStyle(
-                                    color: isDark ? const Color(0xFFB0B3B8) : Colors.grey[600],
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                if (comment['likes'] > 0) ...[
-                                  const Spacer(),
-                                  Text(
-                                    '${comment['likes']}',
-                                    style: TextStyle(
-                                      color: isDark ? const Color(0xFFB0B3B8) : Colors.grey[600],
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Container(
-                                    padding: const EdgeInsets.all(2),
-                                    decoration: const BoxDecoration(
-                                      color: AppTheme.facebookBlue,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Icon(Icons.thumb_up, color: Colors.white, size: 8),
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                );
+                return _buildCommentItem(context, _comments[index], index, isDark);
               },
             ),
           ),
           
+          // Reply Banner
+          if (_replyingToIndex != null)
+             Container(
+               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+               color: isDark ? const Color(0xFF3A3B3C) : Colors.grey[200],
+               child: Row(
+                 children: [
+                   Text(
+                     'Replying to ${_comments[_replyingToIndex!]['user']}',
+                     style: TextStyle(color: isDark ? Colors.grey[400] : Colors.grey[700]),
+                   ),
+                   const Spacer(),
+                   GestureDetector(
+                     onTap: _cancelReply,
+                     child: const Icon(Icons.close, size: 16, color: Colors.grey),
+                   )
+                 ],
+               ),
+             ),
+
           // Input Field
           Container(
             padding: EdgeInsets.fromLTRB(16, 12, 16, 12 + keyboardHeight),
@@ -245,8 +227,9 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
                         Expanded(
                           child: TextField(
                             controller: _controller,
+                            focusNode: _focusNode,
                             decoration: InputDecoration(
-                              hintText: 'Write a comment...',
+                              hintText: _replyingToIndex != null ? 'Write a reply...' : 'Write a comment...',
                               hintStyle: TextStyle(
                                 color: isDark ? const Color(0xFFB0B3B8) : Colors.grey[600],
                                 fontSize: 14,
@@ -258,20 +241,16 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
                               color: isDark ? Colors.white : AppTheme.black,
                               fontSize: 14,
                             ),
+                            onSubmitted: (_) => _submitComment(),
                           ),
                         ),
-                        // Emoji, GIF, Sticker icons inside input
+                        // Emoji, GIF, Sticker icons
                         Icon(Icons.emoji_emotions_outlined, 
                           color: isDark ? const Color(0xFFB0B3B8) : Colors.grey[600], 
                           size: 20,
                         ),
                         const SizedBox(width: 8),
                         Icon(Icons.gif_box_outlined, 
-                          color: isDark ? const Color(0xFFB0B3B8) : Colors.grey[600], 
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        Icon(Icons.sticky_note_2_outlined, 
                           color: isDark ? const Color(0xFFB0B3B8) : Colors.grey[600], 
                           size: 20,
                         ),
@@ -282,23 +261,10 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
                 const SizedBox(width: 8),
                 // Send Button
                 GestureDetector(
-                  onTap: () {
-                    if (_controller.text.isNotEmpty) {
-                      setState(() {
-                         _comments.add({
-                            'user': DummyData.currentUser.name,
-                            'avatar': DummyData.currentUser.avatarUrl,
-                            'text': _controller.text,
-                            'time': 'Just now',
-                            'likes': 0,
-                         });
-                         _controller.clear();
-                      });
-                    }
-                  },
-                  child: Icon(
+                  onTap: _submitComment,
+                  child: const Icon(
                     Icons.send,
-                    color: _controller.text.isNotEmpty ? AppTheme.facebookBlue : Colors.grey,
+                    color: AppTheme.facebookBlue,
                     size: 22,
                   ),
                 ),
@@ -308,6 +274,190 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
         ],
       ),
     );
+  }
+
+  Widget _buildCommentItem(BuildContext context, Map<String, dynamic> comment, int index, bool isDark) {
+    return Column(
+      children: [
+        // Main Comment
+        Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CircleAvatar(
+                radius: 18,
+                backgroundImage: ImageHelper.getImageProvider(comment['avatar']),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF3A3B3C) : const Color(0xFFF0F2F5),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            comment['user'],
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                              color: isDark ? Colors.white : AppTheme.black,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            comment['text'],
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: isDark ? Colors.white : AppTheme.black,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        const SizedBox(width: 10),
+                        Text(
+                          comment['time'],
+                          style: TextStyle(
+                            color: isDark ? const Color(0xFFB0B3B8) : Colors.grey[600],
+                            fontSize: 12,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        GestureDetector(
+                           onTap: () {}, // Like logic (simplified)
+                           child: Text(
+                            'Like',
+                            style: TextStyle(
+                              color: isDark ? const Color(0xFFB0B3B8) : Colors.grey[600],
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        GestureDetector(
+                          onTap: () => _handleReply(index),
+                          child: Text(
+                            'Reply',
+                            style: TextStyle(
+                              color: isDark ? const Color(0xFFB0B3B8) : Colors.grey[600],
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        if (comment['likes'] > 0) ...[
+                          const Spacer(),
+                          Text(
+                            '${comment['likes']}',
+                            style: TextStyle(
+                              color: isDark ? const Color(0xFFB0B3B8) : Colors.grey[600],
+                              fontSize: 12,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Container(
+                            padding: const EdgeInsets.all(2),
+                            decoration: const BoxDecoration(
+                              color: AppTheme.facebookBlue,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.thumb_up, color: Colors.white, size: 8),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        
+        // Replies
+        if (comment['replies'] != null && (comment['replies'] as List).isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(left: 50),
+            child: listReplies(comment['replies'], isDark),
+          ),
+      ],
+    );
+  }
+
+  Widget listReplies(List<dynamic> replies, bool isDark) {
+     return Column(
+       children: replies.map((reply) {
+         return Padding(
+           padding: const EdgeInsets.only(bottom: 12),
+           child: Row(
+             crossAxisAlignment: CrossAxisAlignment.start,
+             children: [
+               CircleAvatar(
+                 radius: 12,
+                 backgroundImage: ImageHelper.getImageProvider(reply['avatar']),
+               ),
+               const SizedBox(width: 8),
+               Expanded(
+                 child: Column(
+                   crossAxisAlignment: CrossAxisAlignment.start,
+                   children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: isDark ? const Color(0xFF3A3B3C) : const Color(0xFFF0F2F5),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              reply['user'],
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                                color: isDark ? Colors.white : AppTheme.black,
+                              ),
+                            ),
+                            Text(
+                              reply['text'],
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: isDark ? Colors.white : AppTheme.black,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Row(
+                         children: [
+                            const SizedBox(width: 8),
+                            Text(reply['time'], style: TextStyle(fontSize: 11, color: Colors.grey[600])),
+                            const SizedBox(width: 12),
+                             Text('Like', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey[600])),
+                            const SizedBox(width: 12),
+                             Text('Reply', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey[600])),
+                         ],
+                      ),
+                   ],
+                 ),
+               )
+             ],
+           ),
+         );
+       }).toList(),
+     );
   }
 
   Widget _buildReactionIcon(IconData icon, Color color) {

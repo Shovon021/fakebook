@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:video_player/video_player.dart';
 import '../models/reel_model.dart';
 
 class ReelsViewerScreen extends StatefulWidget {
@@ -18,10 +19,12 @@ class ReelsViewerScreen extends StatefulWidget {
 
 class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
   late PageController _pageController;
+  late int _currentIndex;
 
   @override
   void initState() {
     super.initState();
+    _currentIndex = widget.initialIndex;
     _pageController = PageController(initialPage: widget.initialIndex);
   }
 
@@ -58,8 +61,16 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
         controller: _pageController,
         scrollDirection: Axis.vertical,
         itemCount: widget.reels.length,
+        onPageChanged: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
         itemBuilder: (context, index) {
-          return _ReelPage(reel: widget.reels[index]);
+          return _ReelPage(
+            reel: widget.reels[index],
+            isActive: index == _currentIndex,
+          );
         },
       ),
     );
@@ -68,14 +79,23 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
 
 class _ReelPage extends StatefulWidget {
   final ReelModel reel;
+  final bool isActive;
 
-  const _ReelPage({required this.reel});
+  const _ReelPage({
+    required this.reel,
+    required this.isActive,
+  });
 
   @override
   State<_ReelPage> createState() => _ReelPageState();
 }
 
 class _ReelPageState extends State<_ReelPage> with SingleTickerProviderStateMixin {
+  late VideoPlayerController _videoController;
+  bool _isInitialized = false;
+  bool _isPlaying = false; // Internal play state requested by user interaction (tap to pause)
+  // Logic: Real state is combined (isActive + !isPausedByUser)
+  
   bool _isLiked = false;
   bool _showHeartAnimation = false;
   late AnimationController _heartAnimationController;
@@ -84,6 +104,9 @@ class _ReelPageState extends State<_ReelPage> with SingleTickerProviderStateMixi
   @override
   void initState() {
     super.initState();
+    _initializeVideo();
+    
+    // Heart Animation Setup
     _heartAnimationController = AnimationController(
       duration: const Duration(milliseconds: 400),
       vsync: this,
@@ -102,10 +125,44 @@ class _ReelPageState extends State<_ReelPage> with SingleTickerProviderStateMixi
          });
       }
     });
+
+    _isLiked = widget.reel.isLiked;
+  }
+
+  Future<void> _initializeVideo() async {
+    _videoController = VideoPlayerController.networkUrl(Uri.parse(widget.reel.videoUrl));
+    try {
+      await _videoController.initialize();
+      _videoController.setLooping(true);
+      if (mounted) {
+        setState(() {
+          _isInitialized = true;
+          _isPlaying = true; // Default to playing
+        });
+        if (widget.isActive) {
+          _videoController.play();
+        }
+      }
+    } catch (e) {
+      debugPrint('Error initializing video: $e');
+    }
+  }
+
+  @override
+  void didUpdateWidget(_ReelPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.isActive != widget.isActive && _isInitialized) {
+      if (widget.isActive) {
+        if (_isPlaying) _videoController.play();
+      } else {
+        _videoController.pause();
+      }
+    }
   }
 
   @override
   void dispose() {
+    _videoController.dispose();
     _heartAnimationController.dispose();
     super.dispose();
   }
@@ -118,21 +175,61 @@ class _ReelPageState extends State<_ReelPage> with SingleTickerProviderStateMixi
     _heartAnimationController.forward();
   }
 
+  void _togglePlayPause() {
+    setState(() {
+      _isPlaying = !_isPlaying;
+      if (_isPlaying) {
+        _videoController.play();
+      } else {
+        _videoController.pause();
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onDoubleTap: _handleDoubleTap,
+      onTap: _togglePlayPause,
       child: Stack(
         fit: StackFit.expand,
         children: [
-          // Background Video (Simulated with Image for now)
-          CachedNetworkImage(
-            imageUrl: widget.reel.thumbUrl,
-            fit: BoxFit.cover,
-            placeholder: (context, url) => Container(color: Colors.grey[900]),
-            errorWidget: (context, url, error) => Container(color: Colors.grey[900]),
-          ),
+          // Background Video
+          if (_isInitialized)
+            SizedBox.expand(
+              child: FittedBox(
+                fit: BoxFit.cover,
+                child: SizedBox(
+                  width: _videoController.value.size.width,
+                  height: _videoController.value.size.height,
+                  child: VideoPlayer(_videoController),
+                ),
+              ),
+            )
+          else
+            // Thumbnail while loading
+            CachedNetworkImage(
+              imageUrl: widget.reel.thumbUrl,
+              fit: BoxFit.cover,
+            ),
           
+          // Play/Pause Icon overlay (only if paused explicitly)
+          if (!_isPlaying && _isInitialized)
+            Center(
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.5),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.play_arrow,
+                  size: 50,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+
           // Gradient Overlay
           Container(
             decoration: const BoxDecoration(
@@ -310,3 +407,4 @@ class _ReelPageState extends State<_ReelPage> with SingleTickerProviderStateMixi
     );
   }
 }
+
