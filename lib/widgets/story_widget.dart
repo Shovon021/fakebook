@@ -164,25 +164,33 @@ class StoryWidget extends StatelessWidget {
             ),
           ),
         ),
-        // Avatar with ring
         Positioned(
           left: 8,
           top: 8,
           child: Container(
-            padding: const EdgeInsets.all(2),
+            padding: const EdgeInsets.all(3),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(
-                color: story.isViewed 
-                    ? Colors.grey.withValues(alpha: 0.5)
-                    : AppTheme.facebookBlue,
-                width: 3,
-              ),
+              gradient: story.isViewed 
+                  ? null
+                  : const LinearGradient(
+                      colors: [Color(0xFF405DE6), Color(0xFF5851DB), Color(0xFF833AB4), Color(0xFFC13584), Color(0xFFE1306C), Color(0xFFFD1D1D)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+              color: story.isViewed ? Colors.grey[400] : null,
             ),
-            child: CircleAvatar(
-              radius: 18,
-              backgroundImage: CachedNetworkImageProvider(
-                story.user.avatarUrl,
+            child: Container(
+              padding: const EdgeInsets.all(2),
+              decoration: BoxDecoration(
+                 shape: BoxShape.circle,
+                 color: isDark ? const Color(0xFF242526) : Colors.white,
+              ),
+              child: CircleAvatar(
+                radius: 18,
+                backgroundImage: CachedNetworkImageProvider(
+                  story.user.avatarUrl,
+                ),
               ),
             ),
           ),

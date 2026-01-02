@@ -3,6 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../models/post_model.dart';
 import '../data/dummy_data.dart';
 import '../theme/app_theme.dart';
+import 'shared_ui.dart';
 
 class CommentBottomSheet extends StatefulWidget {
   final PostModel post;
@@ -57,6 +58,8 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
       ),
       child: Column(
         children: [
+          // Handle Bar
+          const BottomSheetHandle(),
           // Header
           Container(
             padding: const EdgeInsets.symmetric(vertical: 12),

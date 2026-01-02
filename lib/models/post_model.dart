@@ -31,7 +31,6 @@ class PostModel {
     this.sharesCount = 0,
     this.userReaction,
     this.isShared = false,
-    this.sharedFrom,
     this.sharedPost,
   });
 

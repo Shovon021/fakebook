@@ -4,6 +4,7 @@ import '../widgets/create_post_widget.dart';
 import '../widgets/post_card.dart';
 import '../widgets/reels_list.dart';
 import '../widgets/memories_widget.dart';
+import '../widgets/facebook_shimmer.dart';
 import '../data/dummy_data.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -14,8 +15,6 @@ class HomeScreen extends StatelessWidget {
     return const HomeScreenContent();
   }
 }
-
-import '../widgets/facebook_shimmer.dart';
 
 class HomeScreenContent extends StatefulWidget {
   const HomeScreenContent({super.key});

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../models/reel_model.dart';
-import '../theme/app_theme.dart';
 
 class ReelsViewerScreen extends StatefulWidget {
   final List<ReelModel> reels;

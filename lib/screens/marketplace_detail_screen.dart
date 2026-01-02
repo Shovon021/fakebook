@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../models/user_model.dart';
 import '../theme/app_theme.dart';
 
 class MarketplaceDetailScreen extends StatelessWidget {

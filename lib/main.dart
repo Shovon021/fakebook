@@ -88,7 +88,7 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
   ];
 
   // Badge counts for tabs: Index -> Count
-  Map<int, int> _badgeCounts = {
+  final Map<int, int> _badgeCounts = {
     1: 9,  // Friends
     2: 5,  // Watch
     3: 2,  // Marketplace

@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../models/story_model.dart';
@@ -57,7 +56,7 @@ class _StoryViewerScreenState extends State<StoryViewerScreen> with SingleTicker
     _loadStory(story: widget.stories[_currentIndex]);
   }
 
-  void _loadStory({required StoryModel story, bool animateToPage = false}) {
+  void _loadStory({required StoryModel story}) {
     _animController.stop();
     _animController.reset();
     _animController.forward();
@@ -149,10 +148,10 @@ class _StoryViewerScreenState extends State<StoryViewerScreen> with SingleTicker
                            decoration: BoxDecoration(
                              gradient: LinearGradient(
                                colors: [
-                                 Colors.black.withOpacity(0.6),
+                                 Colors.black.withValues(alpha: 0.6),
                                  Colors.transparent,
                                  Colors.transparent,
-                                 Colors.black.withOpacity(0.4),
+                                 Colors.black.withValues(alpha: 0.4),
                                ],
                                begin: Alignment.topCenter,
                                end: Alignment.bottomCenter,
@@ -178,7 +177,7 @@ class _StoryViewerScreenState extends State<StoryViewerScreen> with SingleTicker
                           value: entry.key == _currentIndex
                               ? _animController.value
                               : (entry.key < _currentIndex ? 1.0 : 0.0),
-                          backgroundColor: Colors.white.withOpacity(0.3),
+                          backgroundColor: Colors.white.withValues(alpha: 0.3),
                           valueColor: const AlwaysStoppedAnimation(Colors.white),
                           minHeight: 2,
                         ),
@@ -239,7 +238,7 @@ class _StoryViewerScreenState extends State<StoryViewerScreen> with SingleTicker
                   Text(
                     '2h', // Helper logic can be added for real time
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.7),
+                      color: Colors.white.withValues(alpha: 0.7),
                       fontSize: 14,
                     ),
                   ),

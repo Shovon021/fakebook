@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import '../models/post_model.dart';
 import '../data/dummy_data.dart';
 import '../theme/app_theme.dart';
 import '../widgets/post_card.dart';

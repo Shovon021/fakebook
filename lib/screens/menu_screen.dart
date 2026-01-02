@@ -33,11 +33,6 @@ class _MenuScreenState extends State<MenuScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final currentUser = DummyData.currentUser;
-    
-    // Show top 6, or all if expanded
-    final displayShortcuts = _showAllShortcuts 
-        ? _allShortcuts 
-        : _allShortcuts.take(8).toList(); // Show first 8 initially (2 rows x 2 cols? No, 8 is 4 rows. Facebook usually shows ~half). Let's stick to 6 + see more button slot logic handling
 
     return Scaffold(
       backgroundColor: isDark ? const Color(0xFF18191A) : const Color(0xFFF0F2F5),
@@ -237,7 +232,7 @@ class _MenuScreenState extends State<MenuScreen> {
         boxShadow: [
           if (!isDark)
             BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
+              color: Colors.grey.withValues(alpha: 0.1),
               blurRadius: 4,
               offset: const Offset(0, 1),
             ),
@@ -306,7 +301,7 @@ class _MenuScreenState extends State<MenuScreen> {
         borderRadius: BorderRadius.circular(8),
         boxShadow: [
           BoxShadow(
-             color: Colors.black.withOpacity(isDark ? 0.2 : 0.05),
+             color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
              blurRadius: 4,
              offset: const Offset(0, 2),
           ),

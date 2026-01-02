@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../models/user_model.dart';
-import '../models/post_model.dart';
 import '../theme/app_theme.dart';
 import '../data/dummy_data.dart';
 import '../widgets/post_card.dart';
@@ -46,7 +45,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
           return [
             SliverAppBar(
               pinned: true,
-              theme: isDark ? ThemeData.dark() : ThemeData.light(),
               backgroundColor: isDark ? const Color(0xFF242526) : Colors.white,
               title: Text(
                 widget.user.name,
@@ -161,7 +159,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
               child: Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.6),
+                  color: Colors.black.withValues(alpha: 0.6),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.camera_alt, color: Colors.white, size: 20),

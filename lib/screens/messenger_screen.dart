@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../data/dummy_data.dart';
 import '../theme/app_theme.dart';
+import '../widgets/shared_ui.dart';
 
 class MessengerScreen extends StatelessWidget {
   const MessengerScreen({super.key});
@@ -158,20 +159,22 @@ class MessengerScreen extends StatelessWidget {
                              Row(
                                children: [
                                  Expanded(
-                                   child: Text(
-                                     isUnread 
-                                        ? 'You: Hey, are we still on for later?' 
-                                        : 'Sent a photo.',
-                                     maxLines: 1,
-                                     overflow: TextOverflow.ellipsis,
-                                     style: TextStyle(
-                                       color: isDark 
-                                           ? (isUnread ? Colors.white : Colors.grey)
-                                           : (isUnread ? Colors.black : Colors.grey[600]),
-                                       fontWeight: isUnread ? FontWeight.bold : FontWeight.normal,
-                                       fontSize: 14,
-                                     ),
-                                   ),
+                                   child: index == 0
+                                     ? const TypingIndicator()
+                                     : Text(
+                                         isUnread 
+                                            ? 'You: Hey, are we still on for later?' 
+                                            : 'Sent a photo.',
+                                         maxLines: 1,
+                                         overflow: TextOverflow.ellipsis,
+                                         style: TextStyle(
+                                           color: isDark 
+                                               ? (isUnread ? Colors.white : Colors.grey)
+                                               : (isUnread ? Colors.black : Colors.grey[600]),
+                                           fontWeight: isUnread ? FontWeight.bold : FontWeight.normal,
+                                           fontSize: 14,
+                                         ),
+                                       ),
                                  ),
                                  const SizedBox(width: 8),
                                  Text(
