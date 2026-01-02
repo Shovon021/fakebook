@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../data/dummy_data.dart';
 import '../theme/app_theme.dart';
+import 'marketplace_detail_screen.dart';
 
 class MarketplaceScreen extends StatelessWidget {
   const MarketplaceScreen({super.key});
@@ -95,7 +96,24 @@ class MarketplaceScreen extends StatelessWidget {
             itemCount: DummyData.marketplaceItems.length,
             itemBuilder: (context, index) {
               final item = DummyData.marketplaceItems[index];
-              return _buildProductCard(item, isDark);
+              return GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => MarketplaceDetailScreen(
+                        product: {
+                          'title': item.title,
+                          'price': item.formattedPrice,
+                          'image': item.imageUrl,
+                          'location': item.location,
+                        },
+                      ),
+                    ),
+                  );
+                },
+                child: _buildProductCard(item, isDark),
+              );
             },
           ),
         ),

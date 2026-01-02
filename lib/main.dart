@@ -7,6 +7,8 @@ import 'screens/watch_screen.dart';
 import 'screens/marketplace_screen.dart';
 import 'screens/notifications_screen.dart';
 import 'screens/menu_screen.dart';
+import 'screens/search_screen.dart';
+import 'screens/messenger_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -83,6 +85,14 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
     Icons.menu,
   ];
 
+  // Badge counts for tabs: Index -> Count
+  Map<int, int> _badgeCounts = {
+    1: 9,  // Friends
+    2: 5,  // Watch
+    3: 2,  // Marketplace
+    4: 7,  // Notifications
+  };
+
   @override
   void initState() {
     super.initState();
@@ -91,6 +101,10 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
       if (!_tabController.indexIsChanging) {
         setState(() {
           _currentIndex = _tabController.index;
+          // Clear badge when tab is selected
+          if (_badgeCounts.containsKey(_currentIndex)) {
+            _badgeCounts.remove(_currentIndex);
+          }
         });
       }
     });
@@ -136,13 +150,23 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
           _buildHeaderIconButton(
             icon: Icons.search,
             isDark: isDark,
-            onTap: () {},
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SearchScreen()),
+              );
+            },
           ),
           // Messenger button
           _buildHeaderIconButton(
             icon: Icons.chat_bubble,
             isDark: isDark,
-            onTap: () {},
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const MessengerScreen()),
+              );
+            },
             badgeCount: 2,
           ),
           const SizedBox(width: 8),
@@ -165,46 +189,58 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
               indicatorSize: TabBarIndicatorSize.tab,
               labelPadding: EdgeInsets.zero,
               dividerColor: Colors.transparent,
+              onTap: (index) {
+                setState(() {
+                  _badgeCounts.remove(index);
+                });
+              },
               tabs: List.generate(6, (index) {
                 final isSelected = _currentIndex == index;
+                final badgeCount = _badgeCounts[index] ?? 0;
+                
                 return Tab(
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Icon(
-                        isSelected ? _tabIconsActive[index] : _tabIcons[index],
-                        size: 26,
-                        color: isSelected 
-                            ? AppTheme.facebookBlue 
-                            : (isDark ? const Color(0xFFB0B3B8) : AppTheme.mediumGrey),
-                      ),
-                      // Notification badge for notifications tab
-                      if (index == 4)
-                        Positioned(
-                          right: 8,
-                          top: 4,
-                          child: Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: const BoxDecoration(
-                              color: Colors.red,
-                              shape: BoxShape.circle,
-                            ),
-                            constraints: const BoxConstraints(
-                              minWidth: 16,
-                              minHeight: 16,
-                            ),
-                            child: const Text(
-                              '3',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Icon(
+                          isSelected ? _tabIconsActive[index] : _tabIcons[index],
+                          size: 26,
+                          color: isSelected 
+                              ? AppTheme.facebookBlue 
+                              : (isDark ? const Color(0xFFB0B3B8) : AppTheme.mediumGrey),
+                        ),
+                        // Badge
+                        if (badgeCount > 0)
+                          Positioned(
+                            right: isSelected ? 30 : 25, // Adjust based on icon position
+                            top: 2,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                              decoration: const BoxDecoration(
+                                color: Colors.red,
+                                shape: BoxShape.circle,
                               ),
-                              textAlign: TextAlign.center,
+                              constraints: const BoxConstraints(
+                                minWidth: 18,
+                                minHeight: 18,
+                              ),
+                              child: Center(
+                                child: Text(
+                                  badgeCount > 9 ? '9+' : badgeCount.toString(),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
                             ),
                           ),
-                        ),
-                    ],
+                      ],
+                    ),
                   ),
                 );
               }),

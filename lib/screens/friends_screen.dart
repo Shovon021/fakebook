@@ -4,12 +4,30 @@ import '../data/dummy_data.dart';
 import '../models/user_model.dart';
 import '../theme/app_theme.dart';
 
-class FriendsScreen extends StatelessWidget {
+class FriendsScreen extends StatefulWidget {
   const FriendsScreen({super.key});
+
+  @override
+  State<FriendsScreen> createState() => _FriendsScreenState();
+}
+
+class _FriendsScreenState extends State<FriendsScreen> {
+  // Local state to track actions
+  final Map<String, String> _requestStatus = {}; // userId -> 'accepted' | 'removed'
+  late List<UserModel> _requests;
+
+  @override
+  void initState() {
+    super.initState();
+    _requests = List.from(DummyData.friendRequests);
+  }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    // Filter out requests that are fully handled if you wanted to hide them completely,
+    // but FB usually keeps them visible as "Request Accepted" for a session.
     
     return SingleChildScrollView(
       child: Column(
@@ -57,7 +75,7 @@ class FriendsScreen extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           // Friend Requests Section
-          if (DummyData.friendRequests.isNotEmpty) ...[
+          if (_requests.isNotEmpty) ...[
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Row(
@@ -81,7 +99,7 @@ class FriendsScreen extends StatelessWidget {
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text(
-                          '${DummyData.friendRequests.length}',
+                          '${_requests.length}',
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 12,
@@ -101,7 +119,7 @@ class FriendsScreen extends StatelessWidget {
                 ],
               ),
             ),
-            ...DummyData.friendRequests.map(
+            ..._requests.map(
               (user) => _buildFriendRequestCard(user, isDark),
             ),
             Divider(
@@ -154,6 +172,12 @@ class FriendsScreen extends StatelessWidget {
   }
 
   Widget _buildFriendRequestCard(UserModel user, bool isDark) {
+    if (_requestStatus[user.name] == 'removed') {
+        return const SizedBox.shrink(); // Hide completely if removed
+    }
+
+    final isAccepted = _requestStatus[user.name] == 'accepted';
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
@@ -179,109 +203,132 @@ class FriendsScreen extends StatelessWidget {
                         color: isDark ? Colors.white : AppTheme.black,
                       ),
                     ),
-                    Text(
-                      '3d',
-                      style: TextStyle(
-                        color: isDark 
-                            ? const Color(0xFFB0B3B8) 
-                            : AppTheme.mediumGrey,
-                        fontSize: 13,
+                    if (!isAccepted)
+                      Text(
+                        '3d',
+                        style: TextStyle(
+                          color: isDark 
+                              ? const Color(0xFFB0B3B8) 
+                              : AppTheme.mediumGrey,
+                          fontSize: 13,
+                        ),
                       ),
-                    ),
                   ],
                 ),
                 const SizedBox(height: 4),
-                Row(
-                  children: [
-                    // Mutual friends avatars stack
-                    SizedBox(
-                      width: 40,
-                      height: 20,
-                      child: Stack(
-                        children: [
-                          CircleAvatar(
-                            radius: 10,
-                            backgroundImage: const CachedNetworkImageProvider(
-                              'https://picsum.photos/seed/mutual1/50/50',
-                            ),
-                          ),
-                          Positioned(
-                            left: 12,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: isDark ? const Color(0xFF242526) : Colors.white,
-                                  width: 2,
-                                ),
-                              ),
-                              child: const CircleAvatar(
-                                radius: 10,
-                                backgroundImage: CachedNetworkImageProvider(
-                                  'https://picsum.photos/seed/mutual2/50/50',
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      '${user.friendsCount} mutual friends',
+                if (isAccepted)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Text(
+                      'Request Accepted',
                       style: TextStyle(
-                        color: isDark 
-                            ? const Color(0xFFB0B3B8) 
-                            : AppTheme.mediumGrey,
+                        color: isDark ? const Color(0xFFB0B3B8) : Colors.grey[600],
                         fontSize: 14,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () {},
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.facebookBlue,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
+                  )
+                else ...[
+                  Row(
+                    children: [
+                      // Mutual friends avatars stack
+                      SizedBox(
+                        width: 40,
+                        height: 20,
+                        child: Stack(
+                          children: [
+                            CircleAvatar(
+                              radius: 10,
+                              backgroundImage: const CachedNetworkImageProvider(
+                                'https://picsum.photos/seed/mutual1/50/50',
+                              ),
+                            ),
+                            Positioned(
+                              left: 12,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: isDark ? const Color(0xFF242526) : Colors.white,
+                                    width: 2,
+                                  ),
+                                ),
+                                child: const CircleAvatar(
+                                  radius: 10,
+                                  backgroundImage: CachedNetworkImageProvider(
+                                    'https://picsum.photos/seed/mutual2/50/50',
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${user.friendsCount} mutual friends',
+                        style: TextStyle(
+                          color: isDark 
+                              ? const Color(0xFFB0B3B8) 
+                              : AppTheme.mediumGrey,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            setState(() {
+                              _requestStatus[user.name] = 'accepted';
+                            });
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.facebookBlue,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            elevation: 0,
                           ),
-                          elevation: 0,
-                        ),
-                        child: const Text(
-                          'Confirm',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () {},
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: isDark 
-                              ? const Color(0xFF3A3B3C) 
-                              : AppTheme.lightGrey,
-                          foregroundColor: isDark ? Colors.white : AppTheme.black,
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
+                          child: const Text(
+                            'Confirm',
+                            style: TextStyle(fontWeight: FontWeight.bold),
                           ),
-                          elevation: 0,
-                        ),
-                        child: const Text(
-                          'Delete',
-                          style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ),
-                    ),
-                  ],
-                ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                             setState(() {
+                               _requestStatus[user.name] = 'removed';
+                             });
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: isDark 
+                                ? const Color(0xFF3A3B3C) 
+                                : AppTheme.lightGrey,
+                            foregroundColor: isDark ? Colors.white : AppTheme.black,
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: const Text(
+                            'Delete',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),

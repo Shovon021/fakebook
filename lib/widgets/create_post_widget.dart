@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../models/user_model.dart';
 import '../theme/app_theme.dart';
+import '../screens/create_post_screen.dart';
 
 class CreatePostWidget extends StatelessWidget {
   final UserModel currentUser;
@@ -33,7 +34,14 @@ class CreatePostWidget extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: GestureDetector(
-                  onTap: onTap,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => CreatePostScreen(currentUser: currentUser),
+                      ),
+                    );
+                  },
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16,

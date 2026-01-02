@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../data/dummy_data.dart';
 import '../theme/app_theme.dart';
+import 'profile_screen.dart';
 
 class MenuScreen extends StatelessWidget {
   const MenuScreen({super.key});
@@ -77,7 +78,14 @@ class MenuScreen extends StatelessWidget {
             child: Column(
               children: [
                 InkWell(
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ProfileScreen(user: currentUser),
+                      ),
+                    );
+                  },
                   borderRadius: BorderRadius.circular(8),
                   child: Row(
                     children: [

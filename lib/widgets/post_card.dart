@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../models/post_model.dart';
 import '../theme/app_theme.dart';
+import 'comment_bottom_sheet.dart';
+import '../screens/photo_viewer_screen.dart';
 
 class PostCard extends StatefulWidget {
   final PostModel post;
@@ -133,7 +135,24 @@ class _PostCardState extends State<PostCard> with SingleTickerProviderStateMixin
             ),
           ),
           // Content
-          if (widget.post.content.isNotEmpty)
+          if (widget.post.backgroundColor != null)
+            Container(
+              width: double.infinity,
+              height: 250,
+              padding: const EdgeInsets.all(30),
+              color: widget.post.backgroundColor,
+              alignment: Alignment.center,
+              child: Text(
+                widget.post.content,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            )
+          else if (widget.post.content.isNotEmpty)
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
               child: Text(
@@ -145,26 +164,116 @@ class _PostCardState extends State<PostCard> with SingleTickerProviderStateMixin
                 ),
               ),
             ),
-          // Image
-          if (widget.post.imageUrl != null) 
-            CachedNetworkImage(
-              imageUrl: widget.post.imageUrl!,
-              width: double.infinity,
-              height: 300,
-              fit: BoxFit.cover,
-              placeholder: (context, url) => Container(
+          
+          // Shared Post Content
+          if (widget.post.sharedPost != null) ...[
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: isDark ? const Color(0xFF3A3B3C) : Colors.grey[300]!,
+                ),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Shared Post Header
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 16,
+                          backgroundImage: CachedNetworkImageProvider(
+                            widget.post.sharedPost!.author.avatarUrl,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              widget.post.sharedPost!.author.name,
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                                color: isDark ? Colors.white : AppTheme.black,
+                              ),
+                            ),
+                            Text(
+                              widget.post.sharedPost!.timeAgo,
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: isDark 
+                                    ? const Color(0xFFB0B3B8) 
+                                    : AppTheme.mediumGrey,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Shared Content
+                  if (widget.post.sharedPost!.content.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      child: Text(
+                        widget.post.sharedPost!.content,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: isDark ? Colors.white : AppTheme.black,
+                        ),
+                      ),
+                    ),
+                  if (widget.post.sharedPost!.imageUrl != null)
+                    CachedNetworkImage(
+                      imageUrl: widget.post.sharedPost!.imageUrl!,
+                      width: double.infinity,
+                      height: 200,
+                      fit: BoxFit.cover,
+                    ),
+                ],
+              ),
+            ),
+          ],
+          
+          // Images
+          if (widget.post.imagesUrl != null && widget.post.imagesUrl!.isNotEmpty)
+            _buildImageGrid(widget.post.imagesUrl!, isDark)
+          else if (widget.post.imageUrl != null) 
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => PhotoViewerScreen(
+                      imageUrl: widget.post.imageUrl!,
+                      post: widget.post,
+                    ),
+                  ),
+                );
+              },
+              child: CachedNetworkImage(
+                imageUrl: widget.post.imageUrl!,
+                width: double.infinity,
                 height: 300,
-                color: isDark ? const Color(0xFF3A3B3C) : Colors.grey[200],
-                child: const Center(
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
+                fit: BoxFit.cover,
+                placeholder: (context, url) => Container(
+                  height: 300,
+                  color: isDark ? const Color(0xFF3A3B3C) : Colors.grey[200],
+                  child: const Center(
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                    ),
                   ),
                 ),
-              ),
-              errorWidget: (context, url, error) => Container(
-                height: 300,
-                color: Colors.grey[300],
-                child: const Icon(Icons.error),
+                errorWidget: (context, url, error) => Container(
+                  height: 300,
+                  color: Colors.grey[300],
+                  child: const Icon(Icons.error),
+                ),
               ),
             ),
           // Reaction counts
@@ -266,7 +375,19 @@ class _PostCardState extends State<PostCard> with SingleTickerProviderStateMixin
                       child: _buildActionButton(
                         icon: Icons.chat_bubble_outline,
                         label: 'Comment',
-                        onTap: () {},
+                        onTap: () {
+                          showModalBottomSheet(
+                            context: context,
+                            isScrollControlled: true,
+                            backgroundColor: Colors.transparent,
+                            builder: (context) => Padding(
+                              padding: EdgeInsets.only(
+                                bottom: MediaQuery.of(context).viewInsets.bottom,
+                              ),
+                              child: CommentBottomSheet(post: widget.post),
+                            ),
+                          );
+                        },
                         isDark: isDark,
                       ),
                     ),
@@ -488,6 +609,99 @@ class _PostCardState extends State<PostCard> with SingleTickerProviderStateMixin
       default:
         return Colors.grey;
     }
+  }
+
+  Widget _buildImageGrid(List<String> images, bool isDark) {
+    if (images.length == 1) {
+      return CachedNetworkImage(
+        imageUrl: images[0],
+        width: double.infinity,
+        height: 300,
+        fit: BoxFit.cover,
+      );
+    }
+    
+    return AspectRatio(
+      aspectRatio: 1,
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              children: [
+                Expanded(
+                  child: _buildGridImage(images[0], isDark),
+                ),
+                const SizedBox(height: 2),
+                Expanded(
+                  child: _buildGridImage(images[1], isDark),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 2),
+          Expanded(
+            child: Column(
+              children: [
+                Expanded(
+                  child: _buildGridImage(images[2], isDark),
+                ),
+                const SizedBox(height: 2),
+                Expanded(
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      _buildGridImage(images[3], isDark),
+                      if (images.length > 4)
+                        Container(
+                          color: Colors.black54,
+                          alignment: Alignment.center,
+                          child: Text(
+                            '+${images.length - 4}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGridImage(String url, bool isDark) {
+    return GestureDetector(
+      onTap: () {
+         Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PhotoViewerScreen(
+              imageUrl: url,
+              post: widget.post,
+            ),
+          ),
+        );
+      },
+      child: CachedNetworkImage(
+        imageUrl: url,
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: double.infinity,
+        placeholder: (context, url) => Container(
+          color: isDark ? const Color(0xFF3A3B3C) : Colors.grey[200],
+        ),
+        errorWidget: (context, url, error) => Container(
+          color: Colors.grey[300],
+          child: const Icon(Icons.error),
+        ),
+      ),
+    );
   }
 
   String _formatCount(int count) {

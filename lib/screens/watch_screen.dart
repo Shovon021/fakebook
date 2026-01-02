@@ -3,80 +3,109 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../data/dummy_data.dart';
 import '../theme/app_theme.dart';
 
-class WatchScreen extends StatelessWidget {
+class WatchScreen extends StatefulWidget {
   const WatchScreen({super.key});
 
   @override
+  State<WatchScreen> createState() => _WatchScreenState();
+}
+
+class _WatchScreenState extends State<WatchScreen> {
+  int _playingIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    // Simulate auto-scrolling execution/auto-play switch every 6 seconds
+    Future.delayed(const Duration(seconds: 2), () => _autoPlayLoop());
+  }
+
+  void _autoPlayLoop() async {
+    if (!mounted) return;
+    await Future.delayed(const Duration(seconds: 6));
+    if (mounted) {
+      setState(() {
+        _playingIndex = (_playingIndex + 1) % 5;
+      });
+      _autoPlayLoop();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    // Watch tab is always dark in this "immersive" mode
+    const isDark = true;
     
-    return ListView(
-      children: [
-        // Header
-        Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Watch',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: isDark ? Colors.white : AppTheme.black,
+    return Container(
+      color: const Color(0xFF18191A), // Always dark background for Watch
+      child: ListView(
+        children: [
+          // Header
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Watch',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
-              ),
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF3A3B3C) : AppTheme.lightGrey,
-                      shape: BoxShape.circle,
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF3A3B3C),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.person,
+                        color: Colors.white,
+                        size: 22,
+                      ),
                     ),
-                    child: Icon(
-                      Icons.person_outline,
-                      color: isDark ? Colors.white : AppTheme.black,
-                      size: 22,
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF3A3B3C),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.search,
+                        color: Colors.white,
+                        size: 22,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF3A3B3C) : AppTheme.lightGrey,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.search,
-                      color: isDark ? Colors.white : AppTheme.black,
-                      size: 22,
-                    ),
-                  ),
-                ],
-              ),
-            ],
+                  ],
+                ),
+              ],
+            ),
           ),
-        ),
-        // Categories
-        SizedBox(
-          height: 48,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            children: [
-              _buildCategoryChip('For You', true, isDark),
-              _buildCategoryChip('Live', false, isDark),
-              _buildCategoryChip('Gaming', false, isDark),
-              _buildCategoryChip('Following', false, isDark),
-              _buildCategoryChip('Reels', false, isDark),
-            ],
+          // Categories
+          SizedBox(
+            height: 48,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              children: [
+                _buildCategoryChip('For You', true, isDark),
+                _buildCategoryChip('Live', false, isDark),
+                _buildCategoryChip('Gaming', false, isDark),
+                _buildCategoryChip('Following', false, isDark),
+                _buildCategoryChip('Reels', false, isDark),
+              ],
+            ),
           ),
-        ),
-        const SizedBox(height: 8),
-        // Video posts
-        ...List.generate(5, (index) => _buildVideoPost(context, index, isDark)),
-      ],
+          const SizedBox(height: 8),
+          // Video posts
+          ...List.generate(5, (index) => _buildVideoPost(context, index, isDark)),
+        ],
+      ),
     );
   }
 
@@ -87,11 +116,9 @@ class WatchScreen extends StatelessWidget {
         label: Text(label),
         backgroundColor: isActive 
             ? AppTheme.facebookBlue 
-            : (isDark ? const Color(0xFF3A3B3C) : AppTheme.lightGrey),
-        labelStyle: TextStyle(
-          color: isActive 
-              ? Colors.white 
-              : (isDark ? Colors.white : AppTheme.black),
+            : const Color(0xFF3A3B3C),
+        labelStyle: const TextStyle(
+          color: Colors.white,
           fontWeight: FontWeight.w600,
         ),
         side: BorderSide.none,
@@ -113,9 +140,11 @@ class WatchScreen extends StatelessWidget {
       'https://picsum.photos/seed/video5/800/450',
     ];
     
+    final isPlaying = index == _playingIndex;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
-      color: isDark ? const Color(0xFF242526) : Colors.white,
+      color: const Color(0xFF242526),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -135,19 +164,17 @@ class WatchScreen extends StatelessWidget {
                     children: [
                       Text(
                         user.name,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontWeight: FontWeight.bold,
-                          color: isDark ? Colors.white : AppTheme.black,
+                          color: Colors.white,
                         ),
                       ),
                       Row(
                         children: [
                           Text(
                             '${(index + 1) * 234}K views',
-                            style: TextStyle(
-                              color: isDark 
-                                  ? const Color(0xFFB0B3B8) 
-                                  : AppTheme.mediumGrey,
+                            style: const TextStyle(
+                              color: Color(0xFFB0B3B8),
                               fontSize: 12,
                             ),
                           ),
@@ -155,19 +182,15 @@ class WatchScreen extends StatelessWidget {
                             margin: const EdgeInsets.symmetric(horizontal: 4),
                             width: 3,
                             height: 3,
-                            decoration: BoxDecoration(
-                              color: isDark 
-                                  ? const Color(0xFFB0B3B8) 
-                                  : AppTheme.mediumGrey,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFB0B3B8),
                               shape: BoxShape.circle,
                             ),
                           ),
                           Text(
                             '${index + 1}h ago',
-                            style: TextStyle(
-                              color: isDark 
-                                  ? const Color(0xFFB0B3B8) 
-                                  : AppTheme.mediumGrey,
+                            style: const TextStyle(
+                              color: Color(0xFFB0B3B8),
                               fontSize: 12,
                             ),
                           ),
@@ -176,30 +199,30 @@ class WatchScreen extends StatelessWidget {
                     ],
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: AppTheme.facebookBlue.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    'Follow',
-                    style: TextStyle(
-                      color: AppTheme.facebookBlue,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
-                  ),
+                TextButton(
+                  onPressed: () {}, 
+                  child: const Text('Follow', style: TextStyle(color: AppTheme.facebookBlue)),
                 ),
-                const SizedBox(width: 8),
-                Icon(
+                const Icon(
                   Icons.more_horiz,
-                  color: isDark ? Colors.white : AppTheme.black,
+                  color: Colors.white,
                 ),
               ],
             ),
           ),
-          // Video thumbnail
+          // Video title
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            child: Text(
+              'Amazing video content #${index + 1} - Check this out! 🔥',
+              style: const TextStyle(
+                fontSize: 15,
+                color: Colors.white,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          // Video thumbnail / Player
           Stack(
             alignment: Alignment.center,
             children: [
@@ -210,62 +233,67 @@ class WatchScreen extends StatelessWidget {
                 fit: BoxFit.cover,
                 placeholder: (context, url) => Container(
                   height: 250,
-                  color: Colors.grey[300],
+                  color: const Color(0xFF3A3B3C),
                 ),
               ),
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.6),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.play_arrow,
-                  color: Colors.white,
-                  size: 40,
-                ),
-              ),
-              // Duration
-              Positioned(
-                right: 10,
-                bottom: 10,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
+              if (!isPlaying)
+                Container(
+                  width: 60,
+                  height: 60,
                   decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.7),
-                    borderRadius: BorderRadius.circular(4),
+                    color: Colors.black.withValues(alpha: 0.6),
+                    shape: BoxShape.circle,
                   ),
-                  child: Text(
-                    '${(index + 1) * 2}:${(index + 3) * 7 % 60}'.padLeft(4, '0'),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
+                  child: const Icon(
+                    Icons.play_arrow,
+                    color: Colors.white,
+                    size: 40,
+                  ),
+                ),
+              if (isPlaying)
+                 Positioned(
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    child: Container(
+                      height: 4,
+                      alignment: Alignment.centerLeft,
+                      child: Container(
+                        width: 150, // Simulated progress
+                        color: Colors.red,
+                      ),
+                    ),
+                 ),
+              // Duration
+              if (!isPlaying)
+                Positioned(
+                  right: 10,
+                  bottom: 10,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.7),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      '${(index + 1) * 2}:${(index + 3) * 7 % 60}'.padLeft(4, '0'),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
                 ),
-              ),
             ],
           ),
-          // Video title
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Text(
-              'Amazing video content #${index + 1} - Check this out! 🔥',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 15,
-                color: isDark ? Colors.white : AppTheme.black,
-              ),
-            ),
-          ),
+          
           // Action buttons
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
@@ -285,14 +313,14 @@ class WatchScreen extends StatelessWidget {
       children: [
         Icon(
           icon,
-          color: isDark ? const Color(0xFFB0B3B8) : AppTheme.mediumGrey,
+          color: Colors.white,
           size: 20,
         ),
         const SizedBox(width: 6),
         Text(
           label,
-          style: TextStyle(
-            color: isDark ? const Color(0xFFB0B3B8) : AppTheme.mediumGrey,
+          style: const TextStyle(
+            color: Colors.white,
             fontWeight: FontWeight.w600,
           ),
         ),

@@ -1,8 +1,10 @@
+import 'package:flutter/material.dart';
 import '../models/user_model.dart';
 import '../models/post_model.dart';
 import '../models/story_model.dart';
 import '../models/notification_model.dart';
 import '../models/marketplace_model.dart';
+import '../models/reel_model.dart';
 
 class DummyData {
   // Current User
@@ -145,6 +147,55 @@ class DummyData {
       commentsCount: 45,
       sharesCount: 8,
       userReaction: ReactionType.haha,
+    ),
+    // New: Multi-image post
+    PostModel(
+      id: '7',
+      author: users[0],
+      content: 'Weekend getaway photo dump! 📸🌲 had so much fun exploring nature.',
+      imagesUrl: [
+        'https://picsum.photos/seed/nature1/800/800',
+        'https://picsum.photos/seed/nature2/800/800',
+        'https://picsum.photos/seed/nature3/800/800',
+        'https://picsum.photos/seed/nature4/800/800',
+      ],
+      createdAt: DateTime.now().subtract(const Duration(days: 2, hours: 5)),
+      likesCount: 560,
+      commentsCount: 88,
+      sharesCount: 15,
+      userReaction: ReactionType.love,
+    ),
+    // New: Colored background post
+    PostModel(
+      id: '8',
+      author: currentUser,
+      content: 'Does anyone know a good place to fix a laptop screen? Urgent! 💻🔧',
+      backgroundColor: const Color(0xFFE41E3F),
+      createdAt: DateTime.now().subtract(const Duration(days: 3)),
+      likesCount: 45,
+      commentsCount: 32,
+      sharesCount: 0,
+    ),
+    // New: Shared Post
+    PostModel(
+      id: '9',
+      author: users[2],
+      content: 'This is so true! 😂',
+      createdAt: DateTime.now().subtract(const Duration(hours: 1)),
+      likesCount: 15,
+      commentsCount: 2,
+      sharesCount: 0,
+      isShared: true,
+      sharedPost: PostModel(
+        id: '10',
+        author: users[0],
+        content: 'Just had an amazing brunch with friends! 🥞☕ Nothing beats good food and great company. #WeekendVibes #BrunchTime',
+        imageUrl: 'https://picsum.photos/seed/food1/800/600',
+        createdAt: DateTime.now().subtract(const Duration(hours: 3)),
+        likesCount: 234,
+        commentsCount: 45,
+        sharesCount: 12,
+      ),
     ),
   ];
 
@@ -324,6 +375,65 @@ class DummyData {
       name: 'Michelle Lee',
       avatarUrl: 'https://picsum.photos/seed/user12/150/150',
       friendsCount: 234,
+    ),
+  ];
+
+  // Sample Reels
+  static final List<ReelModel> reels = [
+    ReelModel(
+      id: '1',
+      user: users[0],
+      videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-girl-in-neon-sign-1232-large.mp4',
+      thumbUrl: 'https://picsum.photos/seed/reel1/400/800',
+      description: 'Neon vibes only ✨ #neon #nightlife',
+      likesCount: 1200,
+      commentsCount: 300,
+      sharesCount: 50,
+      viewsCount: 5000,
+    ),
+    ReelModel(
+      id: '2',
+      user: users[2],
+      videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-tree-with-yellow-flowers-1173-large.mp4',
+      thumbUrl: 'https://picsum.photos/seed/reel2/400/800',
+      description: 'Spring is here! 🌸 #nature #spring',
+      likesCount: 890,
+      commentsCount: 150,
+      sharesCount: 30,
+      viewsCount: 3000,
+    ),
+    ReelModel(
+      id: '3',
+      user: users[4],
+      videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-mother-with-her-little-daughter-eating-a-marshmallow-in-nature-39764-large.mp4',
+      thumbUrl: 'https://picsum.photos/seed/reel3/400/800',
+      description: 'Family time ❤️ #family #love',
+      likesCount: 2300,
+      commentsCount: 450,
+      sharesCount: 100,
+      viewsCount: 8000,
+    ),
+    ReelModel(
+      id: '4',
+      user: users[6],
+      videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-taking-photos-from-different-angles-of-a-model-34421-large.mp4',
+      thumbUrl: 'https://picsum.photos/seed/reel4/400/800',
+      description: 'Behind the scenes 📸 #photography #bts',
+      likesCount: 1500,
+      commentsCount: 200,
+      sharesCount: 80,
+      viewsCount: 6000,
+    ),
+    ReelModel(
+      id: '5',
+      user: users[1],
+      videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-young-mother-with-her-little-daughter-decorating-a-christmas-tree-39745-large.mp4',
+      thumbUrl: 'https://picsum.photos/seed/reel5/400/800',
+      description: 'Getting ready for Christmas! 🎄 #christmas #holidays',
+      likesCount: 3000,
+      commentsCount: 600,
+      sharesCount: 150,
+      viewsCount: 10000,
     ),
   ];
 }

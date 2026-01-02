@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'user_model.dart';
 
 enum ReactionType { like, love, haha, wow, sad, angry }
@@ -6,20 +7,24 @@ class PostModel {
   final String id;
   final UserModel author;
   final String content;
-  final String? imageUrl;
+  final String? imageUrl; // Kept for backward compatibility
+  final List<String>? imagesUrl; // New: Multiple images
+  final Color? backgroundColor; // New: Colored backgrounds
   final DateTime createdAt;
   final int likesCount;
   final int commentsCount;
   final int sharesCount;
   final ReactionType? userReaction;
   final bool isShared;
-  final UserModel? sharedFrom;
+  final PostModel? sharedPost;
 
   PostModel({
     required this.id,
     required this.author,
     required this.content,
     this.imageUrl,
+    this.imagesUrl, // New
+    this.backgroundColor, // New
     required this.createdAt,
     this.likesCount = 0,
     this.commentsCount = 0,
@@ -27,6 +32,7 @@ class PostModel {
     this.userReaction,
     this.isShared = false,
     this.sharedFrom,
+    this.sharedPost,
   });
 
   String get timeAgo {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../models/story_model.dart';
 import '../theme/app_theme.dart';
+import '../screens/story_viewer_screen.dart';
 
 class StoryWidget extends StatelessWidget {
   final List<StoryModel> stories;
@@ -31,20 +32,34 @@ class StoryWidget extends StatelessWidget {
   }
 
   Widget _buildStoryCard(BuildContext context, StoryModel story, bool isDark) {
-    return Container(
-      width: 115,
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          // Background
-          ClipRRect(
-            borderRadius: BorderRadius.circular(14),
-            child: story.isOwnStory
-                ? _buildCreateStoryCard(story, isDark)
-                : _buildUserStoryCard(story, isDark),
-          ),
-        ],
+    return GestureDetector(
+      onTap: () {
+        if (!story.isOwnStory) {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => StoryViewerScreen(
+                stories: stories.where((s) => !s.isOwnStory).toList(),
+                initialIndex: stories.where((s) => !s.isOwnStory).toList().indexOf(story),
+              ),
+            ),
+          );
+        }
+      },
+      child: Container(
+        width: 115,
+        margin: const EdgeInsets.symmetric(horizontal: 4),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            // Background
+            ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: story.isOwnStory
+                  ? _buildCreateStoryCard(story, isDark)
+                  : _buildUserStoryCard(story, isDark),
+            ),
+          ],
+        ),
       ),
     );
   }
