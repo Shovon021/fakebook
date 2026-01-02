@@ -4,7 +4,7 @@ import '../models/post_model.dart';
 
 class PhotoViewerScreen extends StatefulWidget {
   final String imageUrl;
-  final PostModel? post; // Optional context for bottom actions
+  final PostModel? post;
 
   const PhotoViewerScreen({
     super.key,
@@ -17,38 +17,60 @@ class PhotoViewerScreen extends StatefulWidget {
 }
 
 class _PhotoViewerScreenState extends State<PhotoViewerScreen> {
-  // Simple check to toggle UI overlaid on tap
   bool _showOverlay = true;
+  double _dragDistance = 0;
+  double _scale = 1.0;
+  double _opacity = 1.0;
+
+  void _onVerticalDragUpdate(DragUpdateDetails details) {
+    setState(() {
+      _dragDistance += details.delta.dy;
+      // Scale down as user drags (0.5 is minimum scale at 200px drag)
+      _scale = (1.0 - (_dragDistance.abs() / 400)).clamp(0.5, 1.0);
+      // Fade background as user drags
+      _opacity = (1.0 - (_dragDistance.abs() / 200)).clamp(0.0, 1.0);
+    });
+  }
+
+  void _onVerticalDragEnd(DragEndDetails details) {
+    if (_dragDistance.abs() > 100) {
+      Navigator.pop(context);
+    } else {
+      setState(() {
+        _dragDistance = 0;
+        _scale = 1.0;
+        _opacity = 1.0;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Colors.black.withValues(alpha: _opacity),
       body: GestureDetector(
-        onTap: () {
-          setState(() {
-             _showOverlay = !_showOverlay;
-          });
-        },
+        onTap: () => setState(() => _showOverlay = !_showOverlay),
+        onVerticalDragUpdate: _onVerticalDragUpdate,
+        onVerticalDragEnd: _onVerticalDragEnd,
         child: Stack(
           children: [
-            // Main Image with Zoom
+            // Main Image with Scale Animation
             Center(
-              child: Dismissible(
-                key: const Key('photo_viewer'),
-                direction: DismissDirection.vertical,
-                onDismissed: (_) => Navigator.pop(context),
-                background: const ColoredBox(color: Colors.transparent),
-                child: InteractiveViewer(
-                  minScale: 0.5,
-                  maxScale: 4.0,
-                  child: CachedNetworkImage(
-                    imageUrl: widget.imageUrl,
-                    fit: BoxFit.contain,
-                    width: double.infinity,
-                    height: double.infinity,
-                    placeholder: (context, url) => const Center(
-                      child: CircularProgressIndicator(color: Colors.white),
+              child: Transform.scale(
+                scale: _scale,
+                child: Transform.translate(
+                  offset: Offset(0, _dragDistance),
+                  child: InteractiveViewer(
+                    minScale: 0.5,
+                    maxScale: 4.0,
+                    child: CachedNetworkImage(
+                      imageUrl: widget.imageUrl,
+                      fit: BoxFit.contain,
+                      width: double.infinity,
+                      height: double.infinity,
+                      placeholder: (context, url) => const Center(
+                        child: CircularProgressIndicator(color: Colors.white),
+                      ),
                     ),
                   ),
                 ),
@@ -56,7 +78,7 @@ class _PhotoViewerScreenState extends State<PhotoViewerScreen> {
             ),
             
             // Top Bar
-            if (_showOverlay)
+            if (_showOverlay && _scale == 1.0)
               Positioned(
                 top: 0,
                 left: 0,
@@ -81,8 +103,8 @@ class _PhotoViewerScreenState extends State<PhotoViewerScreen> {
                 ),
               ),
 
-            // Bottom Actions (if post data provided)
-            if (_showOverlay && widget.post != null)
+            // Bottom Actions
+            if (_showOverlay && widget.post != null && _scale == 1.0)
               Positioned(
                 bottom: 0,
                 left: 0,
@@ -90,12 +112,12 @@ class _PhotoViewerScreenState extends State<PhotoViewerScreen> {
                 child: Container(
                   color: Colors.black.withValues(alpha: 0.5),
                   padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-                  child: Row(
+                  child: const Row(
                      mainAxisAlignment: MainAxisAlignment.spaceAround,
                      children: [
-                       const Icon(Icons.thumb_up_outlined, color: Colors.white),
-                       const Icon(Icons.chat_bubble_outline, color: Colors.white),
-                       const Icon(Icons.share_outlined, color: Colors.white),
+                       Icon(Icons.thumb_up_outlined, color: Colors.white),
+                       Icon(Icons.chat_bubble_outline, color: Colors.white),
+                       Icon(Icons.share_outlined, color: Colors.white),
                      ],
                   ),
                 ),

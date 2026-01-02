@@ -9,6 +9,7 @@ import 'screens/notifications_screen.dart';
 import 'screens/menu_screen.dart';
 import 'screens/search_screen.dart';
 import 'screens/messenger_screen.dart';
+import 'utils/slide_page_route.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -156,7 +157,7 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const SearchScreen()),
+                SlidePageRoute(page: const SearchScreen()),
               );
             },
           ),
@@ -167,7 +168,7 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const MessengerScreen()),
+                SlidePageRoute(page: const MessengerScreen()),
               );
             },
             badgeCount: 2,

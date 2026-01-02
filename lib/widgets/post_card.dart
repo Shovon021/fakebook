@@ -21,20 +21,36 @@ class PostCard extends StatefulWidget {
 class _PostCardState extends State<PostCard> with SingleTickerProviderStateMixin {
   ReactionType? _currentReaction;
   bool _showReactions = false;
+  bool _isTextExpanded = false;
+  bool _showHeartAnimation = false;
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
+  late Animation<double> _heartScaleAnimation;
 
   @override
   void initState() {
     super.initState();
     _currentReaction = widget.post.userReaction;
     _animationController = AnimationController(
-      duration: const Duration(milliseconds: 200),
+      duration: const Duration(milliseconds: 400),
       vsync: this,
     );
     _scaleAnimation = Tween<double>(begin: 1.0, end: 1.2).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
     );
+    _heartScaleAnimation = Tween<double>(begin: 0.0, end: 1.2).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.elasticOut),
+    );
+    _animationController.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        Future.delayed(const Duration(milliseconds: 100), () {
+          if (mounted) {
+            setState(() => _showHeartAnimation = false);
+            _animationController.reset();
+          }
+        });
+      }
+    });
   }
 
   @override
@@ -156,13 +172,55 @@ class _PostCardState extends State<PostCard> with SingleTickerProviderStateMixin
           else if (widget.post.content.isNotEmpty)
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
-              child: Text(
-                widget.post.content,
-                style: TextStyle(
-                  fontSize: 15,
-                  color: isDark ? Colors.white : AppTheme.black,
-                  height: 1.3,
-                ),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final textSpan = TextSpan(
+                    text: widget.post.content,
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: isDark ? Colors.white : AppTheme.black,
+                      height: 1.3,
+                    ),
+                  );
+                  final textPainter = TextPainter(
+                    text: textSpan,
+                    maxLines: 3,
+                    textDirection: TextDirection.ltr,
+                  );
+                  textPainter.layout(maxWidth: constraints.maxWidth);
+                  final isOverflowing = textPainter.didExceedMaxLines;
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.post.content,
+                        style: TextStyle(
+                          fontSize: 15,
+                          color: isDark ? Colors.white : AppTheme.black,
+                          height: 1.3,
+                        ),
+                        maxLines: _isTextExpanded ? null : 3,
+                        overflow: _isTextExpanded ? null : TextOverflow.ellipsis,
+                      ),
+                      if (isOverflowing && !_isTextExpanded)
+                        GestureDetector(
+                          onTap: () => setState(() => _isTextExpanded = true),
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Text(
+                              'See more',
+                              style: TextStyle(
+                                color: isDark ? const Color(0xFFB0B3B8) : Colors.grey[600],
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  );
+                },
               ),
             ),
           
@@ -256,25 +314,51 @@ class _PostCardState extends State<PostCard> with SingleTickerProviderStateMixin
                   ),
                 );
               },
-              child: CachedNetworkImage(
-                imageUrl: widget.post.imageUrl!,
-                width: double.infinity,
-                height: 300,
-                fit: BoxFit.cover,
-                placeholder: (context, url) => Container(
-                  height: 300,
-                  color: isDark ? const Color(0xFF3A3B3C) : Colors.grey[200],
-                  child: const Center(
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
+              onDoubleTap: () {
+                setState(() {
+                  _currentReaction = ReactionType.like;
+                  _showHeartAnimation = true;
+                });
+                _animationController.forward();
+                HapticFeedback.lightImpact();
+              },
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  CachedNetworkImage(
+                    imageUrl: widget.post.imageUrl!,
+                    width: double.infinity,
+                    height: 300,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => Container(
+                      height: 300,
+                      color: isDark ? const Color(0xFF3A3B3C) : Colors.grey[200],
+                      child: const Center(
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                        ),
+                      ),
+                    ),
+                    errorWidget: (context, url, error) => Container(
+                      height: 300,
+                      color: Colors.grey[300],
+                      child: const Icon(Icons.error),
                     ),
                   ),
-                ),
-                errorWidget: (context, url, error) => Container(
-                  height: 300,
-                  color: Colors.grey[300],
-                  child: const Icon(Icons.error),
-                ),
+                  // Heart Animation Overlay
+                  if (_showHeartAnimation)
+                    ScaleTransition(
+                      scale: _heartScaleAnimation,
+                      child: const Icon(
+                        Icons.favorite,
+                        size: 100,
+                        color: Colors.white,
+                        shadows: [
+                          Shadow(color: Colors.black54, blurRadius: 20),
+                        ],
+                      ),
+                    ),
+                ],
               ),
             ),
           // Reaction counts

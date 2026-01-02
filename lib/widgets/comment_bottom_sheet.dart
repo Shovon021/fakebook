@@ -221,39 +221,68 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
             ),
             child: Row(
               children: [
-                CircleAvatar(
-                  radius: 18,
-                  backgroundImage: CachedNetworkImageProvider(
-                    DummyData.currentUser.avatarUrl,
+                // Camera Icon (left)
+                IconButton(
+                  icon: Icon(Icons.camera_alt_outlined, 
+                    color: isDark ? const Color(0xFFB0B3B8) : Colors.grey[600],
+                    size: 22,
                   ),
+                  onPressed: () {},
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 8),
+                // Text Input
                 Expanded(
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
                     decoration: BoxDecoration(
                       color: isDark ? const Color(0xFF3A3B3C) : const Color(0xFFF0F2F5),
-                      borderRadius: BorderRadius.circular(24),
+                      borderRadius: BorderRadius.circular(20),
                     ),
-                    child: TextField(
-                      controller: _controller,
-                      decoration: InputDecoration(
-                        hintText: 'Write a comment...',
-                        hintStyle: TextStyle(
-                          color: isDark ? const Color(0xFFB0B3B8) : Colors.grey[600],
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _controller,
+                            decoration: InputDecoration(
+                              hintText: 'Write a comment...',
+                              hintStyle: TextStyle(
+                                color: isDark ? const Color(0xFFB0B3B8) : Colors.grey[600],
+                                fontSize: 14,
+                              ),
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                            ),
+                            style: TextStyle(
+                              color: isDark ? Colors.white : AppTheme.black,
+                              fontSize: 14,
+                            ),
+                          ),
                         ),
-                        border: InputBorder.none,
-                      ),
-                      style: TextStyle(
-                        color: isDark ? Colors.white : AppTheme.black,
-                      ),
+                        // Emoji, GIF, Sticker icons inside input
+                        Icon(Icons.emoji_emotions_outlined, 
+                          color: isDark ? const Color(0xFFB0B3B8) : Colors.grey[600], 
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Icon(Icons.gif_box_outlined, 
+                          color: isDark ? const Color(0xFFB0B3B8) : Colors.grey[600], 
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Icon(Icons.sticky_note_2_outlined, 
+                          color: isDark ? const Color(0xFFB0B3B8) : Colors.grey[600], 
+                          size: 20,
+                        ),
+                      ],
                     ),
                   ),
                 ),
                 const SizedBox(width: 8),
-                IconButton(
-                  icon: const Icon(Icons.send, color: AppTheme.facebookBlue),
-                  onPressed: () {
+                // Send Button
+                GestureDetector(
+                  onTap: () {
                     if (_controller.text.isNotEmpty) {
                       setState(() {
                          _comments.add({
@@ -267,6 +296,11 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
                       });
                     }
                   },
+                  child: Icon(
+                    Icons.send,
+                    color: _controller.text.isNotEmpty ? AppTheme.facebookBlue : Colors.grey,
+                    size: 22,
+                  ),
                 ),
               ],
             ),
