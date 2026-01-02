@@ -105,4 +105,27 @@ class UserService {
       return [];
     }
   }
+  // Search users by name (simple prefix search)
+  Future<List<UserModel>> searchUsers(String query) async {
+    if (query.isEmpty) return [];
+
+    try {
+      // Capitalize first letter to match stored format if needed, 
+      // but ideally we'd store a lowercase 'searchName' field for better results.
+      // For now, let's assume case-sensitive or user types correctly.
+      final snapshot = await _firestore
+          .collection('users')
+          .where('name', isGreaterThanOrEqualTo: query)
+          .where('name', isLessThan: '${query}z')
+          .limit(20)
+          .get();
+
+      return snapshot.docs
+          .map((doc) => UserModel.fromMap(doc.data()))
+          .toList();
+    } catch (e) {
+      print('Search Users Error: $e');
+      return [];
+    }
+  }
 }

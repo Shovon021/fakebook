@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../widgets/story_widget.dart';
 import '../widgets/create_post_widget.dart';
 import '../widgets/post_card.dart';
 import '../widgets/reels_list.dart';
 import '../widgets/memories_widget.dart';
 import '../widgets/facebook_shimmer.dart';
+import '../widgets/empty_states.dart';
 import '../services/post_service.dart';
 import '../services/story_service.dart';
 import '../providers/current_user_provider.dart';
@@ -33,6 +35,12 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
   final PostService _postService = PostService();
   final StoryService _storyService = StoryService();
 
+  Future<void> _handleRefresh() async {
+    HapticFeedback.mediumImpact();
+    setState(() {}); // Trigger rebuild to refresh streams
+    await Future.delayed(const Duration(milliseconds: 800)); // Minimum shimmer time
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -50,14 +58,35 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
 
         // If no posts yet, show empty state with create post
         if (posts.isEmpty) {
-          return _buildEmptyState(context, currentUser, isDark);
+          return RefreshIndicator(
+            onRefresh: _handleRefresh,
+            color: const Color(0xFF1877F2),
+            child: ListView(
+              children: [
+                StreamBuilder<List<StoryModel>>(
+                  stream: _storyService.getActiveStoriesStream(),
+                  builder: (context, storySnapshot) {
+                    final stories = storySnapshot.data ?? [];
+                    return StoryWidget(stories: stories);
+                  },
+                ),
+                _buildDivider(isDark),
+                CreatePostWidget(currentUser: currentUser),
+                _buildDivider(isDark),
+                const SizedBox(height: 60),
+                EmptyStates.noPosts(
+                  onCreatePost: () {
+                    // Focus on create post or navigate
+                  },
+                ),
+              ],
+            ),
+          );
         }
 
         return RefreshIndicator(
-          onRefresh: () async {
-            setState(() {}); // Trigger rebuild to refresh streams
-            await Future.delayed(const Duration(milliseconds: 500));
-          },
+          onRefresh: _handleRefresh,
+          color: const Color(0xFF1877F2),
           child: ListView(
             children: [
               // Stories - Use StreamBuilder
@@ -89,7 +118,7 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
                     children: [
                       PostCard(post: post),
                       _buildDivider(isDark),
-                      ReelsList(reels: _getPlaceholderReels()), // TODO: Create ReelsService
+                      ReelsList(reels: _getPlaceholderReels()),
                       _buildDivider(isDark),
                     ],
                   );
@@ -106,51 +135,6 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
           ),
         );
       },
-    );
-  }
-
-  Widget _buildEmptyState(BuildContext context, dynamic currentUser, bool isDark) {
-    return ListView(
-      children: [
-        StreamBuilder<List<StoryModel>>(
-          stream: _storyService.getActiveStoriesStream(),
-          builder: (context, storySnapshot) {
-            final stories = storySnapshot.data ?? [];
-            return StoryWidget(stories: stories);
-          },
-        ),
-        _buildDivider(isDark),
-        CreatePostWidget(currentUser: currentUser),
-        _buildDivider(isDark),
-        const SizedBox(height: 100),
-        Center(
-          child: Column(
-            children: [
-              Icon(
-                Icons.post_add,
-                size: 64,
-                color: isDark ? Colors.white54 : Colors.grey,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'No posts yet',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: isDark ? Colors.white : Colors.black,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Create your first post!',
-                style: TextStyle(
-                  color: isDark ? Colors.white54 : Colors.grey,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
     );
   }
 

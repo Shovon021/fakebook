@@ -94,6 +94,13 @@ class AppTheme {
       onSecondary: white,
       onSurface: black,
     ),
+    snackBarTheme: SnackBarThemeData(
+      behavior: SnackBarBehavior.floating,
+      backgroundColor: const Color(0xFF323436), // Keeping dark gray for contrast in light mode too (like FB)
+      contentTextStyle: GoogleFonts.roboto(color: white),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      elevation: 6,
+    ),
   );
 
   // Dark Theme
@@ -170,6 +177,13 @@ class AppTheme {
       onPrimary: white,
       onSecondary: white,
       onSurface: white,
+    ),
+    snackBarTheme: SnackBarThemeData(
+      behavior: SnackBarBehavior.floating,
+      backgroundColor: const Color(0xFF323436),
+      contentTextStyle: GoogleFonts.roboto(color: white),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      elevation: 6,
     ),
   );
 }

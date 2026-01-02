@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'user_model.dart';
 
-enum ReactionType { like, love, haha, wow, sad, angry }
+enum ReactionType { like, love, care, haha, wow, sad, angry }
 
 class PostModel {
   final String id;

@@ -25,16 +25,43 @@ class _MessengerScreenState extends State<MessengerScreen> {
     final currentUser = currentUserProvider.currentUserOrDefault;
 
     return Scaffold(
-      backgroundColor: isDark ? Colors.black : Colors.white,
+      backgroundColor: isDark ? const Color(0xFF000000) : Colors.white,
       appBar: AppBar(
-        backgroundColor: isDark ? Colors.black : Colors.white,
+        backgroundColor: isDark ? const Color(0xFF000000) : Colors.white,
         elevation: 0,
+        titleSpacing: 0,
         leading: BackButton(color: isDark ? Colors.white : Colors.black),
         title: Row(
           children: [
-            CircleAvatar(
-              radius: 16,
-              backgroundImage: ImageHelper.getImageProvider(currentUser.avatarUrl),
+            // Profile Avatar
+            GestureDetector(
+              onTap: () {
+                // Navigate to settings
+              },
+              child: Stack(
+                children: [
+                  CircleAvatar(
+                    radius: 18,
+                    backgroundImage: ImageHelper.getImageProvider(currentUser.avatarUrl),
+                  ),
+                  Positioned(
+                    right: 0,
+                    bottom: 0,
+                    child: Container(
+                      width: 12,
+                      height: 12,
+                      decoration: BoxDecoration(
+                        color: Colors.green,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: isDark ? Colors.black : Colors.white,
+                          width: 2,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(width: 12),
             Text(
@@ -42,185 +69,224 @@ class _MessengerScreenState extends State<MessengerScreen> {
               style: TextStyle(
                 color: isDark ? Colors.white : Colors.black,
                 fontWeight: FontWeight.bold,
-                fontSize: 24,
+                fontSize: 26,
               ),
             ),
           ],
         ),
         actions: [
-          IconButton(
-            icon: Icon(Icons.camera_alt, color: isDark ? Colors.white : Colors.black),
-            onPressed: () {},
+          // Camera button
+          _buildActionButton(
+            icon: Icons.camera_alt_outlined,
+            isDark: isDark,
+            onTap: () {},
           ),
-          IconButton(
-            icon: Icon(Icons.edit, color: isDark ? Colors.white : Colors.black),
-            onPressed: () => _showNewChatDialog(context),
+          // Edit/New message button
+          _buildActionButton(
+            icon: Icons.edit_outlined,
+            isDark: isDark,
+            onTap: () => _showNewChatDialog(context),
           ),
+          const SizedBox(width: 8),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Column(
-          children: [
-            // Search Bar
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF2A2B2C) : Colors.grey[200],
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.search, color: isDark ? Colors.grey : Colors.grey[600]),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Search',
-                    style: TextStyle(
-                      color: isDark ? Colors.grey : Colors.grey[600],
-                      fontSize: 16,
+      body: Column(
+        children: [
+          // Search Bar
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: GestureDetector(
+              onTap: () {
+                // Open search
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF3A3B3C) : Colors.grey.shade200,
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.search, color: Colors.grey.shade500, size: 22),
+                    const SizedBox(width: 10),
+                    Text(
+                      'Search',
+                      style: TextStyle(
+                        color: Colors.grey.shade500,
+                        fontSize: 16,
+                      ),
                     ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          // Content
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Active Now Section
+                  FutureBuilder<List<UserModel>>(
+                    future: _userService.getAllUsers(),
+                    builder: (context, snapshot) {
+                      final users = (snapshot.data ?? [])
+                          .where((u) => u.id != currentUser.id)
+                          .toList();
+                      if (users.isEmpty) return const SizedBox.shrink();
+                      
+                      return Column(
+                        children: [
+                          const SizedBox(height: 8),
+                          SizedBox(
+                            height: 100,
+                            child: ListView.builder(
+                              scrollDirection: Axis.horizontal,
+                              padding: const EdgeInsets.symmetric(horizontal: 12),
+                              itemCount: users.length,
+                              itemBuilder: (context, index) {
+                                final user = users[index];
+                                return _buildActiveUser(context, user, isDark);
+                              },
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                        ],
+                      );
+                    },
+                  ),
+
+                  // Chat List
+                  StreamBuilder<QuerySnapshot>(
+                    stream: _messengerService.getChatRoomsStream(currentUser.id),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Padding(
+                          padding: EdgeInsets.all(40),
+                          child: Center(child: CircularProgressIndicator()),
+                        );
+                      }
+
+                      final chatRooms = snapshot.data?.docs ?? [];
+
+                      if (chatRooms.isEmpty) {
+                        return _buildEmptyState(isDark);
+                      }
+
+                      return ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: chatRooms.length,
+                        itemBuilder: (context, index) {
+                          final roomData = chatRooms[index].data() as Map<String, dynamic>;
+                          final participants = List<String>.from(roomData['participants'] ?? []);
+                          final otherUserId = participants.firstWhere(
+                            (id) => id != currentUser.id,
+                            orElse: () => '',
+                          );
+
+                          return FutureBuilder<UserModel?>(
+                            future: _userService.getUserById(otherUserId),
+                            builder: (context, userSnapshot) {
+                              final otherUser = userSnapshot.data;
+                              if (otherUser == null) return const SizedBox.shrink();
+
+                              return _buildChatTile(
+                                context,
+                                otherUser,
+                                roomData['lastMessage'] ?? '',
+                                roomData['lastMessageTime'] as Timestamp?,
+                                isDark,
+                              );
+                            },
+                          );
+                        },
+                      );
+                    },
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 16),
+          ),
+        ],
+      ),
+    );
+  }
 
-            // Active Now - Show all users
-            FutureBuilder<List<UserModel>>(
-              future: _userService.getAllUsers(),
-              builder: (context, snapshot) {
-                final users = snapshot.data ?? [];
-                if (users.isEmpty) {
-                  return const SizedBox.shrink();
-                }
-                return SizedBox(
-                  height: 90,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: users.length,
-                    itemBuilder: (context, index) {
-                      final user = users[index];
-                      if (user.id == currentUser.id) return const SizedBox.shrink();
-                      return GestureDetector(
-                        onTap: () => _openChat(context, user),
-                        child: Padding(
-                          padding: const EdgeInsets.only(right: 16),
-                          child: Column(
-                            children: [
-                              Stack(
-                                children: [
-                                  CircleAvatar(
-                                    radius: 28,
-                                    backgroundImage: ImageHelper.getImageProvider(user.avatarUrl),
-                                  ),
-                                  if (user.isOnline)
-                                    Positioned(
-                                      right: 2,
-                                      bottom: 2,
-                                      child: Container(
-                                        width: 14,
-                                        height: 14,
-                                        decoration: BoxDecoration(
-                                          color: Colors.green,
-                                          shape: BoxShape.circle,
-                                          border: Border.all(
-                                            color: isDark ? Colors.black : Colors.white,
-                                            width: 2,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                ],
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                user.name.split(' ')[0],
-                                style: TextStyle(
-                                  color: isDark ? Colors.grey[300] : Colors.grey[600],
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                );
-              },
+  Widget _buildActionButton({
+    required IconData icon,
+    required bool isDark,
+    required VoidCallback onTap,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Material(
+        color: isDark ? const Color(0xFF3A3B3C) : Colors.grey.shade200,
+        borderRadius: BorderRadius.circular(20),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: onTap,
+          child: Container(
+            width: 36,
+            height: 36,
+            alignment: Alignment.center,
+            child: Icon(
+              icon,
+              size: 20,
+              color: isDark ? Colors.white : Colors.black,
             ),
+          ),
+        ),
+      ),
+    );
+  }
 
-            // Chat List - Real chat rooms
-            StreamBuilder<QuerySnapshot>(
-              stream: _messengerService.getChatRoomsStream(currentUser.id),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-
-                final chatRooms = snapshot.data?.docs ?? [];
-
-                if (chatRooms.isEmpty) {
-                  return Padding(
-                    padding: const EdgeInsets.all(40),
-                    child: Column(
-                      children: [
-                        Icon(
-                          Icons.chat_bubble_outline,
-                          size: 64,
-                          color: isDark ? Colors.white54 : Colors.grey,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'No chats yet',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: isDark ? Colors.white : Colors.black,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Start a conversation by tapping the edit icon',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: isDark ? Colors.white54 : Colors.grey,
-                          ),
-                        ),
-                      ],
+  Widget _buildActiveUser(BuildContext context, UserModel user, bool isDark) {
+    return GestureDetector(
+      onTap: () => _openChat(context, user),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 6),
+        child: Column(
+          children: [
+            Stack(
+              children: [
+                CircleAvatar(
+                  radius: 30,
+                  backgroundImage: ImageHelper.getImageProvider(user.avatarUrl),
+                ),
+                Positioned(
+                  right: 2,
+                  bottom: 2,
+                  child: Container(
+                    width: 14,
+                    height: 14,
+                    decoration: BoxDecoration(
+                      color: Colors.green,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: isDark ? Colors.black : Colors.white,
+                        width: 2,
+                      ),
                     ),
-                  );
-                }
-
-                return ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: chatRooms.length,
-                  itemBuilder: (context, index) {
-                    final roomData = chatRooms[index].data() as Map<String, dynamic>;
-                    final participants = List<String>.from(roomData['participants'] ?? []);
-                    final otherUserId = participants.firstWhere(
-                      (id) => id != currentUser.id,
-                      orElse: () => '',
-                    );
-
-                    return FutureBuilder<UserModel?>(
-                      future: _userService.getUserById(otherUserId),
-                      builder: (context, userSnapshot) {
-                        final otherUser = userSnapshot.data;
-                        if (otherUser == null) return const SizedBox.shrink();
-
-                        return _buildChatTile(
-                          context,
-                          otherUser,
-                          roomData['lastMessage'] ?? '',
-                          isDark,
-                        );
-                      },
-                    );
-                  },
-                );
-              },
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            SizedBox(
+              width: 70,
+              child: Text(
+                user.name.split(' ')[0],
+                style: TextStyle(
+                  color: isDark ? Colors.white : Colors.black,
+                  fontSize: 13,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
           ],
         ),
@@ -228,18 +294,59 @@ class _MessengerScreenState extends State<MessengerScreen> {
     );
   }
 
-  Widget _buildChatTile(BuildContext context, UserModel user, String lastMessage, bool isDark) {
-    return GestureDetector(
+  Widget _buildChatTile(
+    BuildContext context,
+    UserModel user,
+    String lastMessage,
+    Timestamp? lastMessageTime,
+    bool isDark,
+  ) {
+    String timeAgo = '';
+    if (lastMessageTime != null) {
+      final diff = DateTime.now().difference(lastMessageTime.toDate());
+      if (diff.inMinutes < 60) {
+        timeAgo = '${diff.inMinutes}m';
+      } else if (diff.inHours < 24) {
+        timeAgo = '${diff.inHours}h';
+      } else {
+        timeAgo = '${diff.inDays}d';
+      }
+    }
+
+    return InkWell(
       onTap: () => _openChat(context, user),
       child: Padding(
-        padding: const EdgeInsets.only(bottom: 20),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         child: Row(
           children: [
-            CircleAvatar(
-              radius: 28,
-              backgroundImage: ImageHelper.getImageProvider(user.avatarUrl),
+            // Avatar
+            Stack(
+              children: [
+                CircleAvatar(
+                  radius: 28,
+                  backgroundImage: ImageHelper.getImageProvider(user.avatarUrl),
+                ),
+                if (user.isOnline)
+                  Positioned(
+                    right: 0,
+                    bottom: 0,
+                    child: Container(
+                      width: 14,
+                      height: 14,
+                      decoration: BoxDecoration(
+                        color: Colors.green,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: isDark ? Colors.black : Colors.white,
+                          width: 2,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
             const SizedBox(width: 12),
+            // Name and Message
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -252,21 +359,90 @@ class _MessengerScreenState extends State<MessengerScreen> {
                       fontSize: 16,
                     ),
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    lastMessage.isEmpty ? 'Tap to start chatting' : lastMessage,
-                    style: TextStyle(
-                      color: isDark ? Colors.grey : Colors.grey[600],
-                      fontSize: 14,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          lastMessage.isEmpty ? 'Tap to start chatting' : lastMessage,
+                          style: TextStyle(
+                            color: Colors.grey.shade600,
+                            fontSize: 14,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (timeAgo.isNotEmpty) ...[
+                        Text(
+                          ' · $timeAgo',
+                          style: TextStyle(
+                            color: Colors.grey.shade600,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ],
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.all(40),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF3A3B3C) : Colors.grey.shade100,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.chat_bubble_outline,
+              size: 48,
+              color: AppTheme.facebookBlue,
+            ),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            'No messages yet',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: isDark ? Colors.white : Colors.black,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Start a conversation with your friends',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.grey.shade600,
+              fontSize: 15,
+            ),
+          ),
+          const SizedBox(height: 20),
+          ElevatedButton(
+            onPressed: () => _showNewChatDialog(context),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.facebookBlue,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
+            ),
+            child: const Text('Start a chat'),
+          ),
+        ],
       ),
     );
   }
@@ -283,28 +459,67 @@ class _MessengerScreenState extends State<MessengerScreen> {
   void _showNewChatDialog(BuildContext context) async {
     final users = await _userService.getAllUsers();
     final currentUser = currentUserProvider.currentUserOrDefault;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     if (!mounted) return;
 
     showModalBottomSheet(
       context: context,
-      builder: (context) => ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: users.length,
-        itemBuilder: (context, index) {
-          final user = users[index];
-          if (user.id == currentUser.id) return const SizedBox.shrink();
-          return ListTile(
-            leading: CircleAvatar(
-              backgroundImage: ImageHelper.getImageProvider(user.avatarUrl),
+      backgroundColor: isDark ? const Color(0xFF242526) : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: 12),
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.grey,
+              borderRadius: BorderRadius.circular(2),
             ),
-            title: Text(user.name),
-            onTap: () {
-              Navigator.pop(context);
-              _openChat(context, user);
-            },
-          );
-        },
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'New Message',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: isDark ? Colors.white : Colors.black,
+            ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 300,
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: users.length,
+              itemBuilder: (context, index) {
+                final user = users[index];
+                if (user.id == currentUser.id) return const SizedBox.shrink();
+                return ListTile(
+                  leading: CircleAvatar(
+                    radius: 24,
+                    backgroundImage: ImageHelper.getImageProvider(user.avatarUrl),
+                  ),
+                  title: Text(
+                    user.name,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? Colors.white : Colors.black,
+                    ),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _openChat(context, user);
+                  },
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

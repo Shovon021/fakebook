@@ -1,8 +1,13 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import '../models/story_model.dart';
+import '../models/user_model.dart';
 import '../theme/app_theme.dart';
 import '../utils/image_helper.dart';
 import '../screens/story_viewer_screen.dart';
+import '../services/storage_service.dart';
+import '../services/story_service.dart';
+import '../providers/current_user_provider.dart';
 
 class StoryWidget extends StatelessWidget {
   final List<StoryModel> stories;
@@ -12,34 +17,116 @@ class StoryWidget extends StatelessWidget {
     required this.stories,
   });
 
+  Future<void> _createStory(BuildContext context) async {
+    final currentUser = currentUserProvider.currentUser;
+    if (currentUser == null) return;
+
+    final storageService = StorageService();
+    final storyService = StoryService();
+
+    // Pick image
+    final file = await storageService.pickImageFromGallery();
+    if (file == null) return;
+
+    // Show loading dialog
+    if (context.mounted) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(color: AppTheme.facebookBlue),
+        ),
+      );
+    }
+
+    try {
+      // Upload image
+      final imageUrl = await storageService.uploadImage(
+        file: file,
+        path: 'stories/${currentUser.id}/${DateTime.now().millisecondsSinceEpoch}',
+      );
+
+      if (imageUrl != null) {
+        // Create story
+        await storyService.createStory(
+          userId: currentUser.id,
+          imageUrl: imageUrl,
+        );
+      }
+
+      if (context.mounted) {
+        Navigator.pop(context); // Close loading dialog
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Story posted!')),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to post story: $e')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final currentUser = currentUserProvider.currentUser;
+    
+    // Build list with Create Story card first
+    final displayStories = <StoryModel>[];
+    
+    // Add create story card placeholder
+    if (currentUser != null) {
+      displayStories.add(StoryModel(
+        id: 'create',
+        user: currentUser,
+        isOwnStory: true,
+        createdAt: DateTime.now(),
+      ));
+    }
+    
+    // Add other stories (filter out duplicates of current user)
+    for (final story in stories) {
+      if (story.user.id != currentUser?.id) {
+        displayStories.add(story);
+      }
+    }
     
     return Container(
       height: 210,
       color: isDark ? const Color(0xFF242526) : Colors.white,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-        itemCount: stories.length,
-        itemBuilder: (context, index) {
-          final story = stories[index];
-          return _buildStoryCard(context, story, isDark);
-        },
-      ),
+      child: displayStories.isEmpty
+          ? const SizedBox.shrink()
+          : ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+              itemCount: displayStories.length,
+              itemBuilder: (context, index) {
+                final story = displayStories[index];
+                return _buildStoryCard(context, story, isDark, displayStories);
+              },
+            ),
     );
   }
 
-  Widget _buildStoryCard(BuildContext context, StoryModel story, bool isDark) {
+  Widget _buildStoryCard(BuildContext context, StoryModel story, bool isDark, List<StoryModel> allStories) {
     return GestureDetector(
       onTap: () {
-        if (!story.isOwnStory) {
+        if (story.isOwnStory) {
+          // Create story
+          _createStory(context);
+        } else {
+          // View stories
+          final viewableStories = allStories.where((s) => !s.isOwnStory).toList();
+          final index = viewableStories.indexOf(story);
           Navigator.of(context).push(
             MaterialPageRoute(
               builder: (context) => StoryViewerScreen(
-                stories: stories.where((s) => !s.isOwnStory).toList(),
-                initialIndex: stories.where((s) => !s.isOwnStory).toList().indexOf(story),
+                stories: viewableStories,
+                initialIndex: index >= 0 ? index : 0,
               ),
             ),
           );

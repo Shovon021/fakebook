@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/post_model.dart';
 import '../providers/current_user_provider.dart';
@@ -25,6 +25,9 @@ class CommentBottomSheet extends StatefulWidget {
 class _CommentBottomSheetState extends State<CommentBottomSheet> {
   final TextEditingController _controller = TextEditingController();
   final FocusNode _focusNode = FocusNode();
+  String? _replyingToUserId;
+  String? _replyingToUserName;
+  final Set<String> _likedComments = {};
 
   @override
   void dispose() {
@@ -42,12 +45,56 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
     final content = _controller.text;
     _controller.clear();
     _focusNode.unfocus();
+    
+    // Clear reply state
+    setState(() {
+      _replyingToUserId = null;
+      _replyingToUserName = null;
+    });
 
     await PostService().addComment(
       postId: widget.post.id,
       userId: userId,
       content: content,
     );
+    
+    HapticFeedback.lightImpact();
+  }
+
+  void _startReply(String userId, String userName) {
+    setState(() {
+      _replyingToUserId = userId;
+      _replyingToUserName = userName;
+    });
+    _focusNode.requestFocus();
+    HapticFeedback.selectionClick();
+  }
+
+  void _cancelReply() {
+    setState(() {
+      _replyingToUserId = null;
+      _replyingToUserName = null;
+    });
+  }
+
+  void _toggleLikeComment(String commentId) {
+    setState(() {
+      if (_likedComments.contains(commentId)) {
+        _likedComments.remove(commentId);
+      } else {
+        _likedComments.add(commentId);
+        HapticFeedback.lightImpact();
+      }
+    });
+  }
+
+  String _getTimeAgo(Timestamp? timestamp) {
+    if (timestamp == null) return 'now';
+    final diff = DateTime.now().difference(timestamp.toDate());
+    if (diff.inSeconds < 60) return 'now';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m';
+    if (diff.inHours < 24) return '${diff.inHours}h';
+    return '${diff.inDays}d';
   }
 
   @override
@@ -67,7 +114,7 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
           const BottomSheetHandle(),
           // Header
           Container(
-            padding: const EdgeInsets.symmetric(vertical: 12),
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
             decoration: BoxDecoration(
               border: Border(
                 bottom: BorderSide(
@@ -79,25 +126,31 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const SizedBox(width: 50),
+                Text(
+                  'Comments',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white : Colors.black,
+                  ),
+                ),
                 Row(
                   children: [
-                    _buildReactionIcon(Icons.thumb_up, AppTheme.facebookBlue),
-                    const SizedBox(width: 4),
+                    _buildReactionIcons(),
+                    const SizedBox(width: 8),
                     Text(
                       '${widget.post.likesCount}',
                       style: TextStyle(
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w600,
                         color: isDark ? Colors.white : AppTheme.black,
                       ),
                     ),
-                    const SizedBox(width: 4),
-                    const Icon(Icons.keyboard_arrow_right, color: Colors.grey, size: 20),
+                    const SizedBox(width: 16),
+                    GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: Icon(Icons.close, color: isDark ? Colors.white : Colors.black),
+                    ),
                   ],
-                ),
-                IconButton(
-                  icon: Icon(Icons.close, color: isDark ? Colors.white : Colors.black),
-                  onPressed: () => Navigator.pop(context),
                 ),
               ],
             ),
@@ -116,11 +169,31 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
 
                 if (comments.isEmpty) {
                   return Center(
-                    child: Text(
-                      'No comments yet. Be the first!',
-                      style: TextStyle(
-                        color: isDark ? const Color(0xFFB0B3B8) : Colors.grey[600],
-                      ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.chat_bubble_outline,
+                          size: 48,
+                          color: isDark ? Colors.grey : Colors.grey[400],
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'No comments yet',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? Colors.white : Colors.black,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Be the first to comment!',
+                          style: TextStyle(
+                            color: isDark ? const Color(0xFFB0B3B8) : Colors.grey[600],
+                          ),
+                        ),
+                      ],
                     ),
                   );
                 }
@@ -137,7 +210,13 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
                       builder: (context, userSnapshot) {
                          if (!userSnapshot.hasData) return const SizedBox.shrink();
                          final user = userSnapshot.data!;
-                         return _buildRealCommentItem(context, user, data, isDark);
+                         return _buildCommentItem(
+                           context, 
+                           doc.id,
+                           user, 
+                           data, 
+                           isDark,
+                         );
                       },
                     );
                   },
@@ -145,6 +224,32 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
               },
             ),
           ),
+          
+          // Reply indicator
+          if (_replyingToUserName != null)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              color: isDark ? const Color(0xFF3A3B3C) : Colors.grey[100],
+              child: Row(
+                children: [
+                  Icon(Icons.reply, size: 18, color: Colors.grey[600]),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Replying to $_replyingToUserName',
+                      style: TextStyle(
+                        color: isDark ? Colors.white70 : Colors.grey[700],
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: _cancelReply,
+                    child: Icon(Icons.close, size: 18, color: Colors.grey[600]),
+                  ),
+                ],
+              ),
+            ),
           
           // Input Field
           Container(
@@ -160,22 +265,19 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
             ),
             child: Row(
               children: [
-                IconButton(
-                  icon: Icon(Icons.camera_alt_outlined, 
-                    color: isDark ? const Color(0xFFB0B3B8) : Colors.grey[600],
-                    size: 22,
+                CircleAvatar(
+                  radius: 16,
+                  backgroundImage: ImageHelper.getImageProvider(
+                    currentUserProvider.currentUserOrDefault.avatarUrl,
                   ),
-                  onPressed: () {},
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
                     decoration: BoxDecoration(
                       color: isDark ? const Color(0xFF3A3B3C) : const Color(0xFFF0F2F5),
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(24),
                     ),
                     child: Row(
                       children: [
@@ -184,7 +286,9 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
                             controller: _controller,
                             focusNode: _focusNode,
                             decoration: InputDecoration(
-                              hintText: 'Write a comment...',
+                              hintText: _replyingToUserName != null 
+                                  ? 'Reply to $_replyingToUserName...'
+                                  : 'Write a comment...',
                               hintStyle: TextStyle(
                                 color: isDark ? const Color(0xFFB0B3B8) : Colors.grey[600],
                                 fontSize: 14,
@@ -199,26 +303,39 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
                             onSubmitted: (_) => _submitComment(),
                           ),
                         ),
-                        Icon(Icons.emoji_emotions_outlined, 
-                          color: isDark ? const Color(0xFFB0B3B8) : Colors.grey[600], 
-                          size: 20,
+                        GestureDetector(
+                          onTap: () {},
+                          child: Icon(Icons.emoji_emotions_outlined, 
+                            color: Colors.grey[500], 
+                            size: 22,
+                          ),
                         ),
-                        const SizedBox(width: 8),
-                        Icon(Icons.gif_box_outlined, 
-                          color: isDark ? const Color(0xFFB0B3B8) : Colors.grey[600], 
-                          size: 20,
+                        const SizedBox(width: 10),
+                        GestureDetector(
+                          onTap: () {},
+                          child: Icon(Icons.camera_alt_outlined, 
+                            color: Colors.grey[500], 
+                            size: 22,
+                          ),
                         ),
                       ],
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 10),
                 GestureDetector(
                   onTap: _submitComment,
-                  child: const Icon(
-                    Icons.send,
-                    color: AppTheme.facebookBlue,
-                    size: 22,
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: const BoxDecoration(
+                      color: AppTheme.facebookBlue,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.send,
+                      color: Colors.white,
+                      size: 18,
+                    ),
                   ),
                 ),
               ],
@@ -229,84 +346,164 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
     );
   }
 
-  Widget _buildRealCommentItem(BuildContext context, UserModel user, Map<String, dynamic> data, bool isDark) {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(bottom: 16),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              CircleAvatar(
-                radius: 18,
-                backgroundImage: ImageHelper.getImageProvider(user.avatarUrl),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF3A3B3C) : const Color(0xFFF0F2F5),
-                        borderRadius: BorderRadius.circular(16),
+  Widget _buildCommentItem(
+    BuildContext context, 
+    String commentId,
+    UserModel user, 
+    Map<String, dynamic> data, 
+    bool isDark,
+  ) {
+    final isLiked = _likedComments.contains(commentId);
+    final timeAgo = _getTimeAgo(data['createdAt'] as Timestamp?);
+    
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CircleAvatar(
+            radius: 18,
+            backgroundImage: ImageHelper.getImageProvider(user.avatarUrl),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Comment bubble
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF3A3B3C) : const Color(0xFFF0F2F5),
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        user.name,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                          color: isDark ? Colors.white : AppTheme.black,
+                        ),
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            user.name,
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13,
-                              color: isDark ? Colors.white : AppTheme.black,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            data['content'] ?? '',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: isDark ? Colors.white : AppTheme.black,
-                            ),
-                          ),
-                        ],
+                      const SizedBox(height: 2),
+                      Text(
+                        data['content'] ?? '',
+                        style: TextStyle(
+                          fontSize: 15,
+                          color: isDark ? Colors.white : AppTheme.black,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        const SizedBox(width: 10),
-                        Text(
-                          'Now', // Simple time
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 6),
+                // Action row
+                Padding(
+                  padding: const EdgeInsets.only(left: 12),
+                  child: Row(
+                    children: [
+                      Text(
+                        timeAgo,
+                        style: TextStyle(
+                          color: isDark ? const Color(0xFFB0B3B8) : Colors.grey[600],
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      GestureDetector(
+                        onTap: () => _toggleLikeComment(commentId),
+                        child: Text(
+                          'Like',
                           style: TextStyle(
-                            color: isDark ? const Color(0xFFB0B3B8) : Colors.grey[600],
+                            color: isLiked ? AppTheme.facebookBlue : (isDark ? const Color(0xFFB0B3B8) : Colors.grey[700]),
                             fontSize: 12,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                      ],
-                    ),
-                  ],
+                      ),
+                      const SizedBox(width: 16),
+                      GestureDetector(
+                        onTap: () => _startReply(user.id, user.name),
+                        child: Text(
+                          'Reply',
+                          style: TextStyle(
+                            color: isDark ? const Color(0xFFB0B3B8) : Colors.grey[700],
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      const Spacer(),
+                      if (isLiked)
+                        Row(
+                          children: [
+                            const Icon(Icons.thumb_up, size: 12, color: AppTheme.facebookBlue),
+                            const SizedBox(width: 4),
+                            Text(
+                              '1',
+                              style: TextStyle(
+                                color: isDark ? Colors.white70 : Colors.grey[600],
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
-  Widget _buildReactionIcon(IconData icon, Color color) {
+  Widget _buildReactionIcons() {
+    return SizedBox(
+      width: 50,
+      height: 22,
+      child: Stack(
+        children: [
+          Positioned(
+            left: 0,
+            child: _buildReactionBubble('👍', AppTheme.facebookBlue),
+          ),
+          Positioned(
+            left: 14,
+            child: _buildReactionBubble('❤️', Colors.red),
+          ),
+          Positioned(
+            left: 28,
+            child: _buildReactionBubble('😆', Colors.amber),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReactionBubble(String emoji, Color borderColor) {
     return Container(
-      width: 18,
-      height: 18,
+      width: 22,
+      height: 22,
       decoration: BoxDecoration(
-        color: color,
+        color: Colors.white,
         shape: BoxShape.circle,
         border: Border.all(color: Colors.white, width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 2,
+          ),
+        ],
       ),
-      child: Icon(icon, color: Colors.white, size: 10),
+      child: Center(
+        child: Text(emoji, style: const TextStyle(fontSize: 12)),
+      ),
     );
   }
 }

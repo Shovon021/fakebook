@@ -151,7 +151,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   Widget _buildNotificationTile(NotificationModel notification, bool isDark) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: notification.isRead 
             ? Colors.transparent 
@@ -160,94 +160,113 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 : AppTheme.facebookBlue.withValues(alpha: 0.1)),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        leading: Stack(
-          children: [
-            CircleAvatar(
-              radius: 28,
-              backgroundImage: CachedNetworkImageProvider(
-                notification.avatarUrl,
-              ),
-            ),
-            Positioned(
-              right: 0,
-              bottom: 0,
-              child: Container(
-                padding: const EdgeInsets.all(5),
-                decoration: BoxDecoration(
-                  color: _getNotificationIconColor(notification.type),
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: isDark ? const Color(0xFF242526) : Colors.white,
-                    width: 2,
-                  ),
-                ),
-                child: Icon(
-                  _getNotificationIcon(notification.type),
-                  color: Colors.white,
-                  size: 12,
-                ),
-              ),
-            ),
-          ],
-        ),
-        title: RichText(
-          text: TextSpan(
-            style: TextStyle(
-              fontSize: 15,
-              color: isDark ? Colors.white : AppTheme.black,
-              height: 1.3,
-            ),
-            children: [
-              TextSpan(
-                text: notification.title,
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              TextSpan(text: ' ${notification.body}'),
-            ],
-          ),
-          maxLines: 3,
-          overflow: TextOverflow.ellipsis,
-        ),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 6),
-          child: Row(
-            children: [
-              if (!notification.isRead)
-                Container(
-                  width: 8,
-                  height: 8,
-                  margin: const EdgeInsets.only(right: 6),
-                  decoration: const BoxDecoration(
-                    color: AppTheme.facebookBlue,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              Text(
-                notification.timeAgo,
-                style: TextStyle(
-                  color: notification.isRead 
-                      ? (isDark ? const Color(0xFFB0B3B8) : AppTheme.mediumGrey)
-                      : AppTheme.facebookBlue,
-                  fontSize: 13,
-                  fontWeight: notification.isRead ? FontWeight.normal : FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-        ),
-        trailing: IconButton(
-          icon: Icon(
-            Icons.more_horiz,
-            color: isDark ? const Color(0xFFB0B3B8) : AppTheme.mediumGrey,
-          ),
-          onPressed: () {},
-        ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
         onTap: () {
           _markAsRead(notification);
-          // Navigate to content if needed
         },
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Avatar with icon badge
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  CircleAvatar(
+                    radius: 28,
+                    backgroundImage: CachedNetworkImageProvider(
+                      notification.avatarUrl,
+                    ),
+                  ),
+                  Positioned(
+                    right: -2,
+                    bottom: -2,
+                    child: Container(
+                      padding: const EdgeInsets.all(5),
+                      decoration: BoxDecoration(
+                        color: _getNotificationIconColor(notification.type),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: isDark ? const Color(0xFF242526) : Colors.white,
+                          width: 2,
+                        ),
+                      ),
+                      child: Icon(
+                        _getNotificationIcon(notification.type),
+                        color: Colors.white,
+                        size: 12,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 12),
+              // Content
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    RichText(
+                      text: TextSpan(
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: isDark ? Colors.white : AppTheme.black,
+                          height: 1.4,
+                        ),
+                        children: [
+                          TextSpan(
+                            text: notification.title,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          TextSpan(text: ' ${notification.body}'),
+                        ],
+                      ),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        if (!notification.isRead)
+                          Container(
+                            width: 8,
+                            height: 8,
+                            margin: const EdgeInsets.only(right: 6),
+                            decoration: const BoxDecoration(
+                              color: AppTheme.facebookBlue,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        Text(
+                          notification.timeAgo,
+                          style: TextStyle(
+                            color: notification.isRead 
+                                ? (isDark ? const Color(0xFFB0B3B8) : AppTheme.mediumGrey)
+                                : AppTheme.facebookBlue,
+                            fontSize: 13,
+                            fontWeight: notification.isRead ? FontWeight.normal : FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              // More button
+              IconButton(
+                icon: Icon(
+                  Icons.more_horiz,
+                  color: isDark ? const Color(0xFFB0B3B8) : AppTheme.mediumGrey,
+                ),
+                onPressed: () {},
+                constraints: const BoxConstraints(),
+                padding: const EdgeInsets.all(8),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

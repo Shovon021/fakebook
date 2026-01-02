@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../models/user_model.dart';
 import '../models/post_model.dart';
 import '../theme/app_theme.dart';
 import '../services/user_service.dart';
 import '../services/post_service.dart';
+import '../services/storage_service.dart';
 import '../widgets/post_card.dart';
 import '../utils/image_helper.dart';
+import '../providers/current_user_provider.dart';
 import 'edit_profile_screen.dart';
-import 'create_story_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   final UserModel user;
@@ -24,12 +24,14 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  late UserModel _user;
   final List<String> _tabs = ['Posts', 'Photos', 'Reels'];
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: _tabs.length, vsync: this);
+    _user = widget.user;
   }
 
   @override
@@ -38,70 +40,93 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     super.dispose();
   }
 
+  Future<void> _changeCoverPhoto() async {
+    final file = await StorageService().pickImageFromGallery();
+    if (file == null) return;
+
+    final url = await StorageService().uploadCoverPhoto(_user.id, file);
+    if (url != null) {
+      await UserService().updateUserProfile(userId: _user.id, coverUrl: url);
+      setState(() {
+        _user = _user.copyWith(coverUrl: url);
+      });
+    }
+  }
+
+  Future<void> _changeProfilePicture() async {
+    final file = await StorageService().pickImageFromGallery();
+    if (file == null) return;
+
+    final url = await StorageService().uploadProfilePicture(_user.id, file);
+    if (url != null) {
+      await UserService().updateUserProfile(userId: _user.id, avatarUrl: url);
+      setState(() {
+        _user = _user.copyWith(avatarUrl: url);
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isOwnProfile = currentUserProvider.currentUser?.id == _user.id;
     
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF18191A) : const Color(0xFFF0F2F5),
+      backgroundColor: isDark ? const Color(0xFF18191A) : Colors.white,
       body: NestedScrollView(
         headerSliverBuilder: (context, innerBoxIsScrolled) {
           return [
+            // App Bar
             SliverAppBar(
               pinned: true,
               backgroundColor: isDark ? const Color(0xFF242526) : Colors.white,
-              title: Text(
-                widget.user.name,
-                style: TextStyle(
-                  color: isDark ? Colors.white : Colors.black,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                ),
-              ),
               leading: IconButton(
                 icon: Icon(Icons.arrow_back, color: isDark ? Colors.white : Colors.black),
                 onPressed: () => Navigator.pop(context),
               ),
-              centerTitle: false,
+              actions: [
+                IconButton(
+                  icon: Icon(Icons.search, color: isDark ? Colors.white : Colors.black),
+                  onPressed: () {},
+                ),
+              ],
             ),
-            SliverList(
-              delegate: SliverChildListDelegate([
-                _buildHeader(isDark),
-                const Divider(height: 20, thickness: 1),
-                if (widget.user.details.isNotEmpty) _buildDetailsSection(isDark),
-                if (widget.user.details.isNotEmpty) const Divider(height: 20, thickness: 1),
-                _buildFriendsList(context, isDark),
-              ]),
+            // Profile Header
+            SliverToBoxAdapter(
+              child: _buildProfileHeader(isDark, isOwnProfile),
             ),
           ];
         },
         body: Column(
           children: [
+            // Tabs
             Container(
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF18191A) : Colors.white,
+                color: isDark ? const Color(0xFF242526) : Colors.white,
                 border: Border(
                   bottom: BorderSide(
-                    color: isDark ? const Color(0xFF3A3B3C) : const Color(0xFFCCCDD2),
-                    width: 1,
+                    color: isDark ? const Color(0xFF3A3B3C) : Colors.grey.shade300,
                   ),
                 ),
               ),
               child: TabBar(
                 controller: _tabController,
                 indicatorColor: AppTheme.facebookBlue,
+                indicatorWeight: 3,
                 labelColor: AppTheme.facebookBlue,
-                unselectedLabelColor: isDark ? const Color(0xFFB0B3B8) : const Color(0xFF65676B),
+                unselectedLabelColor: isDark ? Colors.grey : Colors.grey.shade600,
+                labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
                 tabs: _tabs.map((t) => Tab(text: t)).toList(),
               ),
             ),
+            // Tab Content
             Expanded(
               child: TabBarView(
                 controller: _tabController,
                 children: [
-                  _buildPostsTab(context, isDark),
-                  _buildPhotosTab(context, isDark),
-                  const Center(child: Text('Reels Content')),
+                  _buildPostsTab(isDark),
+                  _buildPhotosTab(isDark),
+                  _buildReelsTab(isDark),
                 ],
               ),
             ),
@@ -111,365 +136,500 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     );
   }
 
-  Widget _buildHeader(bool isDark) {
+  Widget _buildProfileHeader(bool isDark, bool isOwnProfile) {
     return Column(
       children: [
+        // Cover Photo with Profile Picture
         Stack(
           clipBehavior: Clip.none,
-          alignment: Alignment.center,
           children: [
-             Container(
-              height: 200,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
+            // Cover Photo
+            GestureDetector(
+              onTap: isOwnProfile ? _changeCoverPhoto : null,
+              child: Container(
+                height: 200,
+                width: double.infinity,
+                color: Colors.grey.shade300,
+                child: _user.coverUrl != null
+                    ? ImageHelper.getNetworkImage(
+                        imageUrl: _user.coverUrl!,
+                        fit: BoxFit.cover,
+                      )
+                    : Center(
+                        child: Icon(
+                          Icons.add_photo_alternate,
+                          size: 48,
+                          color: Colors.grey.shade500,
+                        ),
+                      ),
               ),
-              child: ImageHelper.getNetworkImage(
-                imageUrl: 'https://images.unsplash.com/photo-1596486095368-f9e4f50998d8?q=80&w=2070&auto=format&fit=crop', // Brick wall/abstract cover
-                fit: BoxFit.cover,
-               // placeholder: (context, url) => Container(color: Colors.grey[300]), // ImageHelper handles this
+            ),
+            // Camera icon on cover
+            if (isOwnProfile)
+              Positioned(
+                right: 12,
+                bottom: 12,
+                child: GestureDetector(
+                  onTap: _changeCoverPhoto,
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF3A3B3C) : Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.2),
+                          blurRadius: 4,
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      Icons.camera_alt,
+                      size: 20,
+                      color: isDark ? Colors.white : Colors.black87,
+                    ),
+                  ),
+                ),
               ),
-             ),
-             Positioned(
-               bottom: -60,
-               child: Container(
-                 padding: const EdgeInsets.all(4),
-                 decoration: BoxDecoration(
-                   color: isDark ? const Color(0xFF242526) : Colors.white,
-                   shape: BoxShape.circle,
-                 ),
-                 child: CircleAvatar(
-                   radius: 70,
-                   backgroundImage: ImageHelper.getImageProvider(widget.user.avatarUrl),
-                 ),
-               ),
-             ),
+            // Profile Picture
+            Positioned(
+              left: 16,
+              bottom: -50,
+              child: GestureDetector(
+                onTap: isOwnProfile ? _changeProfilePicture : null,
+                child: Stack(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF242526) : Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                      child: CircleAvatar(
+                        radius: 70,
+                        backgroundImage: ImageHelper.getImageProvider(_user.avatarUrl),
+                      ),
+                    ),
+                    // Camera icon on profile pic
+                    if (isOwnProfile)
+                      Positioned(
+                        right: 4,
+                        bottom: 4,
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: isDark ? const Color(0xFF3A3B3C) : Colors.grey.shade200,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: isDark ? const Color(0xFF242526) : Colors.white,
+                              width: 2,
+                            ),
+                          ),
+                          child: Icon(
+                            Icons.camera_alt,
+                            size: 18,
+                            color: isDark ? Colors.white : Colors.black87,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
-        const SizedBox(height: 70),
-        Text(
-          widget.user.name,
-          style: TextStyle(
-            fontSize: 26,
-            fontWeight: FontWeight.bold,
-            color: isDark ? Colors.white : AppTheme.black,
+        const SizedBox(height: 60),
+        
+        // Name and Friends Count
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _user.name,
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.white : Colors.black,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '${_user.friendsCount} friends',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: isDark ? Colors.grey : Colors.grey.shade600,
+                ),
+              ),
+            ],
           ),
         ),
-        if (widget.user.bio != null)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 32),
-            child: Text(
-              widget.user.bio!,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 16,
-                color: isDark ? const Color(0xFFB0B3B8) : AppTheme.mediumGrey,
-              ),
-            ),
-          ),
+        const SizedBox(height: 16),
+
+        // Action Buttons - Different for own profile vs friend's profile
         Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(
-              children: [
-                Expanded(
-                  flex: 4,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const CreateStoryScreen()),
-                      );
-                    },
-                    icon: const Icon(Icons.add, color: Colors.white, size: 18),
-                    label: const Text('Add to Story'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.facebookBlue,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  flex: 4,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => EditProfileScreen(user: widget.user)),
-                      );
-                    },
-                    icon: Icon(Icons.edit, color: isDark ? Colors.white : Colors.black, size: 18),
-                    label: const Text('Edit Profile'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: isDark ? const Color(0xFF3A3B3C) : const Color(0xFFE4E6EB),
-                      foregroundColor: isDark ? Colors.white : Colors.black,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF3A3B3C) : const Color(0xFFE4E6EB),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(Icons.more_horiz, color: isDark ? Colors.white : Colors.black),
-                ),
-              ],
-            ),
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: isOwnProfile
+              ? _buildOwnProfileButtons(isDark)
+              : _buildFriendProfileButtons(isDark),
+        ),
+        const SizedBox(height: 16),
+
+        // Divider
+        Divider(color: isDark ? const Color(0xFF3A3B3C) : Colors.grey.shade300, height: 1),
+        
+        // Details Section
+        _buildDetailsSection(isDark, isOwnProfile),
+        
+        Divider(color: isDark ? const Color(0xFF3A3B3C) : Colors.grey.shade300, height: 1),
       ],
     );
   }
 
-  Widget _buildDetailsSection(bool isDark) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-             Text(
-              'Details',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: isDark ? Colors.white : AppTheme.black,
-              ),
-            ),
-            const SizedBox(height: 12),
-            ...widget.user.details.map((detail) {
-              IconData icon = Icons.info_outline;
-              if (detail.contains('Works') || detail.contains('Assistant') || detail.contains('Member')) {
-                icon = Icons.work;
-              } else if (detail.contains('Studied') || detail.contains('School') || detail.contains('College')) {
-                icon = Icons.school;
-              } else if (detail.contains('Lives') || detail.contains('From')) {
-                icon = Icons.home;
-              }
-              
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(icon, color: isDark ? Colors.grey[400] : Colors.grey[600], size: 20),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        detail,
-                        style: TextStyle(
-                          fontSize: 15,
-                          color: isDark ? Colors.white : AppTheme.black,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }),
-            Container(
-              width: double.infinity,
-              margin: const EdgeInsets.only(top: 8),
-              child: ElevatedButton(
-                onPressed: () {},
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: isDark ? const Color(0xFF3A3B3C).withValues(alpha: 0.5) : const Color(0xFFE7F3FF),
-                  foregroundColor: AppTheme.facebookBlue,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                ),
-                child: const Text('Edit public details'),
-              ),
-            ),
-          ],
-        ),
-      );
-  }
+  Widget _buildDetailsSection(bool isDark, bool isOwnProfile) {
+    final textColor = isDark ? Colors.white : Colors.black;
+    final iconColor = isDark ? Colors.grey : Colors.grey.shade600;
 
-  Widget _buildFriendsList(BuildContext context, bool isDark) {
-    return Container(
+    return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Friends',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: isDark ? Colors.white : AppTheme.black,
-                    ),
-                  ),
-                  Text(
-                    '${widget.user.friendsCount} friends',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: isDark ? const Color(0xFFB0B3B8) : AppTheme.mediumGrey,
-                    ),
-                  ),
-                ],
-              ),
-              Text(
-                'Find Friends',
-                style: TextStyle(
-                  color: AppTheme.facebookBlue,
-                  fontSize: 16,
-                ),
-              ),
-            ],
+          Text(
+            'Details',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: textColor,
+            ),
           ),
           const SizedBox(height: 16),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              childAspectRatio: 0.75,
-              crossAxisSpacing: 8,
-              mainAxisSpacing: 8,
-            ),
-            itemCount: 9,
-            itemBuilder: (context, index) {
-              // Show placeholder friends grid
-              return FutureBuilder<List<UserModel>>(
-                future: UserService().getAllUsers(limit: 9),
-                builder: (context, snapshot) {
-                  if (!snapshot.hasData || index >= snapshot.data!.length) {
-                    return Container(
-                      decoration: BoxDecoration(
-                        color: Colors.grey[300],
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    );
-                  }
-                  final friend = snapshot.data![index];
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: ImageHelper.getNetworkImage(
-                            imageUrl: friend.avatarUrl,
-                            fit: BoxFit.cover,
-                            width: double.infinity,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 5),
-                      Text(
-                        friend.name,
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                          color: isDark ? Colors.white : AppTheme.black,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
+          
+          // Show user details if available
+          if (_user.details.isNotEmpty)
+            ...(_user.details.map((detail) => _buildDetailRow(
+              _getIconForDetail(detail),
+              detail,
+              textColor,
+              iconColor,
+            ))),
+          
+          // Show placeholder details if empty
+          if (_user.details.isEmpty) ...[
+            _buildDetailRow(Icons.school, 'Add education', textColor, iconColor, isPlaceholder: true),
+            _buildDetailRow(Icons.work, 'Add workplace', textColor, iconColor, isPlaceholder: true),
+            _buildDetailRow(Icons.home, 'Add current city', textColor, iconColor, isPlaceholder: true),
+            _buildDetailRow(Icons.location_on, 'Add hometown', textColor, iconColor, isPlaceholder: true),
+          ],
+          
+          // See your About info
+          _buildDetailRow(Icons.more_horiz, 'See your About info', textColor, iconColor),
+          
+          const SizedBox(height: 12),
+          
+          // Edit public details button
+          if (isOwnProfile)
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => EditProfileScreen(user: _user)),
                   );
                 },
-              );
-            },
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-             width: double.infinity,
-             child: ElevatedButton(
-               onPressed: () {}, 
-               style: ElevatedButton.styleFrom(
-                 backgroundColor: isDark ? const Color(0xFF3A3B3C) : const Color(0xFFE4E6EB),
-                 elevation: 0,
-                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-               ),
-               child: Text(
-                 'See All Friends',
-                  style: TextStyle(
-                    color: isDark ? Colors.white : Colors.black,
-                    fontWeight: FontWeight.bold,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppTheme.facebookBlue,
+                  side: const BorderSide(color: AppTheme.facebookBlue),
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
                   ),
-               ),
-             ),
-          ),
+                ),
+                child: const Text(
+                  'Edit public details',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ),
+            ),
         ],
       ),
     );
   }
 
-  Widget _buildPostsTab(BuildContext context, bool isDark) {
-    return SingleChildScrollView(
-      child: Column(
-        children: [
-          _buildUserPosts(isDark),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPhotosTab(BuildContext context, bool isDark) {
-    return GridView.builder(
-      padding: const EdgeInsets.all(8),
-      itemCount: 12,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        crossAxisSpacing: 8,
-        mainAxisSpacing: 8,
-      ),
-      itemBuilder: (context, index) {
-        return Container(
-          decoration: BoxDecoration(
-            color: Colors.grey[300],
-            borderRadius: BorderRadius.circular(4),
-            image: DecorationImage(
-            image: ImageHelper.getImageProvider('https://picsum.photos/seed/photo$index/400/400'),
-              fit: BoxFit.cover,
+  // Buttons for viewing own profile
+  Widget _buildOwnProfileButtons(bool isDark) {
+    return Row(
+      children: [
+        Expanded(
+          child: ElevatedButton.icon(
+            onPressed: () {},
+            icon: const Icon(Icons.add, size: 18),
+            label: const Text('Add to story'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.facebookBlue,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
           ),
-        );
-      },
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: ElevatedButton.icon(
+            onPressed: () async {
+              final result = await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => EditProfileScreen(user: _user)),
+              );
+              if (result == true) {
+                final updated = await UserService().getUserById(_user.id);
+                if (updated != null) setState(() => _user = updated);
+              }
+            },
+            icon: Icon(Icons.edit, size: 18, color: isDark ? Colors.white : Colors.black),
+            label: Text('Edit profile', style: TextStyle(color: isDark ? Colors.white : Colors.black)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: isDark ? const Color(0xFF3A3B3C) : Colors.grey.shade200,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF3A3B3C) : Colors.grey.shade200,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: IconButton(
+            onPressed: () {},
+            icon: Icon(Icons.more_horiz, color: isDark ? Colors.white : Colors.black),
+            constraints: const BoxConstraints(),
+            padding: const EdgeInsets.all(10),
+          ),
+        ),
+      ],
     );
   }
 
-  Widget _buildUserPosts(bool isDark) {
+  // Buttons for viewing friend's profile
+  Widget _buildFriendProfileButtons(bool isDark) {
+    final bool isFriend = _user.isFriend;
+    
+    return Row(
+      children: [
+        // Add Friend / Friends button
+        Expanded(
+          child: ElevatedButton.icon(
+            onPressed: () {
+              // Send friend request
+              if (!isFriend) {
+                UserService().sendFriendRequest(
+                  currentUserProvider.currentUser?.id ?? '',
+                  _user.id,
+                );
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Friend request sent!')),
+                );
+              }
+            },
+            icon: Icon(
+              isFriend ? Icons.person : Icons.person_add,
+              size: 18,
+            ),
+            label: Text(isFriend ? 'Friends' : 'Add Friend'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: isFriend 
+                  ? (isDark ? const Color(0xFF3A3B3C) : Colors.grey.shade200)
+                  : AppTheme.facebookBlue,
+              foregroundColor: isFriend 
+                  ? (isDark ? Colors.white : Colors.black)
+                  : Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        // Message button
+        Expanded(
+          child: ElevatedButton.icon(
+            onPressed: () {
+              // Navigate to message screen
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Message ${_user.name}')),
+              );
+            },
+            icon: Icon(Icons.chat_bubble_outline, size: 18, color: isDark ? Colors.white : Colors.black),
+            label: Text('Message', style: TextStyle(color: isDark ? Colors.white : Colors.black)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: isDark ? const Color(0xFF3A3B3C) : Colors.grey.shade200,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        // More button
+        Container(
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF3A3B3C) : Colors.grey.shade200,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: IconButton(
+            onPressed: () {},
+            icon: Icon(Icons.more_horiz, color: isDark ? Colors.white : Colors.black),
+            constraints: const BoxConstraints(),
+            padding: const EdgeInsets.all(10),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDetailRow(IconData icon, String text, Color textColor, Color iconColor, {bool isPlaceholder = false}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        children: [
+          Icon(icon, size: 22, color: iconColor),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                fontSize: 15,
+                color: isPlaceholder ? iconColor : textColor,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  IconData _getIconForDetail(String detail) {
+    final lowerDetail = detail.toLowerCase();
+    if (lowerDetail.contains('university') || lowerDetail.contains('studied') || lowerDetail.contains('college')) {
+      return Icons.school;
+    } else if (lowerDetail.contains('school') || lowerDetail.contains('went to')) {
+      return Icons.school_outlined;
+    } else if (lowerDetail.contains('works') || lowerDetail.contains('work')) {
+      return Icons.work;
+    } else if (lowerDetail.contains('lives')) {
+      return Icons.home;
+    } else if (lowerDetail.contains('from')) {
+      return Icons.location_on;
+    } else if (lowerDetail.contains('joined')) {
+      return Icons.access_time;
+    } else if (lowerDetail.contains('gender')) {
+      return Icons.person;
+    } else if (lowerDetail.contains('relationship')) {
+      return Icons.favorite;
+    }
+    return Icons.info_outline;
+  }
+
+  Widget _buildPostsTab(bool isDark) {
     return StreamBuilder<List<PostModel>>(
       stream: PostService().getPostsStream(),
       builder: (context, snapshot) {
         final allPosts = snapshot.data ?? [];
-        final userPosts = allPosts.where((p) => p.author.id == widget.user.id).toList();
+        final userPosts = allPosts.where((p) => p.author.id == _user.id).toList();
+
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
         if (userPosts.isEmpty) {
-          return Padding(
-            padding: const EdgeInsets.all(20),
-            child: Center(
-              child: Text(
-                'No posts yet',
-                style: TextStyle(color: isDark ? Colors.grey : Colors.black),
-              ),
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.article_outlined, size: 64, color: Colors.grey.shade400),
+                const SizedBox(height: 16),
+                Text(
+                  'No posts yet',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white : Colors.black,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Your posts will appear here',
+                  style: TextStyle(color: Colors.grey.shade600),
+                ),
+              ],
             ),
           );
         }
 
-        return Column(
-          children: userPosts.map((post) => Column(
-            children: [
-              PostCard(post: post),
-              Container(height: 8, color: isDark ? const Color(0xFF18191A) : const Color(0xFFF0F2F5)),
-            ],
-          )).toList(),
+        return ListView.separated(
+          itemCount: userPosts.length,
+          separatorBuilder: (_, __) => Container(
+            height: 8,
+            color: isDark ? const Color(0xFF18191A) : Colors.grey.shade100,
+          ),
+          itemBuilder: (context, index) => PostCard(post: userPosts[index]),
         );
       },
+    );
+  }
+
+  Widget _buildPhotosTab(bool isDark) {
+    return GridView.builder(
+      padding: const EdgeInsets.all(2),
+      itemCount: 12,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: 2,
+        mainAxisSpacing: 2,
+      ),
+      itemBuilder: (context, index) {
+        return Container(
+          color: Colors.grey.shade300,
+          child: ImageHelper.getNetworkImage(
+            imageUrl: 'https://picsum.photos/seed/photo$index/400/400',
+            fit: BoxFit.cover,
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildReelsTab(bool isDark) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.video_library_outlined, size: 64, color: Colors.grey.shade400),
+          const SizedBox(height: 16),
+          Text(
+            'No reels yet',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: isDark ? Colors.white : Colors.black,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

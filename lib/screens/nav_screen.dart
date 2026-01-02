@@ -105,7 +105,7 @@ class _NavScreenState extends State<NavScreen> with SingleTickerProviderStateMix
           _buildHeaderIconButton(
             icon: Icons.add,
             isDark: isDark,
-            onTap: () {},
+            onTap: () => _showCreateMenu(context, isDark),
           ),
           // Search button
           _buildHeaderIconButton(
@@ -278,6 +278,118 @@ class _NavScreenState extends State<NavScreen> with SingleTickerProviderStateMix
             ),
         ],
       ),
+    );
+  }
+
+  void _showCreateMenu(BuildContext context, bool isDark) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: isDark ? const Color(0xFF242526) : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Create',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white : Colors.black,
+              ),
+            ),
+            const SizedBox(height: 16),
+            _buildCreateOption(
+              context,
+              icon: Icons.article,
+              color: Colors.green,
+              title: 'Post',
+              subtitle: 'Share what\'s on your mind',
+              onTap: () {
+                Navigator.pop(context);
+                // Navigate to create post
+              },
+            ),
+            _buildCreateOption(
+              context,
+              icon: Icons.auto_stories,
+              color: AppTheme.facebookBlue,
+              title: 'Story',
+              subtitle: 'Share a photo or video',
+              onTap: () {
+                Navigator.pop(context);
+                // Navigate to create story
+              },
+            ),
+            _buildCreateOption(
+              context,
+              icon: Icons.video_library,
+              color: Colors.red,
+              title: 'Reel',
+              subtitle: 'Create a short video',
+              onTap: () {
+                Navigator.pop(context);
+              },
+            ),
+            _buildCreateOption(
+              context,
+              icon: Icons.videocam,
+              color: Colors.purple,
+              title: 'Live Video',
+              subtitle: 'Start a live broadcast',
+              onTap: () {
+                Navigator.pop(context);
+              },
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCreateOption(
+    BuildContext context, {
+    required IconData icon,
+    required Color color,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return ListTile(
+      leading: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.15),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(icon, color: color, size: 24),
+      ),
+      title: Text(
+        title,
+        style: TextStyle(
+          fontWeight: FontWeight.w600,
+          color: isDark ? Colors.white : Colors.black,
+        ),
+      ),
+      subtitle: Text(
+        subtitle,
+        style: TextStyle(color: isDark ? Colors.grey : Colors.grey.shade600),
+      ),
+      onTap: onTap,
     );
   }
 }

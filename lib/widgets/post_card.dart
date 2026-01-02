@@ -4,6 +4,7 @@ import '../models/post_model.dart';
 import '../theme/app_theme.dart';
 import 'package:flutter/services.dart';
 import '../utils/image_helper.dart';
+import '../utils/reaction_assets.dart'; // Added import
 import 'comment_bottom_sheet.dart';
 import 'share_bottom_sheet.dart';
 import '../screens/photo_viewer_screen.dart';
@@ -26,8 +27,7 @@ class PostCard extends StatefulWidget {
 
 class _PostCardState extends State<PostCard> with SingleTickerProviderStateMixin {
   ReactionType? _currentReaction;
-  bool _showReactions = false;
-  bool _isTextExpanded = false;
+  bool _isTextExpanded = false; // Removed _showReactions
   bool _showHeartAnimation = false;
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
@@ -535,59 +535,52 @@ class _PostCardState extends State<PostCard> with SingleTickerProviderStateMixin
   }
 
   Widget _buildReactionIcons() {
+    // We want to show a stack of icons. 
+    // If user reacted, show their reaction first.
+    // Then show Like and Love as defaults if we have enough counts.
+    
+    final reactionsToShow = <ReactionType>[];
+    
+    // 1. User's reaction
+    if (_currentReaction != null) {
+      reactionsToShow.add(_currentReaction!);
+    }
+    
+    // 2. Add defaults if not present
+    if (!reactionsToShow.contains(ReactionType.like)) reactionsToShow.add(ReactionType.like);
+    if (!reactionsToShow.contains(ReactionType.love)) reactionsToShow.add(ReactionType.love);
+    if (!reactionsToShow.contains(ReactionType.haha)) reactionsToShow.add(ReactionType.haha);
+    
+    // Take top 3
+    final visibleReactions = reactionsToShow.take(3).toList();
+    
     return SizedBox(
-      width: 56,
-      height: 22,
+      width: 18.0 * visibleReactions.length + 4, // Dynamic width
+      height: 20,
       child: Stack(
-        children: [
-          Positioned(
-            left: 0,
+        children: List.generate(visibleReactions.length, (index) {
+          final type = visibleReactions[index];
+          return Positioned(
+            left: index * 16.0,
             child: Container(
-              width: 22,
-              height: 22,
+              width: 20,
+              height: 20,
               decoration: BoxDecoration(
-                color: AppTheme.facebookBlue,
                 shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 1.5),
-              ),
-              child: const Icon(
-                Icons.thumb_up,
-                size: 12,
+                border: Border.all(color: Colors.white, width: 2),
                 color: Colors.white,
               ),
-            ),
-          ),
-          Positioned(
-            left: 15,
-            child: Container(
-              width: 22,
-              height: 22,
-              decoration: BoxDecoration(
-                color: AppTheme.loveRed,
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 1.5),
-              ),
-              child: const Center(
-                child: Text('❤️', style: TextStyle(fontSize: 11)),
+              child: ClipOval(
+                child: CachedNetworkImage(
+                  imageUrl: ReactionAssets.getReactionIcon(type),
+                  fit: BoxFit.cover,
+                  placeholder: (context, url) => Container(color: Colors.grey[200]),
+                  errorWidget: (context, url, error) => const Icon(Icons.error, size: 10),
+                ),
               ),
             ),
-          ),
-          Positioned(
-            left: 30,
-            child: Container(
-              width: 22,
-              height: 22,
-              decoration: BoxDecoration(
-                color: AppTheme.hahaYellow,
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 1.5),
-              ),
-              child: const Center(
-                child: Text('😂', style: TextStyle(fontSize: 11)),
-              ),
-            ),
-          ),
-        ],
+          );
+        }).reversed.toList(), // Reverse to make first item on top
       ),
     );
   }
@@ -631,8 +624,6 @@ class _PostCardState extends State<PostCard> with SingleTickerProviderStateMixin
       ),
     );
   }
-
-
 
   Widget _buildImageGrid(List<String> images, bool isDark) {
     if (images.length == 1) {
@@ -729,26 +720,11 @@ class _PostCardState extends State<PostCard> with SingleTickerProviderStateMixin
     return count.toString();
   }
 
-  Widget _buildReactionEmoji(String emoji, ReactionType type) {
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _currentReaction = type;
-          _showReactions = false;
-        });
-        HapticFeedback.lightImpact();
-      },
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4),
-        child: Text(emoji, style: const TextStyle(fontSize: 28)),
-      ),
-    );
-  }
-
   String _getReactionLabel(ReactionType? reaction) {
     switch (reaction) {
       case ReactionType.like: return 'Like';
       case ReactionType.love: return 'Love';
+      case ReactionType.care: return 'Care';
       case ReactionType.haha: return 'Haha';
       case ReactionType.wow: return 'Wow';
       case ReactionType.sad: return 'Sad';

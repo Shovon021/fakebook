@@ -26,10 +26,12 @@ class _FriendsScreenState extends State<FriendsScreen> {
 
   Future<void> _loadSuggestions() async {
     final users = await _userService.getAllUsers();
-    // In a real app, filter out existing friends
+    final currentUserId = currentUserProvider.currentUser?.id;
+    
+    // Filter out current user and existing friends
     if (mounted) {
       setState(() {
-        _suggestions = users;
+        _suggestions = users.where((user) => user.id != currentUserId).toList();
       });
     }
   }
@@ -354,6 +356,30 @@ class _FriendsScreenState extends State<FriendsScreen> {
   }
 }
   Widget _buildSuggestionCard(UserModel user, bool isDark) {
+    // Local state for the button could be handled better by extracting this to a StatefulWidget,
+    // but for now we'll use a local set of 'sent' IDs if we want instant feedback,
+    // or just trigger the service. Let's make it a StatefulBuilder or extract widget.
+    // For simplicity in this file, I'll extract it to a separate widget below which is cleaner.
+    return _SuggestionCard(user: user, isDark: isDark);
+  }
+}
+
+class _SuggestionCard extends StatefulWidget {
+  final UserModel user;
+  final bool isDark;
+
+  const _SuggestionCard({required this.user, required this.isDark});
+
+  @override
+  State<_SuggestionCard> createState() => _SuggestionCardState();
+}
+
+class _SuggestionCardState extends State<_SuggestionCard> {
+  bool _requestSent = false;
+  final UserService _userService = UserService();
+
+  @override
+  Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
@@ -361,7 +387,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
         children: [
           CircleAvatar(
             radius: 44,
-            backgroundImage: CachedNetworkImageProvider(user.avatarUrl),
+            backgroundImage: CachedNetworkImageProvider(widget.user.avatarUrl),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -369,17 +395,16 @@ class _FriendsScreenState extends State<FriendsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  user.name,
+                  widget.user.name,
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
-                    color: isDark ? Colors.white : AppTheme.black,
+                    color: widget.isDark ? Colors.white : AppTheme.black,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    // Mutual friends avatars stack
                     SizedBox(
                       width: 40,
                       height: 20,
@@ -397,7 +422,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 border: Border.all(
-                                  color: isDark ? const Color(0xFF242526) : Colors.white,
+                                  color: widget.isDark ? const Color(0xFF242526) : Colors.white,
                                   width: 2,
                                 ),
                               ),
@@ -414,9 +439,9 @@ class _FriendsScreenState extends State<FriendsScreen> {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      '${user.friendsCount} mutual friends',
+                      '${widget.user.friendsCount} mutual friends',
                       style: TextStyle(
-                        color: isDark 
+                        color: widget.isDark 
                             ? const Color(0xFFB0B3B8) 
                             : AppTheme.mediumGrey,
                         fontSize: 14,
@@ -429,31 +454,46 @@ class _FriendsScreenState extends State<FriendsScreen> {
                   children: [
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: () {},
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.facebookBlue,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          elevation: 0,
-                        ),
-                        child: const Text(
-                          'Add Friend',
-                          style: TextStyle(fontWeight: FontWeight.bold),
+                        onPressed: _requestSent ? null : () async {
+                          final currentUser = currentUserProvider.currentUser;
+                          if (currentUser != null) {
+                            setState(() => _requestSent = true);
+                            await _userService.sendFriendRequest(
+                              currentUser.id,
+                              widget.user.id,
+                            );
+                          }
+                        },
+                         style: ElevatedButton.styleFrom(
+                           backgroundColor: _requestSent 
+                               ? (widget.isDark ? const Color(0xFF3A3B3C) : Colors.grey[300])
+                               : AppTheme.facebookBlue,
+                           foregroundColor: _requestSent 
+                               ? (widget.isDark ? Colors.white54 : Colors.grey[600])
+                               : Colors.white,
+                           padding: const EdgeInsets.symmetric(vertical: 10),
+                           shape: RoundedRectangleBorder(
+                             borderRadius: BorderRadius.circular(8),
+                           ),
+                           elevation: 0,
+                         ),
+                        child: Text(
+                          _requestSent ? 'Requested' : 'Add Friend',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          // Handle Remove logic (just hide card)
+                        },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: isDark 
+                          backgroundColor: widget.isDark 
                               ? const Color(0xFF3A3B3C) 
                               : AppTheme.lightGrey,
-                          foregroundColor: isDark ? Colors.white : AppTheme.black,
+                          foregroundColor: widget.isDark ? Colors.white : AppTheme.black,
                           padding: const EdgeInsets.symmetric(vertical: 10),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
@@ -474,4 +514,5 @@ class _FriendsScreenState extends State<FriendsScreen> {
         ],
       ),
     );
+  }
 }

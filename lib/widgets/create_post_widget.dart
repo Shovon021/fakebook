@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/user_model.dart';
 import '../theme/app_theme.dart';
 import '../screens/create_post_screen.dart';
+import '../screens/profile_screen.dart';
 import '../utils/image_helper.dart';
 
 class CreatePostWidget extends StatelessWidget {
@@ -25,10 +26,20 @@ class CreatePostWidget extends StatelessWidget {
         children: [
           Row(
             children: [
-              CircleAvatar(
-                radius: 22,
-                backgroundImage: ImageHelper.getImageProvider(
-                  currentUser.avatarUrl,
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ProfileScreen(user: currentUser),
+                    ),
+                  );
+                },
+                child: CircleAvatar(
+                  radius: 22,
+                  backgroundImage: ImageHelper.getImageProvider(
+                    currentUser.avatarUrl,
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
