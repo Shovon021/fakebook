@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../services/marketplace_service.dart';
-import '../models/marketplace_item_model.dart';
+import '../models/marketplace_model.dart'; // Fixed import
 import '../theme/app_theme.dart';
 import 'marketplace_detail_screen.dart';
+import 'create_marketplace_item_screen.dart';
 
 class MarketplaceScreen extends StatelessWidget {
   const MarketplaceScreen({super.key});
@@ -70,7 +71,19 @@ class MarketplaceScreen extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Row(
               children: [
-                _buildCategoryButton(Icons.sell, 'Sell', isDark),
+                _buildCategoryButton(
+                  Icons.sell, 
+                  'Sell', 
+                  isDark, 
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const CreateMarketplaceItemScreen(),
+                      ),
+                    );
+                  }
+                ),
                 _buildCategoryButton(Icons.category, 'Categories', isDark),
                 _buildCategoryButton(Icons.local_offer, 'Today\'s Picks', isDark),
                 _buildCategoryButton(Icons.directions_car, 'Vehicles', isDark),
@@ -86,76 +99,106 @@ class MarketplaceScreen extends StatelessWidget {
         ),
         // Product grid
         Expanded(
-          child: GridView.builder(
-            padding: const EdgeInsets.all(8),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              childAspectRatio: 0.72,
-              crossAxisSpacing: 10,
-              mainAxisSpacing: 10,
-            ),
-            itemCount: MarketplaceService().getPlaceholderItems().length,
-            itemBuilder: (context, index) {
-              final items = MarketplaceService().getPlaceholderItems();
-              final item = items[index];
-              return GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => MarketplaceDetailScreen(
-                        product: {
-                          'title': item.title,
-                          'price': item.formattedPrice,
-                          'image': item.imageUrl,
-                          'location': item.location,
-                        },
-                      ),
-                    ),
+          child: StreamBuilder<List<MarketplaceItemModel>>(
+            stream: MarketplaceService().getItemsStream(),
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return Center(child: Text('Error: ${snapshot.error}'));
+              }
+
+              if (!snapshot.hasData) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              final items = snapshot.data!;
+              
+              if (items.isEmpty) {
+                 return Center(
+                   child: Column(
+                     mainAxisAlignment: MainAxisAlignment.center,
+                     children: [
+                       Icon(Icons.storefront, size: 60, color: Colors.grey[400]),
+                       const SizedBox(height: 16),
+                       Text('No items for sale yet', style: TextStyle(color: Colors.grey[600])),
+                     ],
+                   ),
+                 );
+              }
+
+              return GridView.builder(
+                padding: const EdgeInsets.all(8),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  childAspectRatio: 0.72,
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 10,
+                ),
+                itemCount: items.length,
+                itemBuilder: (context, index) {
+                  final item = items[index];
+                  return GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => MarketplaceDetailScreen(
+                            product: {
+                              'title': item.title,
+                              'price': item.formattedPrice,
+                              'image': item.imageUrl,
+                              'location': item.location,
+                            },
+                          ),
+                        ),
+                      );
+                    },
+                    child: _buildProductCard(item, isDark),
                   );
                 },
-                child: _buildProductCard(item, isDark),
               );
-            },
+            }
           ),
         ),
       ],
     );
   }
 
-  Widget _buildCategoryButton(IconData icon, String label, bool isDark) {
-    return Container(
-      margin: const EdgeInsets.only(right: 12),
-      child: Column(
-        children: [
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF3A3B3C) : AppTheme.lightGrey,
-              shape: BoxShape.circle,
+  Widget _buildCategoryButton(IconData icon, String label, bool isDark, {VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(right: 12),
+        child: Column(
+          children: [
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF3A3B3C) : AppTheme.lightGrey,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                icon,
+                color: isDark ? Colors.white : AppTheme.black,
+                size: 26,
+              ),
             ),
-            child: Icon(
-              icon,
-              color: isDark ? Colors.white : AppTheme.black,
-              size: 26,
+            const SizedBox(height: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                color: isDark ? Colors.white : AppTheme.black,
+                fontWeight: FontWeight.w500,
+              ),
             ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              color: isDark ? Colors.white : AppTheme.black,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildProductCard(dynamic item, bool isDark) {
+  Widget _buildProductCard(MarketplaceItemModel item, bool isDark) {
     return Container(
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF242526) : Colors.white,
@@ -185,6 +228,10 @@ class MarketplaceScreen extends StatelessWidget {
                     fit: BoxFit.cover,
                     placeholder: (context, url) => Container(
                       color: Colors.grey[300],
+                    ),
+                    errorWidget: (context, url, error) => Container( // Fallback for bad URLs
+                      color: Colors.grey[300],
+                      child: Icon(Icons.image_not_supported, color: Colors.grey[500]),
                     ),
                   ),
                 ),

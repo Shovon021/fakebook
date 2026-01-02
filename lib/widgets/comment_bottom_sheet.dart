@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/post_model.dart';
 import '../providers/current_user_provider.dart';
 import '../theme/app_theme.dart';
 import 'shared_ui.dart';
 import '../utils/image_helper.dart';
+import '../services/post_service.dart';
+import '../services/user_service.dart';
+import '../models/user_model.dart';
 
 class CommentBottomSheet extends StatefulWidget {
   final PostModel post;
@@ -21,43 +25,6 @@ class CommentBottomSheet extends StatefulWidget {
 class _CommentBottomSheetState extends State<CommentBottomSheet> {
   final TextEditingController _controller = TextEditingController();
   final FocusNode _focusNode = FocusNode();
-  int? _replyingToIndex; // Index of the comment being replied to
-
-  // Mock comments with replies
-  final List<Map<String, dynamic>> _comments = [
-    {
-      'user': 'Sarah Johnson',
-      'avatar': 'https://picsum.photos/seed/user1/150/150',
-      'text': 'This looks amazing! 😍',
-      'time': '2h',
-      'likes': 12,
-      'replies': <Map<String, dynamic>>[],
-    },
-    {
-      'user': 'Mike Wilson',
-      'avatar': 'https://picsum.photos/seed/user2/150/150',
-      'text': 'Great shot! Where was this taken?',
-      'time': '5h',
-      'likes': 5,
-      'replies': <Map<String, dynamic>>[
-        {
-          'user': 'Post Author',
-          'avatar': currentUserProvider.currentUserOrDefault.avatarUrl,
-          'text': 'At the national park! 🌲',
-          'time': '1h',
-          'likes': 2,
-        }
-      ],
-    },
-    {
-      'user': 'Emily Davis',
-      'avatar': 'https://picsum.photos/seed/user3/150/150',
-      'text': 'Best vibes ever 🔥',
-      'time': '1d',
-      'likes': 24,
-      'replies': <Map<String, dynamic>>[],
-    },
-  ];
 
   @override
   void dispose() {
@@ -66,43 +33,21 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
     super.dispose();
   }
 
-  void _handleReply(int index) {
-    setState(() {
-      _replyingToIndex = index;
-    });
-    _focusNode.requestFocus();
-  }
-
-  void _cancelReply() {
-    setState(() {
-      _replyingToIndex = null;
-    });
-    _focusNode.unfocus();
-  }
-
-  void _submitComment() {
+  void _submitComment() async {
     if (_controller.text.isEmpty) return;
+    
+    final userId = currentUserProvider.userId;
+    if (userId == null) return;
 
-    setState(() {
-      final newComment = {
-        'user': currentUserProvider.currentUserOrDefault.name,
-        'avatar': currentUserProvider.currentUserOrDefault.avatarUrl,
-        'text': _controller.text,
-        'time': 'Just now',
-        'likes': 0,
-        'replies': <Map<String, dynamic>>[],
-      };
+    final content = _controller.text;
+    _controller.clear();
+    _focusNode.unfocus();
 
-      if (_replyingToIndex != null) {
-        // Add as reply
-        _comments[_replyingToIndex!]['replies'].add(newComment);
-        _replyingToIndex = null; // Reset
-      } else {
-        // Add as main comment
-        _comments.add(newComment);
-      }
-      _controller.clear();
-    });
+    await PostService().addComment(
+      postId: widget.post.id,
+      userId: userId,
+      content: content,
+    );
   }
 
   @override
@@ -160,35 +105,47 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
           
           // Comments List
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: _comments.length,
-              itemBuilder: (context, index) {
-                return _buildCommentItem(context, _comments[index], index, isDark);
+            child: StreamBuilder<QuerySnapshot>(
+              stream: PostService().getCommentsStream(widget.post.id),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                final comments = snapshot.data!.docs;
+
+                if (comments.isEmpty) {
+                  return Center(
+                    child: Text(
+                      'No comments yet. Be the first!',
+                      style: TextStyle(
+                        color: isDark ? const Color(0xFFB0B3B8) : Colors.grey[600],
+                      ),
+                    ),
+                  );
+                }
+
+                return ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: comments.length,
+                  itemBuilder: (context, index) {
+                    final doc = comments[index];
+                    final data = doc.data() as Map<String, dynamic>;
+                    
+                    return FutureBuilder<UserModel?>(
+                      future: UserService().getUserById(data['userId']),
+                      builder: (context, userSnapshot) {
+                         if (!userSnapshot.hasData) return const SizedBox.shrink();
+                         final user = userSnapshot.data!;
+                         return _buildRealCommentItem(context, user, data, isDark);
+                      },
+                    );
+                  },
+                );
               },
             ),
           ),
           
-          // Reply Banner
-          if (_replyingToIndex != null)
-             Container(
-               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-               color: isDark ? const Color(0xFF3A3B3C) : Colors.grey[200],
-               child: Row(
-                 children: [
-                   Text(
-                     'Replying to ${_comments[_replyingToIndex!]['user']}',
-                     style: TextStyle(color: isDark ? Colors.grey[400] : Colors.grey[700]),
-                   ),
-                   const Spacer(),
-                   GestureDetector(
-                     onTap: _cancelReply,
-                     child: const Icon(Icons.close, size: 16, color: Colors.grey),
-                   )
-                 ],
-               ),
-             ),
-
           // Input Field
           Container(
             padding: EdgeInsets.fromLTRB(16, 12, 16, 12 + keyboardHeight),
@@ -203,7 +160,6 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
             ),
             child: Row(
               children: [
-                // Camera Icon (left)
                 IconButton(
                   icon: Icon(Icons.camera_alt_outlined, 
                     color: isDark ? const Color(0xFFB0B3B8) : Colors.grey[600],
@@ -214,7 +170,6 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
                   constraints: const BoxConstraints(),
                 ),
                 const SizedBox(width: 8),
-                // Text Input
                 Expanded(
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -229,7 +184,7 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
                             controller: _controller,
                             focusNode: _focusNode,
                             decoration: InputDecoration(
-                              hintText: _replyingToIndex != null ? 'Write a reply...' : 'Write a comment...',
+                              hintText: 'Write a comment...',
                               hintStyle: TextStyle(
                                 color: isDark ? const Color(0xFFB0B3B8) : Colors.grey[600],
                                 fontSize: 14,
@@ -244,7 +199,6 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
                             onSubmitted: (_) => _submitComment(),
                           ),
                         ),
-                        // Emoji, GIF, Sticker icons
                         Icon(Icons.emoji_emotions_outlined, 
                           color: isDark ? const Color(0xFFB0B3B8) : Colors.grey[600], 
                           size: 20,
@@ -259,7 +213,6 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                // Send Button
                 GestureDetector(
                   onTap: _submitComment,
                   child: const Icon(
@@ -276,10 +229,9 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
     );
   }
 
-  Widget _buildCommentItem(BuildContext context, Map<String, dynamic> comment, int index, bool isDark) {
+  Widget _buildRealCommentItem(BuildContext context, UserModel user, Map<String, dynamic> data, bool isDark) {
     return Column(
       children: [
-        // Main Comment
         Padding(
           padding: const EdgeInsets.only(bottom: 16),
           child: Row(
@@ -287,7 +239,7 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
             children: [
               CircleAvatar(
                 radius: 18,
-                backgroundImage: ImageHelper.getImageProvider(comment['avatar']),
+                backgroundImage: ImageHelper.getImageProvider(user.avatarUrl),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -304,7 +256,7 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            comment['user'],
+                            user.name,
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 13,
@@ -313,7 +265,7 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            comment['text'],
+                            data['content'] ?? '',
                             style: TextStyle(
                               fontSize: 14,
                               color: isDark ? Colors.white : AppTheme.black,
@@ -327,55 +279,12 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
                       children: [
                         const SizedBox(width: 10),
                         Text(
-                          comment['time'],
+                          'Now', // Simple time
                           style: TextStyle(
                             color: isDark ? const Color(0xFFB0B3B8) : Colors.grey[600],
                             fontSize: 12,
                           ),
                         ),
-                        const SizedBox(width: 16),
-                        GestureDetector(
-                           onTap: () {}, // Like logic (simplified)
-                           child: Text(
-                            'Like',
-                            style: TextStyle(
-                              color: isDark ? const Color(0xFFB0B3B8) : Colors.grey[600],
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        GestureDetector(
-                          onTap: () => _handleReply(index),
-                          child: Text(
-                            'Reply',
-                            style: TextStyle(
-                              color: isDark ? const Color(0xFFB0B3B8) : Colors.grey[600],
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        if (comment['likes'] > 0) ...[
-                          const Spacer(),
-                          Text(
-                            '${comment['likes']}',
-                            style: TextStyle(
-                              color: isDark ? const Color(0xFFB0B3B8) : Colors.grey[600],
-                              fontSize: 12,
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Container(
-                            padding: const EdgeInsets.all(2),
-                            decoration: const BoxDecoration(
-                              color: AppTheme.facebookBlue,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(Icons.thumb_up, color: Colors.white, size: 8),
-                          ),
-                        ],
                       ],
                     ),
                   ],
@@ -384,80 +293,8 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
             ],
           ),
         ),
-        
-        // Replies
-        if (comment['replies'] != null && (comment['replies'] as List).isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.only(left: 50),
-            child: listReplies(comment['replies'], isDark),
-          ),
       ],
     );
-  }
-
-  Widget listReplies(List<dynamic> replies, bool isDark) {
-     return Column(
-       children: replies.map((reply) {
-         return Padding(
-           padding: const EdgeInsets.only(bottom: 12),
-           child: Row(
-             crossAxisAlignment: CrossAxisAlignment.start,
-             children: [
-               CircleAvatar(
-                 radius: 12,
-                 backgroundImage: ImageHelper.getImageProvider(reply['avatar']),
-               ),
-               const SizedBox(width: 8),
-               Expanded(
-                 child: Column(
-                   crossAxisAlignment: CrossAxisAlignment.start,
-                   children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF3A3B3C) : const Color(0xFFF0F2F5),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              reply['user'],
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
-                                color: isDark ? Colors.white : AppTheme.black,
-                              ),
-                            ),
-                            Text(
-                              reply['text'],
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: isDark ? Colors.white : AppTheme.black,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Row(
-                         children: [
-                            const SizedBox(width: 8),
-                            Text(reply['time'], style: TextStyle(fontSize: 11, color: Colors.grey[600])),
-                            const SizedBox(width: 12),
-                             Text('Like', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey[600])),
-                            const SizedBox(width: 12),
-                             Text('Reply', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey[600])),
-                         ],
-                      ),
-                   ],
-                 ),
-               )
-             ],
-           ),
-         );
-       }).toList(),
-     );
   }
 
   Widget _buildReactionIcon(IconData icon, Color color) {

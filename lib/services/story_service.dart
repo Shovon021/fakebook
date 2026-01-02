@@ -62,6 +62,7 @@ class StoryService {
               imageUrl: data['imageUrl'],
               isViewed: false, // Will be updated based on viewer list
               isOwnStory: false, // Set by UI based on current user
+              createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
             ));
           }
           

@@ -5,9 +5,12 @@ import '../theme/app_theme.dart';
 import 'package:flutter/services.dart';
 import '../utils/image_helper.dart';
 import 'comment_bottom_sheet.dart';
+import 'share_bottom_sheet.dart';
 import '../screens/photo_viewer_screen.dart';
 import '../screens/profile_screen.dart';
 import 'reactions/reaction_button.dart';
+import '../services/post_service.dart';
+import '../providers/current_user_provider.dart';
 
 class PostCard extends StatefulWidget {
   final PostModel post;
@@ -432,7 +435,11 @@ class _PostCardState extends State<PostCard> with SingleTickerProviderStateMixin
                     Expanded(
                       child: ReactionButton(
                         initialReaction: _currentReaction,
-                        onReactionChanged: (reaction) {
+                        onReactionChanged: (reaction) async {
+                          final userId = currentUserProvider.userId;
+                          if (userId == null) return;
+
+                          // Optimistic update
                           setState(() {
                             _currentReaction = reaction;
                             if (reaction == ReactionType.like) {
@@ -443,6 +450,9 @@ class _PostCardState extends State<PostCard> with SingleTickerProviderStateMixin
                               HapticFeedback.lightImpact();
                             }
                           });
+
+                          // Call service
+                          await PostService().toggleLike(widget.post.id, userId);
                         },
                       ),
                     ),
@@ -470,7 +480,13 @@ class _PostCardState extends State<PostCard> with SingleTickerProviderStateMixin
                       child: _buildActionButton(
                         icon: Icons.share_outlined,
                         label: 'Share',
-                        onTap: () {},
+                        onTap: () {
+                          showModalBottomSheet(
+                            context: context,
+                            backgroundColor: Colors.transparent,
+                            builder: (context) => ShareBottomSheet(post: widget.post),
+                          );
+                        },
                         isDark: isDark,
                       ),
                     ),
