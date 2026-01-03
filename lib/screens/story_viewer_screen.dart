@@ -102,6 +102,21 @@ class _StoryViewerScreenState extends State<StoryViewerScreen> with SingleTicker
     }
   }
 
+  String _getTimeAgo(DateTime createdAt) {
+    final now = DateTime.now();
+    final difference = now.difference(createdAt);
+
+    if (difference.inMinutes < 1) {
+      return 'Just now';
+    } else if (difference.inMinutes < 60) {
+      return '${difference.inMinutes}m';
+    } else if (difference.inHours < 24) {
+      return '${difference.inHours}h';
+    } else {
+      return '${difference.inDays}d';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final story = widget.stories[_currentIndex];
@@ -236,7 +251,7 @@ class _StoryViewerScreenState extends State<StoryViewerScreen> with SingleTicker
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    '2h', // Helper logic can be added for real time
+                    _getTimeAgo(story.createdAt),
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.7),
                       fontSize: 14,
