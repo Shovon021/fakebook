@@ -4,7 +4,6 @@ import '../widgets/story_widget.dart';
 import '../widgets/create_post_widget.dart';
 import '../widgets/post_card.dart';
 import '../widgets/reels_list.dart';
-import '../widgets/memories_widget.dart';
 import '../widgets/facebook_shimmer.dart';
 import '../widgets/empty_states.dart';
 import '../services/post_service.dart';
@@ -101,10 +100,6 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
               
               // Create post
               CreatePostWidget(currentUser: currentUser),
-              _buildDivider(isDark),
-              
-              // Memories
-              const MemoriesWidget(),
               _buildDivider(isDark),
               
               // Posts

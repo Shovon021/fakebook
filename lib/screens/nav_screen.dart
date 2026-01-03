@@ -13,6 +13,8 @@ import 'notifications_screen.dart';
 import 'menu_screen.dart';
 import 'search_screen.dart';
 import 'messenger_screen.dart';
+import 'create_post_screen.dart';
+import 'create_story_screen.dart';
 import '../utils/slide_page_route.dart';
 
 class NavScreen extends StatefulWidget {
@@ -345,27 +347,33 @@ class _NavScreenState extends State<NavScreen> with SingleTickerProviderStateMix
             ),
             const SizedBox(height: 16),
             _buildCreateOption(
-              context,
-              icon: Icons.article,
-              color: Colors.green,
-              title: 'Post',
-              subtitle: 'Share what\'s on your mind',
-              onTap: () {
-                Navigator.pop(context);
-                // Navigate to create post
-              },
-            ),
-            _buildCreateOption(
-              context,
-              icon: Icons.auto_stories,
-              color: AppTheme.facebookBlue,
-              title: 'Story',
-              subtitle: 'Share a photo or video',
-              onTap: () {
-                Navigator.pop(context);
-                // Navigate to create story
-              },
-            ),
+            context,
+            icon: Icons.article,
+            color: Colors.green,
+            title: 'Post',
+            subtitle: 'Share what\'s on your mind',
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                SlidePageRoute(page: CreatePostScreen(currentUser: currentUserProvider.currentUserOrDefault)),
+              );
+            },
+          ),
+          _buildCreateOption(
+            context,
+            icon: Icons.auto_stories,
+            color: AppTheme.facebookBlue,
+            title: 'Story',
+            subtitle: 'Share a photo or video',
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                SlidePageRoute(page: const CreateStoryScreen()),
+              );
+            },
+          ),
             _buildCreateOption(
               context,
               icon: Icons.video_library,
