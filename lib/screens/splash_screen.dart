@@ -182,7 +182,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                           ),
                           const SizedBox(width: 6),
                           const Text(
-                            'Meta',
+                            'Beta',
                             style: TextStyle(
                               color: Color(0xFF1877F2),
                               fontSize: 18,
