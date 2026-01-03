@@ -16,6 +16,7 @@ import 'messenger_screen.dart';
 import 'create_post_screen.dart';
 import 'create_story_screen.dart';
 import '../utils/slide_page_route.dart';
+import '../widgets/messenger_icon.dart';
 
 class NavScreen extends StatefulWidget {
   final VoidCallback onThemeToggle;
@@ -159,17 +160,7 @@ class _NavScreenState extends State<NavScreen> with SingleTickerProviderStateMix
             },
           ),
           // Messenger button
-          _buildHeaderIconButton(
-            icon: Icons.chat_bubble,
-            isDark: isDark,
-            onTap: () {
-              Navigator.push(
-                context,
-                SlidePageRoute(page: const MessengerScreen()),
-              );
-            },
-            badgeCount: 2,
-          ),
+          _buildMessengerButton(isDark),
           const SizedBox(width: 8),
         ],
         bottom: PreferredSize(
@@ -253,6 +244,61 @@ class _NavScreenState extends State<NavScreen> with SingleTickerProviderStateMix
           MarketplaceScreen(),
           NotificationsScreen(),
           MenuScreen(),
+        ],
+      ),
+    );
+  }
+  Widget _buildMessengerButton(bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Stack(
+        children: [
+          Material(
+            color: isDark ? const Color(0xFF3A3B3C) : AppTheme.lightGrey,
+            borderRadius: BorderRadius.circular(20),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(20),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  SlidePageRoute(page: const MessengerScreen()),
+                );
+              },
+              child: Container(
+                width: 38,
+                height: 38,
+                alignment: Alignment.center,
+                child: MessengerIcon(
+                  size: 20,
+                  color: isDark ? Colors.white : AppTheme.black,
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            right: 0,
+            top: 0,
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: const BoxDecoration(
+                color: Colors.red,
+                shape: BoxShape.circle,
+              ),
+              constraints: const BoxConstraints(
+                minWidth: 16,
+                minHeight: 16,
+              ),
+              child: const Text(
+                '2', // Hardcoded badge count, should be dynamic
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
         ],
       ),
     );
