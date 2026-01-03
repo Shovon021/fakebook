@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../theme/app_theme.dart';
 
 class SplashScreen extends StatefulWidget {
   final Widget nextScreen;
@@ -14,10 +13,12 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _scaleAnimation;
-  late Animation<double> _fadeAnimation;
+class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMixin {
+  late AnimationController _logoController;
+  late AnimationController _metaController;
+  late Animation<double> _logoScale;
+  late Animation<double> _logoPulse;
+  late Animation<double> _metaFade;
 
   @override
   void initState() {
@@ -31,33 +32,47 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       ),
     );
 
-    // Animation controller
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 1500),
+    // Logo animation controller
+    _logoController = AnimationController(
+      duration: const Duration(milliseconds: 800),
       vsync: this,
     );
 
-    // Scale animation for the logo
-    _scaleAnimation = Tween<double>(begin: 0.5, end: 1.0).animate(
+    // Logo scale animation - subtle pop in
+    _logoScale = Tween<double>(begin: 0.8, end: 1.0).animate(
       CurvedAnimation(
-        parent: _controller,
-        curve: const Interval(0.0, 0.6, curve: Curves.elasticOut),
+        parent: _logoController,
+        curve: Curves.easeOutBack,
       ),
     );
 
-    // Fade animation
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: const Interval(0.3, 0.8, curve: Curves.easeIn),
-      ),
+    // Subtle pulse animation
+    _logoPulse = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.02), weight: 1),
+      TweenSequenceItem(tween: Tween(begin: 1.02, end: 1.0), weight: 1),
+    ]).animate(CurvedAnimation(
+      parent: _logoController,
+      curve: const Interval(0.5, 1.0),
+    ));
+
+    // Meta branding controller
+    _metaController = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
     );
 
-    // Start animation
-    _controller.forward();
+    _metaFade = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _metaController, curve: Curves.easeIn),
+    );
+
+    // Start animations
+    _logoController.forward();
+    Future.delayed(const Duration(milliseconds: 400), () {
+      if (mounted) _metaController.forward();
+    });
 
     // Navigate after delay
-    Future.delayed(const Duration(milliseconds: 2500), () {
+    Future.delayed(const Duration(milliseconds: 2000), () {
       if (mounted) {
         Navigator.of(context).pushReplacement(
           PageRouteBuilder(
@@ -68,7 +83,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                 child: child,
               );
             },
-            transitionDuration: const Duration(milliseconds: 500),
+            transitionDuration: const Duration(milliseconds: 400),
           ),
         );
       }
@@ -77,7 +92,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
   @override
   void dispose() {
-    _controller.dispose();
+    _logoController.dispose();
+    _metaController.dispose();
     super.dispose();
   }
 
@@ -85,95 +101,149 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Main content - centered logo
-            Expanded(
-              child: Center(
-                child: AnimatedBuilder(
-                  animation: _controller,
-                  builder: (context, child) {
-                    return Transform.scale(
-                      scale: _scaleAnimation.value,
-                      child: Container(
-                        width: 100,
-                        height: 100,
-                        decoration: BoxDecoration(
-                          color: AppTheme.facebookBlue,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppTheme.facebookBlue.withValues(alpha: 0.3),
-                              blurRadius: 30,
-                              spreadRadius: 5,
-                            ),
+      body: Column(
+        children: [
+          // Main content - centered logo
+          Expanded(
+            child: Center(
+              child: AnimatedBuilder(
+                animation: Listenable.merge([_logoController]),
+                builder: (context, child) {
+                  return Transform.scale(
+                    scale: _logoScale.value * _logoPulse.value,
+                    child: Container(
+                      width: 88,
+                      height: 88,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Color(0xFF1877F2), // Facebook blue
+                            Color(0xFF0D65D9), // Slightly darker
                           ],
                         ),
-                        child: const Center(
-                          child: Text(
-                            'f',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 60,
-                              fontWeight: FontWeight.bold,
-                              fontFamily: 'Arial',
-                              height: 1,
-                            ),
+                        borderRadius: BorderRadius.circular(22),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF1877F2).withValues(alpha: 0.25),
+                            blurRadius: 40,
+                            spreadRadius: 0,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
+                      ),
+                      child: const Center(
+                        child: Text(
+                          'f',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 52,
+                            fontWeight: FontWeight.w700,
+                            fontFamily: 'Helvetica',
+                            height: 1.1,
                           ),
                         ),
                       ),
-                    );
-                  },
-                ),
+                    ),
+                  );
+                },
               ),
             ),
-            // Bottom branding
-            AnimatedBuilder(
-              animation: _fadeAnimation,
-              builder: (context, child) {
-                return Opacity(
-                  opacity: _fadeAnimation.value,
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: 40),
-                    child: Column(
-                      children: [
-                        Text(
-                          'from',
-                          style: TextStyle(
-                            color: Colors.grey.shade600,
-                            fontSize: 14,
+          ),
+          // Bottom - Meta branding (like real Facebook)
+          AnimatedBuilder(
+            animation: _metaFade,
+            builder: (context, child) {
+              return Opacity(
+                opacity: _metaFade.value,
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 50),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'from',
+                        style: TextStyle(
+                          color: Colors.grey.shade500,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w400,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          // Meta infinity logo
+                          CustomPaint(
+                            size: const Size(24, 16),
+                            painter: MetaLogoPainter(),
                           ),
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.all_inclusive,
-                              color: AppTheme.facebookBlue,
-                              size: 28,
+                          const SizedBox(width: 6),
+                          const Text(
+                            'Meta',
+                            style: TextStyle(
+                              color: Color(0xFF1877F2),
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: -0.3,
                             ),
-                            const SizedBox(width: 6),
-                            Text(
-                              'Beta',
-                              style: TextStyle(
-                                color: AppTheme.facebookBlue,
-                                fontSize: 22,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                );
-              },
-            ),
-          ],
-        ),
+                ),
+              );
+            },
+          ),
+        ],
       ),
     );
   }
+}
+
+// Custom painter for Meta infinity logo
+class MetaLogoPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = const Color(0xFF1877F2)
+      ..strokeWidth = 2.5
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    final path = Path();
+    
+    // Left loop
+    path.moveTo(size.width * 0.5, size.height * 0.5);
+    path.cubicTo(
+      size.width * 0.25, size.height * 0.1,
+      size.width * 0.0, size.height * 0.3,
+      size.width * 0.0, size.height * 0.5,
+    );
+    path.cubicTo(
+      size.width * 0.0, size.height * 0.7,
+      size.width * 0.25, size.height * 0.9,
+      size.width * 0.5, size.height * 0.5,
+    );
+    
+    // Right loop
+    path.cubicTo(
+      size.width * 0.75, size.height * 0.1,
+      size.width * 1.0, size.height * 0.3,
+      size.width * 1.0, size.height * 0.5,
+    );
+    path.cubicTo(
+      size.width * 1.0, size.height * 0.7,
+      size.width * 0.75, size.height * 0.9,
+      size.width * 0.5, size.height * 0.5,
+    );
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
