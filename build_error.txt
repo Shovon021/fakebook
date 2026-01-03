@@ -1,0 +1,39 @@
+﻿Running Gradle task 'assembleRelease'...                        
+flutter : lib/widgets/story_widget.dart:44:9: Error: No 
+named parameter with the name 'path'.
+At line:1 char:1
++ flutter build apk --release 2>&1 | Out-File -FilePath 
+build_error.txt ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (lib/widgets 
+   /sto...he name 'path'.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+        path: 'stories/${currentUser.id}/${DateTime.now()
+.millisecondsSinceEpoch}',
+        ^^^^
+lib/screens/create_marketplace_item_screen.dart:77:9: 
+Error: No named parameter with the name 'path'.
+        path: 'marketplace/$userId'
+        ^^^^
+Target kernel_snapshot_program failed: Exception
+
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task 
+':app:compileFlutterBuildRelease'.
+> Process 'command 'C:\flutter_windows_3.38.5-stable\flut
+ter\bin\flutter.bat'' finished with non-zero exit value 1
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log 
+output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 20s
+Running Gradle task 'assembleRelease'...                           20.6s
+Gradle task assembleRelease failed with exit code 1

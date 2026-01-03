@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import '../models/post_model.dart';
 import '../models/user_model.dart';
 import 'notification_service.dart';
@@ -143,7 +144,7 @@ class PostService {
 
       return docRef.id;
     } catch (e) {
-      print('Create Post Error: $e');
+      debugPrint('Create Post Error: $e');
       return null;
     }
   }
@@ -263,8 +264,8 @@ class PostService {
     try {
       await _firestore.collection('posts').doc(postId).delete();
     } catch (e) {
-      print('Delete Post Error: $e');
-      throw e;
+      debugPrint('Delete Post Error: $e');
+      rethrow;
     }
   }
 }

@@ -74,7 +74,7 @@ class _CreateMarketplaceItemScreenState extends State<CreateMarketplaceItemScree
       // Upload image
       final imageUrl = await StorageService().uploadImage(
         file: _imageFile!, 
-        path: 'marketplace/$userId'
+        folder: 'fakebook/marketplace/$userId'
       );
       
       if (imageUrl == null) throw Exception('Image upload failed');

@@ -225,8 +225,8 @@ class _ReactionOverlayState extends State<_ReactionOverlay> with SingleTickerPro
                            duration: const Duration(milliseconds: 200),
                            curve: Curves.easeOutBack,
                            transform: Matrix4.identity()
-                             ..translate(0.0, isHovered ? -10.0 : 0.0)
-                             ..scale(isHovered ? 1.3 : 1.0),
+                             ..translate(0.0, isHovered ? -10.0 : 0.0, 0.0)
+                             ..scale(isHovered ? 1.3 : 1.0, isHovered ? 1.3 : 1.0, 1.0),
                            child: CachedNetworkImage(
                              imageUrl: ReactionAssets.getReactionPath(type),
                              width: 40,

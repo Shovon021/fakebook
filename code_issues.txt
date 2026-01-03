@@ -23,12 +23,12 @@ warning - The value of the field '_replyingToUserId' isn't used - lib\widgets\co
    info - 'translate' is deprecated and shouldn't be used. Use translateByVector3, translateByVector4, or translateByDouble instead - lib\widgets\reactions\reaction_button.dart:228:32 - deprecated_member_use
    info - 'scale' is deprecated and shouldn't be used. Use scaleByVector3, scaleByVector4, or scaleByDouble instead - lib\widgets\reactions\reaction_button.dart:229:32 - deprecated_member_use
 
-flutter : 22 issues found. (ran in 4.6s)
+flutter : 22 issues found. (ran in 29.1s)
 At line:1 char:1
 + flutter analyze 2>&1 | Out-File -FilePath 
-analyze_final.txt -Encoding ...
+code_issues.txt -Encoding u ...
 + ~~~~~~~~~~~~~~~~~~~~
-    + CategoryInfo          : NotSpecified: (22 issues f 
-   ound. (ran in 4.6s):String) [], RemoteException
+    + CategoryInfo          : NotSpecified: (22 issues f   
+ ound. (ran in 29.1s):String) [], RemoteException
     + FullyQualifiedErrorId : NativeCommandError
  

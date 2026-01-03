@@ -66,7 +66,7 @@ class _PhotoViewerScreenState extends State<PhotoViewerScreen> with SingleTicker
     if (_transformationController.value.getMaxScaleOnAxis() > 1.0) {
       endMatrix = Matrix4.identity();
     } else {
-      endMatrix = Matrix4.identity()..scale(2.0);
+      endMatrix = Matrix4.identity()..scale(2.0, 2.0, 1.0);
     }
 
     _animation = Matrix4Tween(

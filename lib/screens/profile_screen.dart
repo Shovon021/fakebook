@@ -41,28 +41,45 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   }
 
   Future<void> _changeCoverPhoto() async {
-    final file = await StorageService().pickImageFromGallery();
-    if (file == null) return;
+    try {
+      final file = await StorageService().pickImageFromGallery();
+      if (file == null) return;
 
-    final url = await StorageService().uploadCoverPhoto(_user.id, file);
-    if (url != null) {
-      await UserService().updateUserProfile(userId: _user.id, coverUrl: url);
-      setState(() {
-        _user = _user.copyWith(coverUrl: url);
-      });
+      final url = await StorageService().uploadCoverPhoto(_user.id, file);
+      // url will be non-null if successful, or it will throw
+      if (url != null) {
+        await UserService().updateUserProfile(userId: _user.id, coverUrl: url);
+        setState(() {
+          _user = _user.copyWith(coverUrl: url);
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to update cover: $e')),
+        );
+      }
     }
   }
 
   Future<void> _changeProfilePicture() async {
-    final file = await StorageService().pickImageFromGallery();
-    if (file == null) return;
+    try {
+      final file = await StorageService().pickImageFromGallery();
+      if (file == null) return;
 
-    final url = await StorageService().uploadProfilePicture(_user.id, file);
-    if (url != null) {
-      await UserService().updateUserProfile(userId: _user.id, avatarUrl: url);
-      setState(() {
-        _user = _user.copyWith(avatarUrl: url);
-      });
+      final url = await StorageService().uploadProfilePicture(_user.id, file);
+      if (url != null) {
+        await UserService().updateUserProfile(userId: _user.id, avatarUrl: url);
+        setState(() {
+          _user = _user.copyWith(avatarUrl: url);
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to update profile picture: $e')),
+        );
+      }
     }
   }
 
@@ -80,6 +97,14 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             SliverAppBar(
               pinned: true,
               backgroundColor: isDark ? const Color(0xFF242526) : Colors.white,
+              title: Text(
+                _user.name,
+                style: TextStyle(
+                  color: isDark ? Colors.white : Colors.black,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               leading: IconButton(
                 icon: Icon(Icons.arrow_back, color: isDark ? Colors.white : Colors.black),
                 onPressed: () => Navigator.pop(context),
@@ -91,6 +116,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                 ),
               ],
             ),
+            
             // Profile Header - StreamBuilder for real-time updates
             SliverToBoxAdapter(
               child: StreamBuilder<UserModel?>(
@@ -119,41 +145,31 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                 },
               ),
             ),
+            
+            // Sticky TabBar
+            SliverPersistentHeader(
+              delegate: _SliverAppBarDelegate(
+                TabBar(
+                  controller: _tabController,
+                  indicatorColor: AppTheme.facebookBlue,
+                  indicatorWeight: 3,
+                  labelColor: AppTheme.facebookBlue,
+                  unselectedLabelColor: isDark ? Colors.grey : Colors.grey.shade600,
+                  labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+                  tabs: _tabs.map((t) => Tab(text: t)).toList(),
+                ),
+                backgroundColor: isDark ? const Color(0xFF242526) : Colors.white,
+              ),
+              pinned: true,
+            ),
           ];
         },
-        body: Column(
+        body: TabBarView(
+          controller: _tabController,
           children: [
-            // Tabs
-            Container(
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF242526) : Colors.white,
-                border: Border(
-                  bottom: BorderSide(
-                    color: isDark ? const Color(0xFF3A3B3C) : Colors.grey.shade300,
-                  ),
-                ),
-              ),
-              child: TabBar(
-                controller: _tabController,
-                indicatorColor: AppTheme.facebookBlue,
-                indicatorWeight: 3,
-                labelColor: AppTheme.facebookBlue,
-                unselectedLabelColor: isDark ? Colors.grey : Colors.grey.shade600,
-                labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
-                tabs: _tabs.map((t) => Tab(text: t)).toList(),
-              ),
-            ),
-            // Tab Content
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  _buildPostsTab(isDark),
-                  _buildPhotosTab(isDark),
-                  _buildReelsTab(isDark),
-                ],
-              ),
-            ),
+            _buildPostsTab(isDark),
+            _buildPhotosTab(isDark),
+            _buildReelsTab(isDark),
           ],
         ),
       ),
@@ -666,5 +682,31 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         ],
       ),
     );
+  }
+}
+
+class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
+  final TabBar _tabBar;
+  final Color backgroundColor;
+
+  _SliverAppBarDelegate(this._tabBar, {required this.backgroundColor});
+
+  @override
+  double get minExtent => _tabBar.preferredSize.height;
+  @override
+  double get maxExtent => _tabBar.preferredSize.height;
+
+  @override
+  Widget build(
+      BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return Container(
+      color: backgroundColor,
+      child: _tabBar,
+    );
+  }
+
+  @override
+  bool shouldRebuild(_SliverAppBarDelegate oldDelegate) {
+    return false;
   }
 }

@@ -4,7 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../theme/app_theme.dart';
 import '../providers/current_user_provider.dart';
 import '../services/user_service.dart';
-import '../services/notification_service.dart';
+// notification_service not currently used
 import 'home_screen.dart';
 import 'friends_screen.dart';
 import 'watch_screen.dart';
@@ -35,7 +35,7 @@ class _NavScreenState extends State<NavScreen> with SingleTickerProviderStateMix
   // Real-time badge counts
   int _friendRequestCount = 0;
   int _notificationCount = 0;
-  int _messageCount = 0;
+  // _messageCount reserved for future use
 
   final List<IconData> _tabIcons = [
     Icons.home_outlined,

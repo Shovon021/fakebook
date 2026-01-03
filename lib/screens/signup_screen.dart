@@ -61,9 +61,11 @@ class _SignupScreenState extends State<SignupScreen> with SingleTickerProviderSt
         password: _passwordController.text.trim(),
         name: _nameController.text.trim(),
       );
+      // After successful signup, Firebase Auth automatically logs the user in.
+      // Pop all screens to root so AuthWrapper can detect the logged-in state.
       if (mounted) {
         HapticFeedback.mediumImpact();
-        Navigator.pop(context);
+        Navigator.of(context).popUntil((route) => route.isFirst);
       }
     } catch (e) {
       if (mounted) {

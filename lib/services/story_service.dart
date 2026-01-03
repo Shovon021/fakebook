@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import '../models/story_model.dart';
 import '../models/user_model.dart';
 
@@ -25,7 +26,7 @@ class StoryService {
       });
       return docRef.id;
     } catch (e) {
-      print('Create Story Error: $e');
+      debugPrint('Create Story Error: $e');
       return null;
     }
   }

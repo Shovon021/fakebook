@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import '../models/user_model.dart';
 
 class UserService {
@@ -13,7 +14,7 @@ class UserService {
       }
       return null;
     } catch (e) {
-      print('Get User Error: $e');
+      debugPrint('Get User Error: $e');
       return null;
     }
   }
@@ -47,7 +48,7 @@ class UserService {
       await _firestore.collection('users').doc(userId).update(updateData);
       return true;
     } catch (e) {
-      print('Update Profile Error: $e');
+      debugPrint('Update Profile Error: $e');
       return false;
     }
   }
@@ -106,7 +107,7 @@ class UserService {
           .map((doc) => UserModel.fromMap(doc.data()))
           .toList();
     } catch (e) {
-      print('Get All Users Error: $e');
+      debugPrint('Get All Users Error: $e');
       return [];
     }
   }
@@ -144,7 +145,7 @@ class UserService {
 
       return results.take(20).toList();
     } catch (e) {
-      print('Search Users Error: $e');
+      debugPrint('Search Users Error: $e');
       return [];
     }
   }

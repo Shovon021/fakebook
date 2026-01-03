@@ -18,7 +18,6 @@ class _SearchScreenState extends State<SearchScreen> {
   final UserService _userService = UserService();
   
   List<UserModel> _searchResults = [];
-  bool _isSearching = false;
   bool _isLoading = false;
   String _query = '';
 
@@ -32,7 +31,6 @@ class _SearchScreenState extends State<SearchScreen> {
   void _onSearchChanged(String value) async {
     setState(() {
       _query = value;
-      _isSearching = value.isNotEmpty;
       _isLoading = value.isNotEmpty;
     });
 

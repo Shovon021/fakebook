@@ -41,7 +41,7 @@ class StoryWidget extends StatelessWidget {
       // Upload image
       final imageUrl = await storageService.uploadImage(
         file: file,
-        path: 'stories/${currentUser.id}/${DateTime.now().millisecondsSinceEpoch}',
+        folder: 'fakebook/stories/${currentUser.id}',
       );
 
       if (imageUrl != null) {

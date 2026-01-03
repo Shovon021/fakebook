@@ -25,7 +25,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   
   bool _isPosting = false;
   File? _selectedImage;
-  List<File> _selectedImages = [];
+  final List<File> _selectedImages = [];
 
   @override
   void initState() {
