@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../models/post_model.dart';
 import '../../theme/app_theme.dart';
 import 'package:flutter/services.dart';
@@ -102,12 +102,14 @@ class _ReactionButtonState extends State<ReactionButton> {
                 size: 20,
               )
             else
-              CachedNetworkImage(
-                imageUrl: ReactionAssets.getReactionIcon(widget.initialReaction!),
+              SvgPicture.network(
+                ReactionAssets.getReactionIcon(widget.initialReaction!),
                 width: 20,
                 height: 20,
-                placeholder: (context, url) => SizedBox(width: 20, height: 20),
-                errorWidget: (context, url, error) => Icon(Icons.error, size: 20, color: color),
+                placeholderBuilder: (context) => Text(
+                  ReactionAssets.getReactionEmoji(widget.initialReaction!),
+                  style: const TextStyle(fontSize: 16),
+                ),
               ),
               
             const SizedBox(width: 8),
@@ -221,35 +223,19 @@ class _ReactionOverlayState extends State<_ReactionOverlay> with SingleTickerPro
                        onExit: (_) => setState(() => _hoveredReaction = null),
                        child: Padding(
                          padding: const EdgeInsets.symmetric(horizontal: 4),
-                         child: AnimatedContainer(
+                         child: AnimatedScale(
+                           scale: isHovered ? 1.3 : 1.0,
                            duration: const Duration(milliseconds: 200),
                            curve: Curves.easeOutBack,
-                           transform: Matrix4.identity()
-                             ..translate(0.0, isHovered ? -10.0 : 0.0, 0.0)
-                             ..scale(isHovered ? 1.3 : 1.0, isHovered ? 1.3 : 1.0, 1.0),
-                           child: CachedNetworkImage(
-                             imageUrl: ReactionAssets.getReactionPath(type),
-                             width: 40,
-                             height: 40,
-                             placeholder: (context, url) => Container(
-                               width: 40, 
-                               height: 40, 
-                               decoration: BoxDecoration(
-                                 color: Colors.grey[200],
-                                 shape: BoxShape.circle,
-                               ),
-                               child: Center(
-                                 child: Text(
-                                   ReactionAssets.getReactionEmoji(type),
-                                   style: const TextStyle(fontSize: 24),
-                                 ),
-                               ),
-                             ),
-                             errorWidget: (context, url, error) => Container(
-                               width: 40, 
-                               height: 40, 
-                               alignment: Alignment.center,
-                               child: Text(
+                           child: AnimatedSlide(
+                             offset: Offset(0, isHovered ? -0.25 : 0),
+                             duration: const Duration(milliseconds: 200),
+                             curve: Curves.easeOutBack,
+                             child: SvgPicture.network(
+                               ReactionAssets.getReactionPath(type),
+                               width: 40,
+                               height: 40,
+                               placeholderBuilder: (context) => Text(
                                  ReactionAssets.getReactionEmoji(type),
                                  style: const TextStyle(fontSize: 28),
                                ),

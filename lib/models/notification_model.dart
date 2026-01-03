@@ -17,6 +17,21 @@ class NotificationModel {
     required this.type,
   });
 
+  factory NotificationModel.fromMap(String id, Map<String, dynamic> data) {
+    return NotificationModel(
+      id: id,
+      title: data['title'] ?? '',
+      body: data['body'] ?? '',
+      avatarUrl: data['avatarUrl'] ?? '',
+      createdAt: (data['createdAt'] as dynamic)?.toDate() ?? DateTime.now(),
+      isRead: data['isRead'] ?? false,
+      type: NotificationType.values.firstWhere(
+        (e) => e.name == (data['type'] ?? 'like'),
+        orElse: () => NotificationType.like,
+      ),
+    );
+  }
+
   String get timeAgo {
     final now = DateTime.now();
     final difference = now.difference(createdAt);

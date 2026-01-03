@@ -73,29 +73,27 @@ class StoryWidget extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final currentUser = currentUserProvider.currentUser;
     
-    // Build list with Create Story card first, then other stories
+    // Build list: [Create Card] -> [My Story (if exists)] -> [Friends Stories]
     final displayStories = <StoryModel>[];
     
-    // Find if current user has any stories
-    final userOwnStories = stories.where((s) => s.user.id == currentUser?.id).toList();
-    
-    // Add "Create Story" card (or user's own story if they have one)
+    // 1. Add "Create Story" card (Always visible)
     if (currentUser != null) {
+      displayStories.add(StoryModel(
+        id: 'create',
+        user: currentUser,
+        isOwnStory: true,
+        createdAt: DateTime.now(),
+      ));
+
+      // 2. Add User's "Your Story" card (if they have stories)
+      final userOwnStories = stories.where((s) => s.user.id == currentUser.id).toList();
       if (userOwnStories.isNotEmpty) {
-        // Show user's own story with "Your Story" indicator
+        // Use copyWith to ensure isOwnStory is true for styling
         displayStories.add(userOwnStories.first.copyWith(isOwnStory: true));
-      } else {
-        // Show "Create Story" placeholder
-        displayStories.add(StoryModel(
-          id: 'create',
-          user: currentUser,
-          isOwnStory: true,
-          createdAt: DateTime.now(),
-        ));
       }
     }
     
-    // Add other users' stories
+    // 3. Add other users' stories
     for (final story in stories) {
       if (story.user.id != currentUser?.id) {
         displayStories.add(story);
@@ -122,13 +120,15 @@ class StoryWidget extends StatelessWidget {
   Widget _buildStoryCard(BuildContext context, StoryModel story, bool isDark, List<StoryModel> allStories) {
     return GestureDetector(
       onTap: () {
-        if (story.isOwnStory) {
+        if (story.id == 'create') {
           // Create story
           _createStory(context);
         } else {
           // View stories
-          final viewableStories = allStories.where((s) => !s.isOwnStory).toList();
-          final index = viewableStories.indexOf(story);
+          // Filter out 'create' card for the viewer
+          final viewableStories = allStories.where((s) => s.id != 'create').toList();
+          final index = viewableStories.indexWhere((s) => s.id == story.id);
+          
           Navigator.of(context).push(
             MaterialPageRoute(
               builder: (context) => StoryViewerScreen(
@@ -148,8 +148,9 @@ class StoryWidget extends StatelessWidget {
             // Background
             ClipRRect(
               borderRadius: BorderRadius.circular(14),
-              child: story.isOwnStory
+              child: story.id == 'create'
                   ? _buildCreateStoryCard(story, isDark)
+                  // For "Your Story" card, we treat it as a normal user story card but with special labeling
                   : _buildUserStoryCard(story, isDark),
             ),
           ],
@@ -289,7 +290,7 @@ class StoryWidget extends StatelessWidget {
           right: 8,
           bottom: 12,
           child: Text(
-            story.user.name.split(' ').first,
+            story.isOwnStory ? 'Your Story' : story.user.name.split(' ').first,
             style: const TextStyle(
               color: Colors.white,
               fontSize: 13,

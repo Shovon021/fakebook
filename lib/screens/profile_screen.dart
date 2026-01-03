@@ -8,7 +8,9 @@ import '../services/storage_service.dart';
 import '../widgets/post_card.dart';
 import '../utils/image_helper.dart';
 import '../providers/current_user_provider.dart';
+import '../services/story_service.dart';
 import 'edit_profile_screen.dart';
+import 'search_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   final UserModel user;
@@ -45,16 +47,44 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       final file = await StorageService().pickImageFromGallery();
       if (file == null) return;
 
+      // Show loading
+      if (mounted) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => const Center(
+            child: CircularProgressIndicator(color: AppTheme.facebookBlue),
+          ),
+        );
+      }
+
       final url = await StorageService().uploadCoverPhoto(_user.id, file);
-      // url will be non-null if successful, or it will throw
       if (url != null) {
         await UserService().updateUserProfile(userId: _user.id, coverUrl: url);
         setState(() {
           _user = _user.copyWith(coverUrl: url);
         });
+
+        // Create post for cover photo update
+        await PostService().createPost(
+          authorId: _user.id,
+          content: '${_user.name} updated their cover photo.',
+          imageUrl: url,
+        );
+
+        if (mounted) {
+          Navigator.pop(context); // Close loading
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Cover photo updated!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
+        Navigator.pop(context); // Close loading if open
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to update cover: $e')),
         );
@@ -67,17 +97,89 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       final file = await StorageService().pickImageFromGallery();
       if (file == null) return;
 
+      // Show loading
+      if (mounted) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => const Center(
+            child: CircularProgressIndicator(color: AppTheme.facebookBlue),
+          ),
+        );
+      }
+
       final url = await StorageService().uploadProfilePicture(_user.id, file);
       if (url != null) {
         await UserService().updateUserProfile(userId: _user.id, avatarUrl: url);
         setState(() {
           _user = _user.copyWith(avatarUrl: url);
         });
+
+        // Create post for profile picture update
+        await PostService().createPost(
+          authorId: _user.id,
+          content: '${_user.name} updated their profile picture.',
+          imageUrl: url,
+        );
+
+        if (mounted) {
+          Navigator.pop(context); // Close loading
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Profile picture updated!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
+        Navigator.pop(context); // Close loading if open
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to update profile picture: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _createStory() async {
+    final file = await StorageService().pickImageFromGallery();
+    if (file == null) return;
+
+    if (mounted) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(color: AppTheme.facebookBlue),
+        ),
+      );
+    }
+
+    try {
+      final imageUrl = await StorageService().uploadImage(
+        file: file,
+        folder: 'fakebook/stories/${_user.id}',
+      );
+
+      if (imageUrl != null) {
+        await StoryService().createStory(
+          userId: _user.id,
+          imageUrl: imageUrl,
+        );
+      }
+
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Story posted!')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to post story: $e')),
         );
       }
     }
@@ -112,7 +214,12 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
               actions: [
                 IconButton(
                   icon: Icon(Icons.search, color: isDark ? Colors.white : Colors.black),
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const SearchScreen()),
+                    );
+                  },
                 ),
               ],
             ),
@@ -178,6 +285,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
 
   Widget _buildProfileHeader(bool isDark, bool isOwnProfile) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start, // Ensure left alignment
       children: [
         // Cover Photo with Profile Picture
         Stack(
@@ -415,7 +523,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       children: [
         Expanded(
           child: ElevatedButton.icon(
-            onPressed: () {},
+            onPressed: _createStory,
             icon: const Icon(Icons.add, size: 18),
             label: const Text('Add to story'),
             style: ElevatedButton.styleFrom(

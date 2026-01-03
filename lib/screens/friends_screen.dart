@@ -25,13 +25,45 @@ class _FriendsScreenState extends State<FriendsScreen> {
   }
 
   Future<void> _loadSuggestions() async {
-    final users = await _userService.getAllUsers();
     final currentUserId = currentUserProvider.currentUser?.id;
-    
-    // Filter out current user and existing friends
+    if (currentUserId == null) return;
+
+    // Fetch all required data in parallel
+    final results = await Future.wait([
+      _userService.getAllUsers(limit: 50), // Increased limit for filtering
+      _userService.getSentFriendRequests(currentUserId),
+      _userService.getUserById(currentUserId), // To get latest friends list
+    ]);
+
+    final allUsers = results[0] as List<UserModel>;
+    final sentRequestIds = results[1] as List<String>;
+    final currentUserData = results[2] as UserModel?; // Fresh data
+
+    // Also get received requests (snapshot would be better but simple get works for init load)
+    // We already have a stream listener in build, but for filtering suggestions we need the list now.
+    final receivedSnapshot = await FirebaseFirestore.instance
+        .collection('friendRequests')
+        .where('to', isEqualTo: currentUserId)
+        .where('status', isEqualTo: 'pending')
+        .get();
+    final receivedRequestIds = receivedSnapshot.docs.map((d) => d['from'] as String).toSet();
+
+    final friendIds = currentUserData?.friends ?? [];
+
     if (mounted) {
       setState(() {
-        _suggestions = users.where((user) => user.id != currentUserId).toList();
+        _suggestions = allUsers.where((user) {
+          // 1. Exclude self
+          if (user.id == currentUserId) return false;
+          // 2. Exclude existing friends
+          if (friendIds.contains(user.id)) return false;
+          // 3. Exclude users we SENT a request to
+          if (sentRequestIds.contains(user.id)) return false;
+          // 4. Exclude users who SENT US a request (they are in the top list)
+          if (receivedRequestIds.contains(user.id)) return false;
+          
+          return true;
+        }).toList();
       });
     }
   }

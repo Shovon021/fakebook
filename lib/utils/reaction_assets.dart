@@ -1,23 +1,23 @@
 import '../models/post_model.dart';
 
 class ReactionAssets {
-  // Using reliable static emoji images - FB-style reactions from Imgur
+  // Using reliable CDN-hosted SVG icons from cdnlogo.com
   static String getReactionPath(ReactionType type) {
     switch (type) {
       case ReactionType.like:
-        return 'https://i.imgur.com/O3Z5P5E.png'; // Blue thumbs up
+        return 'https://static.cdnlogo.com/logos/f/41/facebook-reaction-like.svg';
       case ReactionType.love:
-        return 'https://i.imgur.com/RLxqvHf.png'; // Red heart
+        return 'https://static.cdnlogo.com/logos/f/61/facebook-reaction-love.svg';
       case ReactionType.haha:
-        return 'https://i.imgur.com/b8qKvds.png'; // Laughing face
+        return 'https://static.cdnlogo.com/logos/f/83/facebook-reaction-haha.svg'; 
       case ReactionType.wow:
-        return 'https://i.imgur.com/XGjBEuJ.png'; // Wow face
+        return 'https://static.cdnlogo.com/logos/f/20/facebook-reaction-wow.svg';
       case ReactionType.sad:
-        return 'https://i.imgur.com/P3wLdwN.png'; // Sad face
+        return 'https://static.cdnlogo.com/logos/f/73/facebook-reaction-sad.svg';
       case ReactionType.angry:
-        return 'https://i.imgur.com/lPb5aSD.png'; // Angry face
+        return 'https://static.cdnlogo.com/logos/f/23/facebook-reaction-angry.svg';
       case ReactionType.care:
-        return 'https://i.imgur.com/5o8LmzX.png'; // Care hug
+        return 'https://static.cdnlogo.com/logos/f/33/facebook-reaction-care.svg';
     }
   }
 

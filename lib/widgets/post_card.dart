@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../models/post_model.dart';
 import '../theme/app_theme.dart';
 import 'package:flutter/services.dart';
@@ -658,11 +659,15 @@ class _PostCardState extends State<PostCard> with SingleTickerProviderStateMixin
                 color: Colors.white,
               ),
               child: ClipOval(
-                child: CachedNetworkImage(
-                  imageUrl: ReactionAssets.getReactionIcon(type),
+                child: SvgPicture.network(
+                  ReactionAssets.getReactionIcon(type),
+                  width: 16,
+                  height: 16,
                   fit: BoxFit.cover,
-                  placeholder: (context, url) => Container(color: Colors.grey[200]),
-                  errorWidget: (context, url, error) => const Icon(Icons.error, size: 10),
+                  placeholderBuilder: (context) => Text(
+                    ReactionAssets.getReactionEmoji(type),
+                    style: const TextStyle(fontSize: 10),
+                  ),
                 ),
               ),
             ),

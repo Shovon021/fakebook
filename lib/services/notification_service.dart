@@ -14,16 +14,7 @@ class NotificationService {
         .limit(50)
         .snapshots()
         .map((snapshot) => snapshot.docs.map((doc) {
-              final data = doc.data();
-              return NotificationModel(
-                id: doc.id,
-                type: data['type'] ?? 'like',
-                avatarUrl: data['avatarUrl'] ?? '',
-                title: data['title'] ?? '',
-                body: data['body'] ?? '',
-                createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-                isRead: data['isRead'] ?? false,
-              );
+              return NotificationModel.fromMap(doc.id, doc.data());
             }).toList());
   }
 

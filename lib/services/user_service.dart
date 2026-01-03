@@ -55,6 +55,34 @@ class UserService {
 
   // Send friend request
   Future<void> sendFriendRequest(String fromUserId, String toUserId) async {
+    // Check if request already exists
+    final existingQuery = await _firestore
+        .collection('friendRequests')
+        .where('from', isEqualTo: fromUserId)
+        .where('to', isEqualTo: toUserId)
+        .where('status', isEqualTo: 'pending')
+        .get();
+
+    if (existingQuery.docs.isNotEmpty) {
+      return; // Already sent
+    }
+
+    // Check if reverse request exists (optional, but good practice)
+    final reverseQuery = await _firestore
+        .collection('friendRequests')
+        .where('from', isEqualTo: toUserId)
+        .where('to', isEqualTo: fromUserId)
+        .where('status', isEqualTo: 'pending')
+        .get();
+
+    if (reverseQuery.docs.isNotEmpty) {
+      // If they sent us one, just accept it instead of sending new one (Auto-accept logic could go here, 
+      // but for now we basically treat it as handled or let UI handle it. 
+      // Simplest for now: allow sending so UI shows "Request Sent" or handle strictly.
+      // Let's just block duplicate sending for now.)
+      return; 
+    }
+
     await _firestore.collection('friendRequests').add({
       'from': fromUserId,
       'to': toUserId,
@@ -93,6 +121,22 @@ class UserService {
         .where('to', isEqualTo: userId)
         .where('status', isEqualTo: 'pending')
         .snapshots();
+  }
+
+  // Get sent friend requests (to filter suggestions)
+  Future<List<String>> getSentFriendRequests(String userId) async {
+    try {
+      final snapshot = await _firestore
+          .collection('friendRequests')
+          .where('from', isEqualTo: userId)
+          .where('status', isEqualTo: 'pending')
+          .get();
+      
+      return snapshot.docs.map((doc) => doc['to'] as String).toList();
+    } catch (e) {
+      debugPrint('Get Sent Requests Error: $e');
+      return [];
+    }
   }
 
   // Get all users (for "People You May Know")
