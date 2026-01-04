@@ -7,26 +7,38 @@ class MarketplaceService {
 
   // Get marketplace items (with optional category filter)
   Stream<List<MarketplaceItemModel>> getItemsStream({String? category}) {
-    Query query = _firestore.collection('marketplace').orderBy('createdAt', descending: true).limit(50);
+    Query query = _firestore.collection('marketplace').limit(50);
     
     if (category != null && category != 'All') {
       query = query.where('category', isEqualTo: category);
+    } else {
+      // Only order by server side if no category filter (or 'All') to avoiding index requirement
+      query = query.orderBy('createdAt', descending: true);
     }
 
-    return query.snapshots().map((snapshot) => snapshot.docs.map((doc) {
-      final data = doc.data() as Map<String, dynamic>;
-      return MarketplaceItemModel(
-        id: doc.id,
-        title: data['title'] ?? '',
-        price: (data['price'] ?? 0).toDouble(),
-        imageUrl: data['imageUrl'] ?? '',
-        location: data['location'] ?? '',
-        createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-        category: data['category'] ?? 'Miscellaneous',
-        description: data['description'] ?? 'No description provided.',
-        sellerId: data['sellerId'] ?? '',
-      );
-    }).toList());
+    return query.snapshots().map((snapshot) {
+      final items = snapshot.docs.map((doc) {
+        final data = doc.data() as Map<String, dynamic>;
+        return MarketplaceItemModel(
+          id: doc.id,
+          title: data['title'] ?? '',
+          price: (data['price'] ?? 0).toDouble(),
+          imageUrl: data['imageUrl'] ?? '',
+          location: data['location'] ?? '',
+          createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+          category: data['category'] ?? 'Miscellaneous',
+          description: data['description'] ?? 'No description provided.',
+          sellerId: data['sellerId'] ?? '',
+        );
+      }).toList();
+
+      // Client-side sort if filtered by category (since we removed server-side sort)
+      if (category != null && category != 'All') {
+        items.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      }
+
+      return items;
+    });
   }
 
   // Create marketplace item
