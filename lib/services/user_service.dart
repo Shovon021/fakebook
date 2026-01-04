@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import '../models/user_model.dart';
 
@@ -191,6 +192,79 @@ class UserService {
     } catch (e) {
       debugPrint('Search Users Error: $e');
       return [];
+    }
+  }
+
+  /// Permanently delete a user's account and all associated data
+  Future<bool> deleteAccount(String userId) async {
+    try {
+      final batch = _firestore.batch();
+      
+      // 1. Delete all posts by this user
+      final postsSnapshot = await _firestore
+          .collection('posts')
+          .where('authorId', isEqualTo: userId)
+          .get();
+      for (final doc in postsSnapshot.docs) {
+        // Also delete likes subcollection
+        final likesSnapshot = await doc.reference.collection('likes').get();
+        for (final likeDoc in likesSnapshot.docs) {
+          batch.delete(likeDoc.reference);
+        }
+        // Also delete comments subcollection
+        final commentsSnapshot = await doc.reference.collection('comments').get();
+        for (final commentDoc in commentsSnapshot.docs) {
+          batch.delete(commentDoc.reference);
+        }
+        batch.delete(doc.reference);
+      }
+      
+      // 2. Delete all stories by this user
+      final storiesSnapshot = await _firestore
+          .collection('stories')
+          .where('userId', isEqualTo: userId)
+          .get();
+      for (final doc in storiesSnapshot.docs) {
+        batch.delete(doc.reference);
+      }
+      
+      // 3. Delete notifications subcollection
+      final notificationsSnapshot = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('notifications')
+          .get();
+      for (final doc in notificationsSnapshot.docs) {
+        batch.delete(doc.reference);
+      }
+      
+      // 4. Delete friend requests subcollection
+      final friendRequestsSnapshot = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('friendRequests')
+          .get();
+      for (final doc in friendRequestsSnapshot.docs) {
+        batch.delete(doc.reference);
+      }
+      
+      // 5. Delete user document
+      batch.delete(_firestore.collection('users').doc(userId));
+      
+      // Commit batch
+      await batch.commit();
+      
+      // 6. Delete Firebase Auth user (must be done after Firestore)
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null && user.uid == userId) {
+        await user.delete();
+      }
+      
+      debugPrint('Account deleted successfully: $userId');
+      return true;
+    } catch (e) {
+      debugPrint('Delete Account Error: $e');
+      return false;
     }
   }
 }

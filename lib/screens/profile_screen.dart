@@ -145,6 +145,170 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     }
   }
 
+  void _showMoreOptions(BuildContext context, bool isDark) {
+    // Only show on own profile
+    final isOwnProfile = currentUserProvider.currentUser?.id == _user.id;
+    
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF242526) : Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+        ),
+        padding: const EdgeInsets.only(bottom: 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                color: isDark ? Colors.grey[700] : Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            if (isOwnProfile) ...[
+              ListTile(
+                leading: CircleAvatar(
+                  radius: 18,
+                  backgroundColor: Colors.red.withValues(alpha: 0.15),
+                  child: const Icon(Icons.delete_forever, color: Colors.red, size: 22),
+                ),
+                title: Text(
+                  'Delete Account',
+                  style: TextStyle(
+                    color: Colors.red,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                subtitle: Text(
+                  'Permanently delete your account and all data',
+                  style: TextStyle(
+                    color: isDark ? Colors.grey[400] : Colors.grey[600],
+                    fontSize: 12,
+                  ),
+                ),
+                onTap: () {
+                  Navigator.pop(context); // Close sheet
+                  _confirmDeleteAccount(context, isDark);
+                },
+              ),
+            ] else ...[
+              ListTile(
+                leading: CircleAvatar(
+                  radius: 18,
+                  backgroundColor: isDark ? const Color(0xFF3A3B3C) : Colors.grey[200],
+                  child: Icon(Icons.block, color: isDark ? Colors.white : Colors.black, size: 22),
+                ),
+                title: Text(
+                  'Block ${_user.name.split(' ').first}',
+                  style: TextStyle(
+                    color: isDark ? Colors.white : Colors.black,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Blocked ${_user.name}')),
+                  );
+                },
+              ),
+              ListTile(
+                leading: CircleAvatar(
+                  radius: 18,
+                  backgroundColor: isDark ? const Color(0xFF3A3B3C) : Colors.grey[200],
+                  child: Icon(Icons.report, color: isDark ? Colors.white : Colors.black, size: 22),
+                ),
+                title: Text(
+                  'Report Profile',
+                  style: TextStyle(
+                    color: isDark ? Colors.white : Colors.black,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Report submitted')),
+                  );
+                },
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _confirmDeleteAccount(BuildContext context, bool isDark) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF242526) : Colors.white,
+        title: Row(
+          children: [
+            const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 28),
+            const SizedBox(width: 8),
+            Text(
+              'Delete Account?',
+              style: TextStyle(color: isDark ? Colors.white : Colors.black),
+            ),
+          ],
+        ),
+        content: Text(
+          'This action is PERMANENT and IRREVERSIBLE.\n\nAll your data will be deleted:\n• Posts\n• Stories\n• Messages\n• Profile information\n\nAre you absolutely sure?',
+          style: TextStyle(color: isDark ? Colors.grey[300] : Colors.grey[800]),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('Cancel', style: TextStyle(color: isDark ? Colors.white : Colors.black)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Delete Forever', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true && mounted) {
+      // Show loading
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(color: Colors.red),
+        ),
+      );
+
+      final success = await UserService().deleteAccount(_user.id);
+
+      if (mounted) {
+        Navigator.pop(context); // Close loading
+
+        if (success) {
+          // Clear local user and navigate to login
+          currentUserProvider.clearUser();
+          Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to delete account. Please try again.')),
+          );
+        }
+      }
+    }
+  }
+
   Future<void> _createStory() async {
     final file = await StorageService().pickImageFromGallery();
     if (file == null) return;
@@ -658,7 +822,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             borderRadius: BorderRadius.circular(8),
           ),
           child: IconButton(
-            onPressed: () {},
+            onPressed: () => _showMoreOptions(context, isDark),
             icon: Icon(Icons.more_horiz, color: isDark ? Colors.white : Colors.black),
             constraints: const BoxConstraints(),
             padding: const EdgeInsets.all(10),
