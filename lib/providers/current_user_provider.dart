@@ -55,6 +55,14 @@ class CurrentUserProvider extends ChangeNotifier {
     }
   }
 
+  /// Clear user data (for logout/account deletion)
+  void clearUser() {
+    _userSubscription?.cancel();
+    _currentUser = null;
+    _isLoading = false;
+    notifyListeners();
+  }
+
   /// Get a default placeholder user when not logged in (for backwards compatibility)
   UserModel get currentUserOrDefault {
     return _currentUser ?? UserModel(

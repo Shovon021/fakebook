@@ -4,6 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../models/post_model.dart';
 import '../theme/app_theme.dart';
 import 'package:flutter/services.dart';
+import 'package:video_player/video_player.dart';
 import '../utils/image_helper.dart';
 import '../utils/reaction_assets.dart'; // Added import
 import 'comment_bottom_sheet.dart';
@@ -523,12 +524,15 @@ class _PostCardState extends State<PostCard> with SingleTickerProviderStateMixin
                       ),
                     )
                   else
-                    ImageHelper.getNetworkImage(
-                      imageUrl: widget.post.imageUrl!,
-                      width: double.infinity,
-                      height: 300,
-                      fit: BoxFit.cover,
-                    ),
+                    if (widget.post.videoUrl != null)
+                      _FeedVideoPlayer(videoUrl: widget.post.videoUrl!)
+                    else
+                      ImageHelper.getNetworkImage(
+                        imageUrl: widget.post.imageUrl!,
+                        width: double.infinity,
+                        height: 300,
+                        fit: BoxFit.cover,
+                      ),
 
           // Reaction counts
                   // Heart Animation Overlay
@@ -894,5 +898,132 @@ class _PostCardState extends State<PostCard> with SingleTickerProviderStateMixin
       case ReactionType.angry: return 'Angry';
       default: return 'Like';
     }
+  }
+}
+
+// Helper widget for playing videos in the feed
+class _FeedVideoPlayer extends StatefulWidget {
+  final String videoUrl;
+
+  const _FeedVideoPlayer({required this.videoUrl});
+
+  @override
+  State<_FeedVideoPlayer> createState() => _FeedVideoPlayerState();
+}
+
+class _FeedVideoPlayerState extends State<_FeedVideoPlayer> {
+  late VideoPlayerController _controller;
+  bool _isInitialized = false;
+  bool _isPlaying = false;
+  bool _hasError = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeVideo();
+  }
+
+  Future<void> _initializeVideo() async {
+    try {
+      _controller = VideoPlayerController.networkUrl(Uri.parse(widget.videoUrl));
+      await _controller.initialize();
+      _controller.setLooping(true);
+      if (mounted) {
+        setState(() {
+          _isInitialized = true;
+        });
+      }
+    } catch (e) {
+      debugPrint('Video player error: $e');
+      if (mounted) {
+        setState(() => _hasError = true);
+      }
+    }
+  }
+
+  void _togglePlay() {
+    if (!_isInitialized) return;
+
+    setState(() {
+      _isPlaying = !_isPlaying;
+      if (_isPlaying) {
+        _controller.play();
+      } else {
+        _controller.pause();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_hasError) {
+      return Container(
+        height: 300,
+        color: Colors.grey[900],
+        child: const Center(
+            child: Icon(Icons.error_outline, color: Colors.white, size: 40)),
+      );
+    }
+
+    if (!_isInitialized) {
+      return Container(
+        height: 300,
+        color: Colors.black,
+        child: const Center(
+          child: CircularProgressIndicator(color: AppTheme.facebookBlue),
+        ),
+      );
+    }
+
+    return GestureDetector(
+      onTap: _togglePlay,
+      child: Container(
+        color: Colors.black,
+        height: 300, // Fixed height for feed consistency
+        width: double.infinity,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            AspectRatio(
+              aspectRatio: _controller.value.aspectRatio,
+              child: VideoPlayer(_controller),
+            ),
+            if (!_isPlaying)
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.5),
+                  shape: BoxShape.circle,
+                ),
+                padding: const EdgeInsets.all(16),
+                child: const Icon(
+                  Icons.play_arrow,
+                  color: Colors.white,
+                  size: 48,
+                ),
+              ),
+              
+            // Sound icon (mute/unmute placeholder for now)
+            Positioned(
+              bottom: 12,
+              right: 12,
+              child: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.6),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.volume_up, color: Colors.white, size: 20),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

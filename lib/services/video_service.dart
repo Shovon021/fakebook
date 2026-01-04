@@ -6,7 +6,7 @@ import '../models/video_model.dart';
 class VideoService {
   // Pexels API Key - Get yours free at https://www.pexels.com/api/
   // For demo purposes, using a placeholder. Replace with your own key.
-  static const String _apiKey = 'YOUR_PEXELS_API_KEY';
+  static const String _apiKey = 'PUaAq8so2S5d0vYudcBIBccUvS668gq3xgPwGTtmCZOeHSJt17BlO2qy';
   static const String _baseUrl = 'https://api.pexels.com/videos';
 
   /// Fetch popular videos from Pexels API
