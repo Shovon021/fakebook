@@ -581,7 +581,8 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
 
   // Buttons for viewing friend's profile
   Widget _buildFriendProfileButtons(bool isDark) {
-    final bool isFriend = _user.isFriend;
+    final currentUser = currentUserProvider.currentUser;
+    final bool isFriend = currentUser?.friends?.contains(_user.id) ?? false;
     
     return Row(
       children: [
