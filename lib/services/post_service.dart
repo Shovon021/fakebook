@@ -99,6 +99,7 @@ class PostService {
               imagesUrl: data['imagesUrl'] != null 
                   ? List<String>.from(data['imagesUrl']) 
                   : null,
+              videoUrl: data['videoUrl'],
               likesCount: data['likesCount'] ?? 0,
               commentsCount: data['commentsCount'] ?? 0,
               sharesCount: data['sharesCount'] ?? 0,
@@ -119,6 +120,7 @@ class PostService {
     required String content,
     String? imageUrl,
     List<String>? imagesUrl,
+    String? videoUrl,
     String? sharedPostId,
     String type = 'regular',
   }) async {
@@ -128,6 +130,7 @@ class PostService {
         'content': content,
         'imageUrl': imageUrl,
         'imagesUrl': imagesUrl,
+        'videoUrl': videoUrl,
         'sharedPostId': sharedPostId,
         'type': type,
         'likesCount': 0,

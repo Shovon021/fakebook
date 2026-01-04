@@ -28,6 +28,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   
   bool _isPosting = false;
   File? _selectedImage;
+  File? _selectedVideo;
   final List<File> _selectedImages = [];
 
   @override
@@ -48,7 +49,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     super.dispose();
   }
 
-  bool get _canPost => _controller.text.isNotEmpty || _selectedImage != null || _selectedImages.isNotEmpty;
+  bool get _canPost => _controller.text.isNotEmpty || _selectedImage != null || _selectedImages.isNotEmpty || _selectedVideo != null;
 
   Future<void> _pickImage() async {
     final file = await _storageService.pickImageFromGallery();
@@ -64,6 +65,17 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     if (file != null) {
       setState(() {
         _selectedImage = file;
+      });
+    }
+  }
+
+  Future<void> _pickVideo() async {
+    final file = await _storageService.pickVideoFromGallery();
+    if (file != null) {
+      setState(() {
+        _selectedVideo = file;
+        _selectedImage = null; // Clear image if video is selected
+        _selectedImages.clear();
       });
     }
   }
@@ -97,12 +109,22 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         }
       }
 
+      // Upload video if selected
+      String? videoUrl;
+      if (_selectedVideo != null) {
+        videoUrl = await _storageService.uploadVideo(
+          widget.currentUser.id,
+          _selectedVideo!,
+        );
+      }
+
       // Create the post
       await _postService.createPost(
         authorId: widget.currentUser.id,
         content: _controller.text,
         imageUrl: imageUrl,
         imagesUrl: imagesUrls,
+        videoUrl: videoUrl,
       );
 
       if (mounted) {

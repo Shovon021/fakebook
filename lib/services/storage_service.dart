@@ -81,4 +81,34 @@ class StorageService {
   Future<String?> uploadStoryImage(String userId, File file) async {
     return uploadImage(file: file, folder: 'fakebook/stories/$userId');
   }
+
+  // Pick video from gallery
+  Future<File?> pickVideoFromGallery() async {
+    final XFile? video = await _picker.pickVideo(
+      source: ImageSource.gallery,
+      maxDuration: const Duration(minutes: 5),
+    );
+    if (video != null) {
+      return File(video.path);
+    }
+    return null;
+  }
+
+  // Upload video to Cloudinary
+  Future<String?> uploadVideo(String userId, File file) async {
+    try {
+      final response = await _cloudinary.uploadFile(
+        CloudinaryFile.fromFile(
+          file.path,
+          folder: 'fakebook/videos/$userId',
+          resourceType: CloudinaryResourceType.Video,
+        ),
+      );
+      debugPrint('✅ Cloudinary video upload success: ${response.secureUrl}');
+      return response.secureUrl;
+    } catch (e) {
+      debugPrint('❌ Cloudinary video upload error: $e');
+      throw Exception('Video upload failed: $e');
+    }
+  }
 }

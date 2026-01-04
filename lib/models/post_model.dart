@@ -9,6 +9,7 @@ class PostModel {
   final String content;
   final String? imageUrl; // Kept for backward compatibility
   final List<String>? imagesUrl; // New: Multiple images
+  final String? videoUrl; // New: Video posts
   final Color? backgroundColor; // New: Colored backgrounds
   final DateTime createdAt;
   final int likesCount;
@@ -26,6 +27,7 @@ class PostModel {
     required this.content,
     this.imageUrl,
     this.imagesUrl, // New
+    this.videoUrl, // New
     this.backgroundColor, // New
     this.type = 'regular', // New
     required this.createdAt,
