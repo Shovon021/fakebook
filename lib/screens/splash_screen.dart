@@ -115,33 +115,36 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                       width: 88,
                       height: 88,
                       decoration: BoxDecoration(
+                        shape: BoxShape.circle,
                         gradient: const LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
                           colors: [
                             Color(0xFF1877F2), // Facebook blue
-                            Color(0xFF0D65D9), // Slightly darker
+                            Color(0xFF1877F2), // Solid for cleaner look, or subtle gradient
                           ],
                         ),
-                        borderRadius: BorderRadius.circular(22),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFF1877F2).withValues(alpha: 0.25),
-                            blurRadius: 40,
-                            spreadRadius: 0,
-                            offset: const Offset(0, 10),
+                            color: const Color(0xFF1877F2).withValues(alpha: 0.3),
+                            blurRadius: 24,
+                            spreadRadius: 2,
+                            offset: const Offset(0, 8),
                           ),
                         ],
                       ),
-                      child: const Center(
+                      alignment: Alignment.bottomCenter,
+                      child: const Padding(
+                        padding: EdgeInsets.only(bottom: 2), // Fine tune 'f' position
                         child: Text(
                           'f',
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: 52,
-                            fontWeight: FontWeight.w700,
-                            fontFamily: 'Helvetica',
-                            height: 1.1,
+                            fontSize: 64, // Larger 'f'
+                            fontWeight: FontWeight.w900, // Thicker
+                            fontFamily: 'Roboto', // Or system default, Helvetica is fine too
+                            letterSpacing: -1.0,
+                            height: 1.0, 
                           ),
                         ),
                       ),
