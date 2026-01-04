@@ -114,6 +114,115 @@ class PostService {
         });
   }
 
+
+  // Get posts for a specific user
+  Stream<List<PostModel>> getUserPostsStream(String userId, {String? currentUserId}) {
+    return _firestore
+        .collection('posts')
+        .where('authorId', isEqualTo: userId)
+        // .orderBy('createdAt', descending: true) // Removed to avoid composite index requirement
+        .snapshots()
+        .asyncMap((snapshot) async {
+          List<PostModel> posts = [];
+          for (var doc in snapshot.docs) {
+            final data = doc.data();
+            
+            // 1. Fetch author data
+            final authorId = data['authorId'];
+            UserModel author;
+            
+            if (authorId != null) {
+              final authorDoc = await _firestore
+                  .collection('users')
+                  .doc(authorId)
+                  .get();
+              
+              author = authorDoc.exists
+                  ? UserModel.fromMap(authorDoc.data()!)
+                  : UserModel(id: authorId, name: 'Unknown User', avatarUrl: '');
+            } else {
+              author = UserModel(id: 'unknown', name: 'Unknown User', avatarUrl: '');
+            }
+
+            // 2. Check if current user liked this post
+            ReactionType? userReaction;
+            if (currentUserId != null) {
+              final likeDoc = await _firestore
+                  .collection('posts')
+                  .doc(doc.id)
+                  .collection('likes')
+                  .doc(currentUserId)
+                  .get();
+              if (likeDoc.exists) {
+                final data = likeDoc.data();
+                if (data != null && data.containsKey('reaction')) {
+                   final reactionStr = data['reaction'] as String;
+                   userReaction = ReactionType.values.firstWhere(
+                     (e) => e.name == reactionStr, 
+                     orElse: () => ReactionType.like
+                   );
+                } else {
+                  userReaction = ReactionType.like;
+                }
+              }
+            }
+
+            // 3. Fetch Shared Post if applicable
+            PostModel? sharedPost;
+            bool isShared = data['sharedPostId'] != null;
+            
+            if (isShared) {
+              final sharedDoc = await _firestore.collection('posts').doc(data['sharedPostId']).get();
+              if (sharedDoc.exists) {
+                final sharedData = sharedDoc.data()!;
+                final sharedAuthorDoc = await _firestore.collection('users').doc(sharedData['authorId']).get();
+                final sharedAuthor = sharedAuthorDoc.exists
+                    ? UserModel.fromMap(sharedAuthorDoc.data()!)
+                    : UserModel(id: sharedData['authorId'], name: 'Unknown', avatarUrl: '');
+
+                sharedPost = PostModel(
+                  id: sharedDoc.id,
+                  author: sharedAuthor,
+                  content: sharedData['content'] ?? '',
+                  imageUrl: sharedData['imageUrl'],
+                  imagesUrl: sharedData['imagesUrl'] != null 
+                      ? List<String>.from(sharedData['imagesUrl']) 
+                      : null,
+                  createdAt: (sharedData['createdAt'] as Timestamp).toDate(),
+                  likesCount: sharedData['likesCount'] ?? 0,
+                  commentsCount: sharedData['commentsCount'] ?? 0,
+                  sharesCount: sharedData['sharesCount'] ?? 0,
+                );
+              }
+            }
+            
+            posts.add(PostModel(
+              id: doc.id,
+              author: author,
+              content: data['content'] ?? '',
+              imageUrl: data['imageUrl'],
+              imagesUrl: data['imagesUrl'] != null 
+                  ? List<String>.from(data['imagesUrl']) 
+                  : null,
+              videoUrl: data['videoUrl'],
+              likesCount: data['likesCount'] ?? 0,
+              commentsCount: data['commentsCount'] ?? 0,
+              sharesCount: data['sharesCount'] ?? 0,
+              createdAt: (data['createdAt'] as Timestamp).toDate(),
+              userReaction: userReaction,
+              isShared: isShared,
+              sharedPost: sharedPost,
+              type: data['type'] ?? 'regular',
+            ));
+          }
+          
+          // Client-side sorting
+          posts.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          
+          return posts;
+        });
+  }
+
   // Create a new post
   Future<String?> createPost({
     required String authorId,

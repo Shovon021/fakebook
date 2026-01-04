@@ -299,39 +299,45 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         if (errorCode == null) {
           // Success - clear local user and navigate to login
           currentUserProvider.clearUser();
-          Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+          if (mounted) {
+            Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+          }
         } else if (errorCode == 'requires-recent-login') {
           // User needs to re-authenticate
-          showDialog(
-            context: context,
-            builder: (context) => AlertDialog(
-              backgroundColor: isDark ? const Color(0xFF242526) : Colors.white,
-              title: Row(
-                children: [
-                  Icon(Icons.lock_outline, color: Colors.orange, size: 28),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Re-authentication Required',
-                    style: TextStyle(color: isDark ? Colors.white : Colors.black, fontSize: 18),
+          if (mounted) {
+            showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                backgroundColor: isDark ? const Color(0xFF242526) : Colors.white,
+                title: Row(
+                  children: [
+                    Icon(Icons.lock_outline, color: Colors.orange, size: 28),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Re-authentication Required',
+                      style: TextStyle(color: isDark ? Colors.white : Colors.black, fontSize: 18),
+                    ),
+                  ],
+                ),
+                content: Text(
+                  'For security, you need to log out and log back in before deleting your account.\n\nPlease log out, sign in again, and then try deleting your account.',
+                  style: TextStyle(color: isDark ? Colors.grey[300] : Colors.grey[800]),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text('OK', style: TextStyle(color: AppTheme.facebookBlue)),
                   ),
                 ],
               ),
-              content: Text(
-                'For security, you need to log out and log back in before deleting your account.\n\nPlease log out, sign in again, and then try deleting your account.',
-                style: TextStyle(color: isDark ? Colors.grey[300] : Colors.grey[800]),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text('OK', style: TextStyle(color: AppTheme.facebookBlue)),
-                ),
-              ],
-            ),
-          );
+            );
+          }
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Failed to delete account. Please try again.')),
-          );
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Failed to delete account. Please try again.')),
+            );
+          }
         }
       }
     }
@@ -765,7 +771,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             borderRadius: BorderRadius.circular(8),
           ),
           child: IconButton(
-            onPressed: () {},
+            onPressed: () => _showMoreOptions(context, isDark),
             icon: Icon(Icons.more_horiz, color: isDark ? Colors.white : Colors.black),
             constraints: const BoxConstraints(),
             padding: const EdgeInsets.all(10),
@@ -942,7 +948,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
 
         return ListView.separated(
           itemCount: userPosts.length,
-          separatorBuilder: (_, __) => Container(
+          separatorBuilder: (context, index) => Container(
             height: 8,
             color: isDark ? const Color(0xFF18191A) : Colors.grey.shade100,
           ),
@@ -953,23 +959,93 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   }
 
   Widget _buildPhotosTab(bool isDark) {
-    return GridView.builder(
-      padding: const EdgeInsets.all(2),
-      itemCount: 12,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        crossAxisSpacing: 2,
-        mainAxisSpacing: 2,
-      ),
-      itemBuilder: (context, index) {
-        return Container(
-          color: Colors.grey.shade300,
-          child: ImageHelper.getNetworkImage(
-            imageUrl: 'https://picsum.photos/seed/photo$index/400/400',
-            fit: BoxFit.cover,
+    return StreamBuilder<List<PostModel>>(
+      stream: PostService().getUserPostsStream(_user.id),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (snapshot.hasError) {
+          return Center(child: Text('Error loading photos', style: TextStyle(color: isDark ? Colors.white : Colors.black)));
+        }
+
+        final posts = snapshot.data ?? [];
+        final imageUrls = <String>[];
+        
+        for (var post in posts) {
+          if (post.imageUrl != null && post.imageUrl!.isNotEmpty) {
+            imageUrls.add(post.imageUrl!);
+          }
+          if (post.imagesUrl != null) {
+            imageUrls.addAll(post.imagesUrl!);
+          }
+        }
+        
+        if (imageUrls.isEmpty) {
+          return _buildEmptyState(isDark, 'No photos yet');
+        }
+
+        return GridView.builder(
+          padding: const EdgeInsets.all(2),
+          itemCount: imageUrls.length,
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            crossAxisSpacing: 2,
+            mainAxisSpacing: 2,
           ),
+          itemBuilder: (context, index) {
+            return GestureDetector(
+              onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => 
+                   Scaffold(
+                     backgroundColor: Colors.black,
+                     appBar: AppBar(
+                       backgroundColor: Colors.black, 
+                       iconTheme: const IconThemeData(color: Colors.white),
+                       elevation: 0,
+                     ),
+                     body: Center(
+                       child: InteractiveViewer(
+                         child: ImageHelper.getNetworkImage(
+                           imageUrl: imageUrls[index], 
+                           fit: BoxFit.contain
+                         ),
+                       ),
+                     ),
+                   )
+                ));
+              },
+              child: Container(
+                color: isDark ? const Color(0xFF242526) : Colors.grey[200],
+                child: ImageHelper.getNetworkImage(
+                  imageUrl: imageUrls[index],
+                  fit: BoxFit.cover,
+                ),
+              ),
+            );
+          },
         );
       },
+    );
+  }
+
+  Widget _buildEmptyState(bool isDark, String message) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.photo_library_outlined, size: 48, color: isDark ? Colors.grey[600] : Colors.grey[400]),
+          const SizedBox(height: 16),
+          Text(
+            message,
+            style: TextStyle(
+              color: isDark ? Colors.grey[400] : Colors.grey[600],
+              fontSize: 16,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
