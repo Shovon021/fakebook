@@ -95,6 +95,14 @@ class CreatePostWidget extends StatelessWidget {
                   label: 'Live',
                   color: const Color(0xFFF3425F), // FB Live Red
                   isDark: isDark,
+                  onTap: () {
+                     Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => CreatePostScreen(currentUser: currentUser),
+                      ),
+                    );
+                  },
                 ),
               ),
               Expanded(
@@ -103,6 +111,17 @@ class CreatePostWidget extends StatelessWidget {
                   label: 'Photo',
                   color: const Color(0xFF45BD62), // FB Green
                   isDark: isDark,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => CreatePostScreen(
+                          currentUser: currentUser,
+                          initPhoto: true,
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ),
               Expanded(
@@ -111,6 +130,14 @@ class CreatePostWidget extends StatelessWidget {
                   label: 'Room',
                   color: const Color(0xFF9360F7), // FB Purple
                   isDark: isDark,
+                   onTap: () {
+                     Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => CreatePostScreen(currentUser: currentUser),
+                      ),
+                    );
+                  },
                 ),
               ),
             ],
@@ -125,11 +152,12 @@ class CreatePostWidget extends StatelessWidget {
     required String label,
     required Color color,
     required bool isDark,
+    required VoidCallback onTap,
   }) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: () {},
+        onTap: onTap,
         borderRadius: BorderRadius.circular(8),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 8),

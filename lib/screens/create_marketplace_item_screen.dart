@@ -99,8 +99,21 @@ class _CreateMarketplaceItemScreenState extends State<CreateMarketplaceItemScree
       }
     } catch (e) {
       if (mounted) {
+        String errorMessage = 'Failed to publish item';
+        debugPrint('Marketplace Error: $e');
+        
+        if (e.toString().contains('SocketException') || e.toString().contains('Failed host lookup')) {
+          errorMessage = 'Network error. Please check your internet connection.';
+        } else if (e.toString().contains('Upload failed')) {
+          errorMessage = 'Image upload failed. Please try again.';
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
         );
       }
     } finally {

@@ -9,9 +9,12 @@ import '../services/storage_service.dart';
 class CreatePostScreen extends StatefulWidget {
   final UserModel currentUser;
 
+  final bool initPhoto;
+
   const CreatePostScreen({
     super.key,
     required this.currentUser,
+    this.initPhoto = false,
   });
 
   @override
@@ -31,6 +34,12 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   void initState() {
     super.initState();
     _controller.addListener(() => setState(() {}));
+    
+    if (widget.initPhoto) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _pickImage();
+      });
+    }
   }
 
   @override
