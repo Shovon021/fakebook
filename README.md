@@ -1,73 +1,127 @@
 # Fakebook
 
-**Fakebook** is a pixel-perfect **Facebook-clone** built with Flutter. 
+![Flutter](https://img.shields.io/badge/Flutter-3.10.4-02569B?style=for-the-badge&logo=flutter&logoColor=white)
+![Dart](https://img.shields.io/badge/Dart-3.0.0-0175C2?style=for-the-badge&logo=dart&logoColor=white)
+![Firebase](https://img.shields.io/badge/Firebase-Auth%20%7C%20Firestore-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)
+![Cloudinary](https://img.shields.io/badge/Cloudinary-Media%20Storage-3448C5?style=for-the-badge&logo=cloudinary&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
-This project demonstrates a modern mobile UI implementation featuring:
-- 📱 **Authentic UI**: Top tab bar navigation, inline headers, and consistent styling with the original Facebook app.
-- 🌗 **Dark Mode Support**: Seamless toggle between light and dark themes.
-- 🏠 **Home Feed**: Stories, create post widget, and a news feed with posts.
-- 👥 **Friends**: Friend requests, suggestions, and mutual friends list.
-- 📺 **Watch**: Video feed with categories and playback UI.
-- 🏪 **Marketplace**: Product grid with categories and item details.
-- 🔔 **Notifications**: Interactive notification list with unread states.
-- ☰ **Menu**: Profile access, shortcuts, and settings.
-
-## Screenshots
-
-| Home | Friends | Watch |
-|------|---------|-------|
-| ![Home](https://via.placeholder.com/200x400?text=Home) | ![Friends](https://via.placeholder.com/200x400?text=Friends) | ![Watch](https://via.placeholder.com/200x400?text=Watch) |
-
-| Marketplace | Notifications | Menu |
-|-------------|---------------|------|
-| ![Marketplace](https://via.placeholder.com/200x400?text=Marketplace) | ![Notifications](https://via.placeholder.com/200x400?text=Notifications) | ![Menu](https://via.placeholder.com/200x400?text=Menu) |
-
-## Getting Started
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/your-username/fakebook.git
-   ```
-
-2. **Install dependencies**
-   ```bash
-   cd fakebook
-   flutter pub get
-   ```
-
-3. **Run the app**
-   ```bash
-   flutter run
-   ```
-
-
-## 📘 Documentation
-- [**Developer Guidelines**](C:\Users\HP\.gemini\antigravity\brain\669d468c-4bf5-4f17-8193-b9ce453022ec\developer_guideline.md) - **READ THIS to understand the Database Image System.**
-- [Firebase Setup Guide](C:\Users\HP\.gemini\antigravity\brain\669d468c-4bf5-4f17-8193-b9ce453022ec\firebase_setup_guide.md)
-
-## Features
-
-- **Rich UI Components**: Custom widgets for Stories, Post Cards, and Navigation.
-- **Responsive Design**: Adapts various screen sizes (Mobile & Web).
-- **State Management**: Efficient local state handling.
-- **✨ Enhanced Fidelity Features (Phase 3)**:
-  - 📝 **Immersive Create Post**: Full-screen composer.
-  - 🔔 **Dynamic Badges**: Real-time notification counts on tabs.
-  - 📺 **Auto-Play Watch**: Immersive dark mode video feed.
-  - 🏪 **Marketplace Details**: Full product pages with seller info.
-  - 👥 **Friend Actions**: Functional Confirm/Delete buttons.
-  - 🔍 **Real Search**: Recent search history and interface.
-  - 💬 **Messenger**: Chats screen and "Active Now" list.
-  - 🔄 **Shared Posts**: Nested content support.
-  - 🕰️ **Memories**: "On This Day" top-of-feed widget.
-  - 🖼️ **Photo Lightbox**: Pinch-to-zoom image viewer.
-- **✨ Pixel-Perfect Polish (Phase 4-6)**:
-  - 👤 **Authentic Profile**: Sticky headers, nested tabs, and friend grid.
-  - 🎞️ **Immersive Reels**: Full-screen viewer, snap scrolling, double-tap to like.
-  - 💀 **Universal Shimmer**: High-fidelity skeleton loading screens.
-  - 📳 **Haptics**: Vibration feedback on tabs and likes.
-  - 👥 **Groups**: Dedicated groups tab and feed.
-  - ☰ **Menu Redesign**: Accordion-style expandable menus.
+**Fakebook** is a production-grade, high-fidelity clone of the Facebook mobile application, built with Flutter. It mimics the core functionality and design aesthetics of the original platform, offering a seamless user experience across Android and iOS. This project serves as a comprehensive demonstration of advanced Flutter UI development, state management, and cloud integration.
 
 ---
-*Disclaimer: This project is for educational purposes only and is not affiliated with Meta or Facebook.*
+
+## 🏗 System Architecture
+
+The application is built using a scalable architecture separating UI, Business Logic, and Data layers.
+
+- **Frontend**: Flutter (Dart)
+- **Backend**: Firebase (Authentication, Firestore Database)
+- **Media Storage**: Cloudinary (Image & Video hosting)
+- **External APIs**: Pexels API (Stock video content for Reels)
+
+---
+
+## 🚀 Key Features
+
+### 1. Authentication & User Management
+- **Secure Login/Register**: Powered by Firebase Authentication.
+- **Persistent Sessions**: Users remain logged in across app restarts.
+- **Account Management**: Full capability to delete account, including all personal data (posts, stories, messages) via the Profile settings.
+
+### 2. News Feed
+- **Infinite Scrolling**: Optimized list view for endless content consumption.
+- **Rich Post Types**: Support for Text, Photo, Video, and Background Color posts.
+- **Interactive Reactions**: Animated reaction buttons (Like, Love, Care, Haha, Wow, Sad, Angry) using custom SVGs.
+- **Comments & Shares**: Fully functional comment threads and sharing capabilities.
+
+### 3. Short Videos (Reels) & Watch
+- **Immersive Player**: Full-screen, vertical swipe video feed (TikTok-style).
+- **Pexels API Integration**: Fetches high-quality, random popular videos for endless entertainment.
+- **Video Upload**: Users can upload their own videos which appear in the main feed.
+- **Playback Controls**: Auto-play, tap-to-pause, and volume toggle.
+
+### 4. Stories
+- **Ephemeral Content**: Users can post photo stories that expire after 24 hours.
+- **Story Viewer**: Interactive viewer with progress bars and manual navigation.
+- **Privacy**: Visibility limited to friends (simulated).
+
+### 5. Profile & Social Graph
+- **Customizable Profile**: Edit Profile Picture and Cover Photo with instant preview and auto-post generation.
+- **Friend Management**: Send, Accept, and Reject friend requests.
+- **Timeline**: View user-specific posts and life events.
+- **Profile Actions**: Message, Block, and Report functionality.
+
+### 6. Marketplace
+- **Product Listing**: Browse items for sale with infinite scrolling.
+- **Filtering**: Sort/Filter items by category (Vehicles, Electronics, etc.) with client-side optimization.
+- **Item Details**: View detailed product information and seller profiles.
+
+### 7. Core Experience
+- **Dark Mode**: Fully supported system-wide dark theme.
+- **Notifications**: Real-time alerts for interactions.
+- **Search**: Functional search for users and posts.
+- **Responsive Design**: Adapts to various screen densities and sizes.
+
+---
+
+## 🛠 Tech Stack & Services
+
+| Service | Usage | Description |
+| :--- | :--- | :--- |
+| **Flutter** | Frontend Framework | Cross-platform mobile development SDK. |
+| **Firebase Auth** | Authentication | Secure user identity management. |
+| **Cloud Firestore** | Database | NoSQL cloud database for real-time data syncing. |
+| **Cloudinary** | Media Storage | Optimized hosting for user-uploaded images and videos. |
+| **Pexels API** | External API | Provider of royalty-free stock videos for the "Watch/Reels" feature. |
+| **Provider** | State Management | Dependency injection and state management solution. |
+
+---
+
+## 📦 Installation
+
+To run this project locally, follow these steps:
+
+**1. Prerequisites**
+- Flutter SDK installed (v3.10.0 or higher)
+- Android Studio / VS Code
+- A Firebase Project
+- A Cloudinary Account
+
+**2. Clone Repository**
+```bash
+git clone https://github.com/Shovon021/fakebook.git
+cd fakebook
+```
+
+**3. Install Dependencies**
+```bash
+flutter pub get
+```
+
+**4. Configuration**
+- **Firebase**: Replace `google-services.json` (Android) and `GoogleService-Info.plist` (iOS) with your own.
+- **Cloudinary**: Update credentials in `lib/services/storage_service.dart`.
+- **Pexels API**: Add your key to `lib/services/video_service.dart`.
+
+**5. Run Application**
+```bash
+flutter run
+```
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please fork the repository and submit a Pull Request.
+
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+---
+
+## 📄 License
+
+Distributed under the MIT License. See `LICENSE` for more information.
