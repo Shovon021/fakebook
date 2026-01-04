@@ -224,6 +224,22 @@ class _PostCardState extends State<PostCard> with SingleTickerProviderStateMixin
                           ),
                         ),
                       ),
+                      if (widget.post.type == 'profile_picture')
+                        Text(
+                          'updated their profile picture.',
+                          style: TextStyle(
+                            color: isDark ? Colors.grey[400] : Colors.grey[600],
+                            fontSize: 14,
+                          ),
+                        )
+                      else if (widget.post.type == 'cover_photo')
+                        Text(
+                          'updated their cover photo.',
+                          style: TextStyle(
+                            color: isDark ? Colors.grey[400] : Colors.grey[600],
+                            fontSize: 14,
+                          ),
+                        ),
                       const SizedBox(height: 2),
                       Row(
                         children: [
@@ -457,12 +473,64 @@ class _PostCardState extends State<PostCard> with SingleTickerProviderStateMixin
               child: Stack(
                 alignment: Alignment.center,
                 children: [
-                  ImageHelper.getNetworkImage(
-                    imageUrl: widget.post.imageUrl!,
-                    width: double.infinity,
-                    height: 300,
-                    fit: BoxFit.cover,
-                  ),
+                   if (widget.post.type == 'profile_picture')
+                     SizedBox(
+                      height: 350,
+                      width: double.infinity,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          // Blurred Background
+                          Positioned.fill(
+                            child: ImageHelper.getNetworkImage(
+                              imageUrl: widget.post.imageUrl!,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                          Positioned.fill(
+                             child: Container(
+                               color: Colors.white.withValues(alpha: 0.85), // Light overlay to soft blur look
+                             ),
+                           ),
+                           if (isDark)
+                            Positioned.fill(
+                             child: Container(
+                               color: Colors.black.withValues(alpha: 0.7), // Dark overlay for dark mode
+                             ),
+                           ),
+                          
+                          // Circular Profile Picture
+                          Container(
+                            padding: const EdgeInsets.all(4), // White border spacing
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: isDark ? const Color(0xFF242526) : Colors.white,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.2),
+                                  blurRadius: 10,
+                                  spreadRadius: 2,
+                                )
+                              ]
+                            ),
+                            child: CircleAvatar(
+                              radius: 140,
+                              backgroundColor: Colors.grey[200],
+                              backgroundImage: ImageHelper.getImageProvider(widget.post.imageUrl!),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  else
+                    ImageHelper.getNetworkImage(
+                      imageUrl: widget.post.imageUrl!,
+                      width: double.infinity,
+                      height: 300,
+                      fit: BoxFit.cover,
+                    ),
+
+          // Reaction counts
                   // Heart Animation Overlay
                   if (_showHeartAnimation)
                     ScaleTransition(

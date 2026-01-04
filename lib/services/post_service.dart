@@ -106,6 +106,7 @@ class PostService {
               userReaction: userReaction,
               isShared: isShared,
               sharedPost: sharedPost,
+              type: data['type'] ?? 'regular',
             ));
           }
           return posts;
@@ -119,6 +120,7 @@ class PostService {
     String? imageUrl,
     List<String>? imagesUrl,
     String? sharedPostId,
+    String type = 'regular',
   }) async {
     try {
       final data = {
@@ -127,6 +129,7 @@ class PostService {
         'imageUrl': imageUrl,
         'imagesUrl': imagesUrl,
         'sharedPostId': sharedPostId,
+        'type': type,
         'likesCount': 0,
         'commentsCount': 0,
         'sharesCount': 0,

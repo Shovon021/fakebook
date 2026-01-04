@@ -18,6 +18,8 @@ class PostModel {
   final bool isShared;
   final PostModel? sharedPost;
 
+  final String type; // 'regular', 'profile_picture', 'cover_photo'
+
   PostModel({
     required this.id,
     required this.author,
@@ -25,6 +27,7 @@ class PostModel {
     this.imageUrl,
     this.imagesUrl, // New
     this.backgroundColor, // New
+    this.type = 'regular', // New
     required this.createdAt,
     this.likesCount = 0,
     this.commentsCount = 0,

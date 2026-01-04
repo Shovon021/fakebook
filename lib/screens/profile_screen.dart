@@ -68,8 +68,9 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         // Create post for cover photo update
         await PostService().createPost(
           authorId: _user.id,
-          content: '${_user.name} updated their cover photo.',
+          content: '', // No text content needed, header will handle it
           imageUrl: url,
+          type: 'cover_photo',
         );
 
         if (mounted) {
@@ -118,8 +119,9 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         // Create post for profile picture update
         await PostService().createPost(
           authorId: _user.id,
-          content: '${_user.name} updated their profile picture.',
+          content: '', // No text content needed, header will handle it
           imageUrl: url,
+          type: 'profile_picture',
         );
 
         if (mounted) {
