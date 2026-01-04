@@ -195,8 +195,9 @@ class UserService {
     }
   }
 
-  /// Permanently delete a user's account and all associated data
-  Future<bool> deleteAccount(String userId) async {
+  /// Permanently delete a user's account and all associated data.
+  /// Returns null on success, or an error code string on failure.
+  Future<String?> deleteAccount(String userId) async {
     try {
       final batch = _firestore.batch();
       
@@ -261,10 +262,13 @@ class UserService {
       }
       
       debugPrint('Account deleted successfully: $userId');
-      return true;
+      return null; // Success
+    } on FirebaseAuthException catch (e) {
+      debugPrint('Delete Account Auth Error: ${e.code}');
+      return e.code; // e.g., 'requires-recent-login'
     } catch (e) {
       debugPrint('Delete Account Error: $e');
-      return false;
+      return 'unknown-error';
     }
   }
 }

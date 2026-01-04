@@ -18,7 +18,9 @@ class _WatchScreenState extends State<WatchScreen> {
   
   List<VideoModel> _videos = [];
   bool _isLoading = true;
+  bool _isLoadingMore = false;
   int _currentIndex = 0;
+  int _currentPage = 1;
   
   // Map of video controllers - lazy loaded
   final Map<int, VideoPlayerController> _controllers = {};
@@ -26,11 +28,13 @@ class _WatchScreenState extends State<WatchScreen> {
   @override
   void initState() {
     super.initState();
+    // Randomize starting page (1-5) for variety
+    _currentPage = (DateTime.now().millisecondsSinceEpoch % 5) + 1;
     _loadVideos();
   }
 
   Future<void> _loadVideos() async {
-    final videos = await _videoService.getPopularVideos();
+    final videos = await _videoService.getPopularVideos(page: _currentPage);
     if (mounted) {
       setState(() {
         _videos = videos;
@@ -41,6 +45,20 @@ class _WatchScreenState extends State<WatchScreen> {
         _initController(0);
       }
     }
+  }
+
+  Future<void> _loadMoreVideos() async {
+    if (_isLoadingMore) return;
+    _isLoadingMore = true;
+    _currentPage++;
+    
+    final moreVideos = await _videoService.getPopularVideos(page: _currentPage);
+    if (mounted && moreVideos.isNotEmpty) {
+      setState(() {
+        _videos.addAll(moreVideos);
+      });
+    }
+    _isLoadingMore = false;
   }
 
   Future<void> _initController(int index) async {
@@ -55,6 +73,7 @@ class _WatchScreenState extends State<WatchScreen> {
     try {
       await controller.initialize();
       controller.setLooping(true);
+      controller.setVolume(1.0); // Enable sound
       if (index == _currentIndex && mounted) {
         controller.play();
         setState(() {});
@@ -91,6 +110,11 @@ class _WatchScreenState extends State<WatchScreen> {
       _initController(index + 1);
     }
 
+    // Load more videos when near end (3 videos before end)
+    if (index >= _videos.length - 3) {
+      _loadMoreVideos();
+    }
+
     // Dispose far away videos to save memory
     for (final key in _controllers.keys.toList()) {
       if ((key - index).abs() > 2) {
@@ -100,6 +124,7 @@ class _WatchScreenState extends State<WatchScreen> {
     
     HapticFeedback.selectionClick();
   }
+
 
   @override
   void dispose() {

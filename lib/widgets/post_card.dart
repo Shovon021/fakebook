@@ -928,6 +928,7 @@ class _FeedVideoPlayerState extends State<_FeedVideoPlayer> {
       _controller = VideoPlayerController.networkUrl(Uri.parse(widget.videoUrl));
       await _controller.initialize();
       _controller.setLooping(true);
+      _controller.setVolume(1.0); // Enable sound
       if (mounted) {
         setState(() {
           _isInitialized = true;

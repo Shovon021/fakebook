@@ -291,15 +291,43 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         ),
       );
 
-      final success = await UserService().deleteAccount(_user.id);
+      final errorCode = await UserService().deleteAccount(_user.id);
 
       if (mounted) {
         Navigator.pop(context); // Close loading
 
-        if (success) {
-          // Clear local user and navigate to login
+        if (errorCode == null) {
+          // Success - clear local user and navigate to login
           currentUserProvider.clearUser();
           Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+        } else if (errorCode == 'requires-recent-login') {
+          // User needs to re-authenticate
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              backgroundColor: isDark ? const Color(0xFF242526) : Colors.white,
+              title: Row(
+                children: [
+                  Icon(Icons.lock_outline, color: Colors.orange, size: 28),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Re-authentication Required',
+                    style: TextStyle(color: isDark ? Colors.white : Colors.black, fontSize: 18),
+                  ),
+                ],
+              ),
+              content: Text(
+                'For security, you need to log out and log back in before deleting your account.\n\nPlease log out, sign in again, and then try deleting your account.',
+                style: TextStyle(color: isDark ? Colors.grey[300] : Colors.grey[800]),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text('OK', style: TextStyle(color: AppTheme.facebookBlue)),
+                ),
+              ],
+            ),
+          );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Failed to delete account. Please try again.')),
@@ -308,6 +336,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       }
     }
   }
+
 
   Future<void> _createStory() async {
     final file = await StorageService().pickImageFromGallery();
