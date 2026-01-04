@@ -60,12 +60,11 @@ class MessengerService {
         .snapshots();
   }
 
-  // Get user's chat rooms
+  // Get user's chat rooms (no orderBy to avoid index requirement)
   Stream<QuerySnapshot> getChatRoomsStream(String userId) {
     return _firestore
         .collection('chatRooms')
         .where('participants', arrayContains: userId)
-        .orderBy('lastMessageTime', descending: true)
         .snapshots();
   }
 
