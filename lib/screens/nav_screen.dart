@@ -271,6 +271,7 @@ class _NavScreenState extends State<NavScreen> with SingleTickerProviderStateMix
                 child: MessengerIcon(
                   size: 20,
                   color: isDark ? Colors.white : AppTheme.black,
+                  boltColor: isDark ? const Color(0xFF3A3B3C) : AppTheme.lightGrey,
                 ),
               ),
             ),

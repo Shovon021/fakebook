@@ -4,26 +4,32 @@ import 'package:flutter/material.dart';
 class MessengerIcon extends StatelessWidget {
   final double size;
   final Color color;
+  final Color boltColor;
 
   const MessengerIcon({
     super.key,
     this.size = 24,
     this.color = Colors.black,
+    this.boltColor = Colors.white,
   });
 
   @override
   Widget build(BuildContext context) {
     return CustomPaint(
       size: Size(size, size),
-      painter: _MessengerIconPainter(color: color),
+      painter: _MessengerIconPainter(color: color, boltColor: boltColor),
     );
   }
 }
 
 class _MessengerIconPainter extends CustomPainter {
   final Color color;
+  final Color boltColor;
 
-  _MessengerIconPainter({required this.color});
+  _MessengerIconPainter({
+    required this.color,
+    required this.boltColor,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -81,7 +87,7 @@ class _MessengerIconPainter extends CustomPainter {
     boltPath.close();
     
     final boltPaint = Paint()
-      ..color = Colors.white
+      ..color = boltColor
       ..style = PaintingStyle.fill;
     
     canvas.drawPath(boltPath, boltPaint);

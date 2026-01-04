@@ -3,6 +3,7 @@ import '../models/user_model.dart';
 import '../models/post_model.dart';
 import '../theme/app_theme.dart';
 import '../services/user_service.dart';
+import '../widgets/messenger_icon.dart';
 import '../services/post_service.dart';
 import '../services/storage_service.dart';
 import '../widgets/post_card.dart';
@@ -633,7 +634,11 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                 SnackBar(content: Text('Message ${_user.name}')),
               );
             },
-            icon: Icon(Icons.chat_bubble_outline, size: 18, color: isDark ? Colors.white : Colors.black),
+            icon: MessengerIcon(
+              size: 20, 
+              color: isDark ? Colors.white : Colors.black,
+              boltColor: isDark ? const Color(0xFF3A3B3C) : Colors.grey.shade200, // Match button background
+            ),
             label: Text('Message', style: TextStyle(color: isDark ? Colors.white : Colors.black)),
             style: ElevatedButton.styleFrom(
               backgroundColor: isDark ? const Color(0xFF3A3B3C) : Colors.grey.shade200,
