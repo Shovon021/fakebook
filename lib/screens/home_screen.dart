@@ -113,7 +113,7 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
                     children: [
                       PostCard(post: post),
                       _buildDivider(isDark),
-                      ReelsList(reels: _getPlaceholderReels()),
+                      const ReelsList(),
                       _buildDivider(isDark),
                     ],
                   );
@@ -131,27 +131,6 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
         );
       },
     );
-  }
-
-  // Placeholder until ReelsService is created
-  List<ReelModel> _getPlaceholderReels() {
-    return [
-      ReelModel(
-        id: '1',
-        user: UserModel(
-          id: 'placeholder',
-          name: 'User',
-          avatarUrl: 'https://i.imgur.com/K3Z3gM9.jpeg',
-        ),
-        videoUrl: 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4',
-        thumbUrl: 'https://images.unsplash.com/photo-1611162616475-46b635cb6868',
-        description: 'Sample Reel',
-        likesCount: 100,
-        commentsCount: 10,
-        sharesCount: 5,
-        viewsCount: 1000,
-      ),
-    ];
   }
 
   Widget _buildDivider(bool isDark) {

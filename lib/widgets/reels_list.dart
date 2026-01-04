@@ -1,21 +1,54 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../models/reel_model.dart';
+import '../models/video_model.dart';
+import '../services/video_service.dart';
 import '../theme/app_theme.dart';
-import '../screens/reels_viewer_screen.dart';
+import '../screens/watch_screen.dart';
 
-class ReelsList extends StatelessWidget {
-  final List<ReelModel> reels;
+class ReelsList extends StatefulWidget {
+  const ReelsList({super.key});
 
-  const ReelsList({
-    super.key,
-    required this.reels,
-  });
+  @override
+  State<ReelsList> createState() => _ReelsListState();
+}
+
+class _ReelsListState extends State<ReelsList> {
+  final VideoService _videoService = VideoService();
+  List<VideoModel> _videos = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadVideos();
+  }
+
+  Future<void> _loadVideos() async {
+    final videos = await _videoService.getPopularVideos(perPage: 10);
+    if (mounted) {
+      setState(() {
+        _videos = videos;
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     
+    if (_isLoading) {
+      return Container(
+        height: 280,
+        color: isDark ? const Color(0xFF242526) : Colors.white,
+        child: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_videos.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
     return Container(
       height: 280,
       color: isDark ? const Color(0xFF242526) : Colors.white,
@@ -47,6 +80,23 @@ class ReelsList extends StatelessWidget {
                     color: isDark ? Colors.white : AppTheme.black,
                   ),
                 ),
+                const Spacer(),
+                TextButton(
+                  onPressed: () {
+                    // Navigate to Watch/Reels tab
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const Scaffold(body: WatchScreen())),
+                    );
+                  },
+                  child: Text(
+                    'See all',
+                    style: TextStyle(
+                      color: AppTheme.facebookBlue,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -55,21 +105,17 @@ class ReelsList extends StatelessWidget {
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              itemCount: reels.length,
+              itemCount: _videos.length,
               itemBuilder: (context, index) {
                 return GestureDetector(
                   onTap: () {
+                    // Open full-screen watch
                     Navigator.push(
                       context,
-                      MaterialPageRoute(
-                        builder: (context) => ReelsViewerScreen(
-                          reels: reels,
-                          initialIndex: index,
-                        ),
-                      ),
+                      MaterialPageRoute(builder: (_) => const Scaffold(body: WatchScreen())),
                     );
                   },
-                  child: _buildReelCard(reels[index], isDark),
+                  child: _buildReelCard(_videos[index], isDark),
                 );
               },
             ),
@@ -80,7 +126,7 @@ class ReelsList extends StatelessWidget {
     );
   }
 
-  Widget _buildReelCard(ReelModel reel, bool isDark) {
+  Widget _buildReelCard(VideoModel video, bool isDark) {
     return Container(
       width: 130,
       margin: const EdgeInsets.symmetric(horizontal: 4),
@@ -93,10 +139,20 @@ class ReelsList extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            // Thumbnail
+            // Thumbnail from Pexels
             CachedNetworkImage(
-              imageUrl: reel.thumbUrl,
+              imageUrl: video.thumbnailUrl,
               fit: BoxFit.cover,
+              placeholder: (context, url) => Container(
+                color: Colors.grey[900],
+                child: const Center(
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+              errorWidget: (context, url, error) => Container(
+                color: Colors.grey[900],
+                child: const Icon(Icons.error, color: Colors.white),
+              ),
             ),
             // Gradient Overlay
             Container(
@@ -113,7 +169,23 @@ class ReelsList extends StatelessWidget {
                 ),
               ),
             ),
-            // Views Count
+            // User Name
+            Positioned(
+              left: 8,
+              bottom: 24,
+              right: 8,
+              child: Text(
+                video.userName,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            // Play icon and duration
             Positioned(
               left: 8,
               bottom: 8,
@@ -126,7 +198,7 @@ class ReelsList extends StatelessWidget {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    _formatViews(reel.viewsCount),
+                    '${video.duration}s',
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -136,19 +208,9 @@ class ReelsList extends StatelessWidget {
                 ],
               ),
             ),
-            // User Avatar (Optional - can be added to top left)
           ],
         ),
       ),
     );
-  }
-
-  String _formatViews(int views) {
-    if (views >= 1000000) {
-      return '${(views / 1000000).toStringAsFixed(1)}M';
-    } else if (views >= 1000) {
-      return '${(views / 1000).toStringAsFixed(0)}k';
-    }
-    return views.toString();
   }
 }
