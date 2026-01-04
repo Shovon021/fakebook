@@ -450,7 +450,7 @@ class _PostCardState extends State<PostCard> with SingleTickerProviderStateMixin
           // Images
           if (widget.post.imagesUrl != null && widget.post.imagesUrl!.isNotEmpty)
             _buildImageGrid(widget.post.imagesUrl!, isDark)
-          else if (widget.post.imageUrl != null) 
+          else if (widget.post.imageUrl != null || widget.post.videoUrl != null) 
             GestureDetector(
               onTap: () {
                 Navigator.push(

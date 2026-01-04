@@ -12,6 +12,7 @@ import '../providers/current_user_provider.dart';
 import '../services/story_service.dart';
 import 'edit_profile_screen.dart';
 import 'search_screen.dart';
+import 'photo_viewer_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   final UserModel user;
@@ -967,60 +968,82 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         }
 
         if (snapshot.hasError) {
-          return Center(child: Text('Error loading photos', style: TextStyle(color: isDark ? Colors.white : Colors.black)));
+          return Center(child: Text('Error loading media', style: TextStyle(color: isDark ? Colors.white : Colors.black)));
         }
 
         final posts = snapshot.data ?? [];
-        final imageUrls = <String>[];
+        final mediaItems = <Map<String, String>>[];
         
         for (var post in posts) {
+          if (post.videoUrl != null && post.videoUrl!.isNotEmpty) {
+            mediaItems.add({'url': post.videoUrl!, 'type': 'video'});
+          }
           if (post.imageUrl != null && post.imageUrl!.isNotEmpty) {
-            imageUrls.add(post.imageUrl!);
+            mediaItems.add({'url': post.imageUrl!, 'type': 'image'});
           }
           if (post.imagesUrl != null) {
-            imageUrls.addAll(post.imagesUrl!);
+            for (var url in post.imagesUrl!) {
+              mediaItems.add({'url': url, 'type': 'image'});
+            }
           }
         }
         
-        if (imageUrls.isEmpty) {
-          return _buildEmptyState(isDark, 'No photos yet');
+        if (mediaItems.isEmpty) {
+          return _buildEmptyState(isDark, 'No photos or videos yet');
         }
 
         return GridView.builder(
           padding: const EdgeInsets.all(2),
-          itemCount: imageUrls.length,
+          itemCount: mediaItems.length,
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 3,
             crossAxisSpacing: 2,
             mainAxisSpacing: 2,
           ),
           itemBuilder: (context, index) {
+            final item = mediaItems[index];
+            final isVideo = item['type'] == 'video';
+            final url = item['url']!;
+
             return GestureDetector(
               onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => 
-                   Scaffold(
-                     backgroundColor: Colors.black,
-                     appBar: AppBar(
-                       backgroundColor: Colors.black, 
-                       iconTheme: const IconThemeData(color: Colors.white),
-                       elevation: 0,
-                     ),
-                     body: Center(
-                       child: InteractiveViewer(
-                         child: ImageHelper.getNetworkImage(
-                           imageUrl: imageUrls[index], 
-                           fit: BoxFit.contain
-                         ),
-                       ),
-                     ),
-                   )
-                ));
+                // For now, simpler viewing. Ideal: Full screen media viewer.
+                // We'll just open the image viewer for images, and maybe nothing/toast for video for now
+                // OR better: Navigate to the post itself? No, standard is easy viewer.
+                if (!isVideo) {
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => 
+                        PhotoViewerScreen(imageUrl: url, post: PostModel(
+                            id: 'temp', 
+                            author: _user, 
+                            content: '', 
+                            createdAt: DateTime.now(),
+                            imageUrl: url
+                        ))
+                    ));
+                }
               },
               child: Container(
                 color: isDark ? const Color(0xFF242526) : Colors.grey[200],
-                child: ImageHelper.getNetworkImage(
-                  imageUrl: imageUrls[index],
-                  fit: BoxFit.cover,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    if (isVideo)
+                       // Cloudinary thumbnail hack: replace extension with .jpg
+                       ImageHelper.getNetworkImage(
+                         imageUrl: url.endsWith('.mp4') ? url.replaceAll('.mp4', '.jpg') : url, 
+                         fit: BoxFit.cover,
+                       )
+                    else
+                      ImageHelper.getNetworkImage(
+                        imageUrl: url,
+                        fit: BoxFit.cover,
+                      ),
+                    
+                    if (isVideo)
+                      const Center(
+                        child: Icon(Icons.play_arrow, color: Colors.white, size: 30),
+                      ),
+                  ],
                 ),
               ),
             );
@@ -1029,6 +1052,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       },
     );
   }
+
 
   Widget _buildEmptyState(bool isDark, String message) {
     return Center(
