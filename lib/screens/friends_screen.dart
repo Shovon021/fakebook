@@ -338,7 +338,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
                           if (currentUser != null) {
                             try {
                               await _userService.acceptFriendRequest(requestId, user.id, currentUser.id);
-                              if (context.mounted) {
+                              if (mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
                                     content: Text('You are now friends with ${user.name}!'),
@@ -347,7 +347,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
                                 );
                               }
                             } catch (e) {
-                              if (context.mounted) {
+                              if (mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
                                     content: Text('Failed to accept request: $e'),
@@ -379,7 +379,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
                         onPressed: () async {
                           try {
                             await _userService.declineFriendRequest(requestId);
-                            if (context.mounted) {
+                            if (mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
                                   content: Text('Friend request removed'),
@@ -387,7 +387,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
                               );
                             }
                           } catch (e) {
-                            if (context.mounted) {
+                            if (mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text('Failed to delete: $e'),

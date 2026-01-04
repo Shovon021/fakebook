@@ -194,7 +194,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                 ),
                 onTap: () {
                   Navigator.pop(context); // Close sheet
-                  _confirmDeleteAccount(context, isDark);
+                  _confirmDeleteAccount(isDark);
                 },
               ),
             ] else ...[
@@ -247,7 +247,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     );
   }
 
-  Future<void> _confirmDeleteAccount(BuildContext context, bool isDark) async {
+  Future<void> _confirmDeleteAccount(bool isDark) async {
     final confirm = await showDialog<bool>(
       context: context,
       barrierDismissible: false,

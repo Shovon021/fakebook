@@ -27,7 +27,6 @@ class CommentBottomSheet extends StatefulWidget {
 class _CommentBottomSheetState extends State<CommentBottomSheet> {
   final TextEditingController _controller = TextEditingController();
   final FocusNode _focusNode = FocusNode();
-  String? _replyingToUserId;
   String? _replyingToUserName;
   final Set<String> _likedComments = {};
 
@@ -50,7 +49,6 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
     
     // Clear reply state
     setState(() {
-      _replyingToUserId = null;
       _replyingToUserName = null;
     });
 
@@ -66,7 +64,6 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
 
   void _startReply(String userId, String userName) {
     setState(() {
-      _replyingToUserId = userId;
       _replyingToUserName = userName;
     });
     _focusNode.requestFocus();
@@ -75,7 +72,6 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
 
   void _cancelReply() {
     setState(() {
-      _replyingToUserId = null;
       _replyingToUserName = null;
     });
   }

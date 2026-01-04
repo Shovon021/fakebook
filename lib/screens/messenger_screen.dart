@@ -85,7 +85,7 @@ class _MessengerScreenState extends State<MessengerScreen> {
           _buildActionButton(
             icon: Icons.edit_outlined,
             isDark: isDark,
-            onTap: () => _showNewChatDialog(context),
+            onTap: () => _showNewChatDialog(),
           ),
           const SizedBox(width: 8),
         ],
@@ -439,7 +439,7 @@ class _MessengerScreenState extends State<MessengerScreen> {
           ),
           const SizedBox(height: 20),
           ElevatedButton(
-            onPressed: () => _showNewChatDialog(context),
+            onPressed: () => _showNewChatDialog(),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.facebookBlue,
               foregroundColor: Colors.white,
@@ -464,12 +464,12 @@ class _MessengerScreenState extends State<MessengerScreen> {
     );
   }
 
-  void _showNewChatDialog(BuildContext context) async {
+  void _showNewChatDialog() async {
     final users = await _userService.getAllUsers();
+    if (!mounted) return;
+
     final currentUser = currentUserProvider.currentUserOrDefault;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    if (!mounted) return;
 
     showModalBottomSheet(
       context: context,
