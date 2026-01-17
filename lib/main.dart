@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'theme/app_theme.dart';
 import 'screens/nav_screen.dart';
 import 'screens/login_screen.dart';
@@ -27,6 +28,14 @@ void main() async {
   // Initialize Firebase with proper error tracking
   try {
     await Firebase.initializeApp();
+    
+    // Activate App Check
+    await FirebaseAppCheck.instance.activate(
+      // standard android provider
+      androidProvider: AndroidProvider.playIntegrity,
+      // For IOS: appleProvider: AppleProvider.appAttest,
+    );
+    
     _firebaseInitialized = true;
     
     // ONLY initialize provider AFTER Firebase is confirmed working

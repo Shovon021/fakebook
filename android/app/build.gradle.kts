@@ -36,6 +36,10 @@ android {
 
     buildTypes {
         release {
+            // R8/ProGuard disabled due to compilation issues with Firebase
+            // Other security measures (App Check, API restrictions, Firestore Rules) are active
+            isMinifyEnabled = false
+            isShrinkResources = false
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")

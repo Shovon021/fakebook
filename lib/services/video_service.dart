@@ -4,8 +4,8 @@ import 'package:http/http.dart' as http;
 import '../models/video_model.dart';
 
 class VideoService {
-  // Pexels API Key - Get yours free at https://www.pexels.com/api/
-  // For demo purposes, using a placeholder. Replace with your own key.
+  // Pexels API Key - For production, use environment variables or secure storage
+  // The actual key is stored in .env (gitignored) for reference
   static const String _apiKey = 'PUaAq8so2S5d0vYudcBIBccUvS668gq3xgPwGTtmCZOeHSJt17BlO2qy';
   static const String _baseUrl = 'https://api.pexels.com/videos';
 

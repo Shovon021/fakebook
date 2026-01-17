@@ -1,0 +1,167 @@
+> Task :gradle:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :gradle:compileKotlin UP-TO-DATE
+> Task :gradle:compileJava NO-SOURCE
+> Task :gradle:compileGroovy NO-SOURCE
+> Task :gradle:pluginDescriptors UP-TO-DATE
+> Task :gradle:processResources UP-TO-DATE
+> Task :gradle:classes UP-TO-DATE
+> Task :gradle:jar UP-TO-DATE
+
+> Task :app:signingReport
+Variant: debug
+Config: debug
+Store: C:\Users\HP\.android\debug.keystore
+Alias: AndroidDebugKey
+MD5: 62:20:62:33:DB:A1:85:42:2B:04:4C:76:4E:9B:A8:A0
+SHA1: 47:43:0F:3E:E7:AB:4B:60:5F:15:3A:AC:83:73:B5:0F:48:BE:4C:84
+SHA-256: 73:7F:81:67:2F:60:65:28:A6:CC:8D:A5:15:EF:E1:CD:36:67:A4:28:F9:25:E4:49:09:73:26:BB:66:68:9B:6B
+Valid until: Saturday, December 18, 2055
+----------
+Variant: release
+Config: debug
+Store: C:\Users\HP\.android\debug.keystore
+Alias: AndroidDebugKey
+MD5: 62:20:62:33:DB:A1:85:42:2B:04:4C:76:4E:9B:A8:A0
+SHA1: 47:43:0F:3E:E7:AB:4B:60:5F:15:3A:AC:83:73:B5:0F:48:BE:4C:84
+SHA-256: 73:7F:81:67:2F:60:65:28:A6:CC:8D:A5:15:EF:E1:CD:36:67:A4:28:F9:25:E4:49:09:73:26:BB:66:68:9B:6B
+Valid until: Saturday, December 18, 2055
+----------
+Variant: profile
+Config: debug
+Store: C:\Users\HP\.android\debug.keystore
+Alias: AndroidDebugKey
+MD5: 62:20:62:33:DB:A1:85:42:2B:04:4C:76:4E:9B:A8:A0
+SHA1: 47:43:0F:3E:E7:AB:4B:60:5F:15:3A:AC:83:73:B5:0F:48:BE:4C:84
+SHA-256: 73:7F:81:67:2F:60:65:28:A6:CC:8D:A5:15:EF:E1:CD:36:67:A4:28:F9:25:E4:49:09:73:26:BB:66:68:9B:6B
+Valid until: Saturday, December 18, 2055
+----------
+Variant: debugAndroidTest
+Config: debug
+Store: C:\Users\HP\.android\debug.keystore
+Alias: AndroidDebugKey
+MD5: 62:20:62:33:DB:A1:85:42:2B:04:4C:76:4E:9B:A8:A0
+SHA1: 47:43:0F:3E:E7:AB:4B:60:5F:15:3A:AC:83:73:B5:0F:48:BE:4C:84
+SHA-256: 73:7F:81:67:2F:60:65:28:A6:CC:8D:A5:15:EF:E1:CD:36:67:A4:28:F9:25:E4:49:09:73:26:BB:66:68:9B:6B
+Valid until: Saturday, December 18, 2055
+----------
+
+> Task :cloud_firestore:signingReport
+Variant: debugAndroidTest
+Config: debug
+Store: C:\Users\HP\.android\debug.keystore
+Alias: AndroidDebugKey
+MD5: 62:20:62:33:DB:A1:85:42:2B:04:4C:76:4E:9B:A8:A0
+SHA1: 47:43:0F:3E:E7:AB:4B:60:5F:15:3A:AC:83:73:B5:0F:48:BE:4C:84
+SHA-256: 73:7F:81:67:2F:60:65:28:A6:CC:8D:A5:15:EF:E1:CD:36:67:A4:28:F9:25:E4:49:09:73:26:BB:66:68:9B:6B
+Valid until: Saturday, December 18, 2055
+----------
+
+> Task :firebase_app_check:signingReport
+Variant: debugAndroidTest
+Config: debug
+Store: C:\Users\HP\.android\debug.keystore
+Alias: AndroidDebugKey
+MD5: 62:20:62:33:DB:A1:85:42:2B:04:4C:76:4E:9B:A8:A0
+SHA1: 47:43:0F:3E:E7:AB:4B:60:5F:15:3A:AC:83:73:B5:0F:48:BE:4C:84
+SHA-256: 73:7F:81:67:2F:60:65:28:A6:CC:8D:A5:15:EF:E1:CD:36:67:A4:28:F9:25:E4:49:09:73:26:BB:66:68:9B:6B
+Valid until: Saturday, December 18, 2055
+----------
+
+> Task :firebase_auth:signingReport
+Variant: debugAndroidTest
+Config: debug
+Store: C:\Users\HP\.android\debug.keystore
+Alias: AndroidDebugKey
+MD5: 62:20:62:33:DB:A1:85:42:2B:04:4C:76:4E:9B:A8:A0
+SHA1: 47:43:0F:3E:E7:AB:4B:60:5F:15:3A:AC:83:73:B5:0F:48:BE:4C:84
+SHA-256: 73:7F:81:67:2F:60:65:28:A6:CC:8D:A5:15:EF:E1:CD:36:67:A4:28:F9:25:E4:49:09:73:26:BB:66:68:9B:6B
+Valid until: Saturday, December 18, 2055
+----------
+
+> Task :firebase_core:signingReport
+Variant: debugAndroidTest
+Config: debug
+Store: C:\Users\HP\.android\debug.keystore
+Alias: AndroidDebugKey
+MD5: 62:20:62:33:DB:A1:85:42:2B:04:4C:76:4E:9B:A8:A0
+SHA1: 47:43:0F:3E:E7:AB:4B:60:5F:15:3A:AC:83:73:B5:0F:48:BE:4C:84
+SHA-256: 73:7F:81:67:2F:60:65:28:A6:CC:8D:A5:15:EF:E1:CD:36:67:A4:28:F9:25:E4:49:09:73:26:BB:66:68:9B:6B
+Valid until: Saturday, December 18, 2055
+----------
+
+> Task :firebase_storage:signingReport
+Variant: debugAndroidTest
+Config: debug
+Store: C:\Users\HP\.android\debug.keystore
+Alias: AndroidDebugKey
+MD5: 62:20:62:33:DB:A1:85:42:2B:04:4C:76:4E:9B:A8:A0
+SHA1: 47:43:0F:3E:E7:AB:4B:60:5F:15:3A:AC:83:73:B5:0F:48:BE:4C:84
+SHA-256: 73:7F:81:67:2F:60:65:28:A6:CC:8D:A5:15:EF:E1:CD:36:67:A4:28:F9:25:E4:49:09:73:26:BB:66:68:9B:6B
+Valid until: Saturday, December 18, 2055
+----------
+
+> Task :flutter_plugin_android_lifecycle:signingReport
+Variant: debugAndroidTest
+Config: debug
+Store: C:\Users\HP\.android\debug.keystore
+Alias: AndroidDebugKey
+MD5: 62:20:62:33:DB:A1:85:42:2B:04:4C:76:4E:9B:A8:A0
+SHA1: 47:43:0F:3E:E7:AB:4B:60:5F:15:3A:AC:83:73:B5:0F:48:BE:4C:84
+SHA-256: 73:7F:81:67:2F:60:65:28:A6:CC:8D:A5:15:EF:E1:CD:36:67:A4:28:F9:25:E4:49:09:73:26:BB:66:68:9B:6B
+Valid until: Saturday, December 18, 2055
+----------
+
+> Task :image_picker_android:signingReport
+Variant: debugAndroidTest
+Config: debug
+Store: C:\Users\HP\.android\debug.keystore
+Alias: AndroidDebugKey
+MD5: 62:20:62:33:DB:A1:85:42:2B:04:4C:76:4E:9B:A8:A0
+SHA1: 47:43:0F:3E:E7:AB:4B:60:5F:15:3A:AC:83:73:B5:0F:48:BE:4C:84
+SHA-256: 73:7F:81:67:2F:60:65:28:A6:CC:8D:A5:15:EF:E1:CD:36:67:A4:28:F9:25:E4:49:09:73:26:BB:66:68:9B:6B
+Valid until: Saturday, December 18, 2055
+----------
+
+> Task :path_provider_android:signingReport
+Variant: debugAndroidTest
+Config: debug
+Store: C:\Users\HP\.android\debug.keystore
+Alias: AndroidDebugKey
+MD5: 62:20:62:33:DB:A1:85:42:2B:04:4C:76:4E:9B:A8:A0
+SHA1: 47:43:0F:3E:E7:AB:4B:60:5F:15:3A:AC:83:73:B5:0F:48:BE:4C:84
+SHA-256: 73:7F:81:67:2F:60:65:28:A6:CC:8D:A5:15:EF:E1:CD:36:67:A4:28:F9:25:E4:49:09:73:26:BB:66:68:9B:6B
+Valid until: Saturday, December 18, 2055
+----------
+
+> Task :sqflite_android:signingReport
+Variant: debugAndroidTest
+Config: debug
+Store: C:\Users\HP\.android\debug.keystore
+Alias: AndroidDebugKey
+MD5: 62:20:62:33:DB:A1:85:42:2B:04:4C:76:4E:9B:A8:A0
+SHA1: 47:43:0F:3E:E7:AB:4B:60:5F:15:3A:AC:83:73:B5:0F:48:BE:4C:84
+SHA-256: 73:7F:81:67:2F:60:65:28:A6:CC:8D:A5:15:EF:E1:CD:36:67:A4:28:F9:25:E4:49:09:73:26:BB:66:68:9B:6B
+Valid until: Saturday, December 18, 2055
+----------
+
+> Task :video_player_android:signingReport
+Variant: debugAndroidTest
+Config: debug
+Store: C:\Users\HP\.android\debug.keystore
+Alias: AndroidDebugKey
+MD5: 62:20:62:33:DB:A1:85:42:2B:04:4C:76:4E:9B:A8:A0
+SHA1: 47:43:0F:3E:E7:AB:4B:60:5F:15:3A:AC:83:73:B5:0F:48:BE:4C:84
+SHA-256: 73:7F:81:67:2F:60:65:28:A6:CC:8D:A5:15:EF:E1:CD:36:67:A4:28:F9:25:E4:49:09:73:26:BB:66:68:9B:6B
+Valid until: Saturday, December 18, 2055
+----------
+
+[Incubating] Problems report is available at: file:///E:/Fakebook/build/reports/problems/problems-report.html
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.14/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD SUCCESSFUL in 6s
+15 actionable tasks: 11 executed, 4 up-to-date

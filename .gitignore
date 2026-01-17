@@ -43,3 +43,11 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Security - Do not commit sensitive files
+.env
+.env.local
+*.env
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+
