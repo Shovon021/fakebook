@@ -98,10 +98,25 @@ cd fakebook
 flutter pub get
 ```
 
-**4. Configuration**
-- **Firebase**: Replace `google-services.json` (Android) and `GoogleService-Info.plist` (iOS) with your own.
-- **Cloudinary**: Update credentials in `lib/services/storage_service.dart`.
-- **Pexels API**: Add your key to `lib/services/video_service.dart`.
+**4. Configuration (Important!)**
+This project uses **secure keys** which are NOT included in the repository. You must add them manually:
+
+*   **Firebase**:
+    1.  Create a project on [Firebase Console](https://console.firebase.google.com/).
+    2.  Add an Android app (package: `com.fakebook.fakebook`).
+    3.  Download `google-services.json` and place it in `android/app/`.
+    4.  Enable **Authentication** (Email/Password) and **Firestore Database**.
+
+*   **Environment Variables**:
+    1.  Copy `.env.example` to a new file named `.env` in the root directory.
+    2.  Get your (free) API Key from [Pexels](https://www.pexels.com/api/).
+    3.  Add it to `.env`:
+        ```
+        PEXELS_API_KEY=your_actual_api_key_here
+        ```
+
+*   **Cloudinary**:
+    *   Update `lib/services/storage_service.dart` with your Cloud Name and Upload Preset.
 
 **5. Run Application**
 ```bash
