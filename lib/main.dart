@@ -162,6 +162,15 @@ class AuthWrapper extends StatelessWidget {
   final VoidCallback onThemeToggle;
   const AuthWrapper({super.key, required this.onThemeToggle});
 
+  Future<bool> _checkEmailVerified() async {
+    final user = AuthService().currentUser;
+    if (user == null) return false;
+    
+    await user.reload();
+    final freshUser = AuthService().currentUser;
+    return freshUser?.emailVerified ?? false;
+  }
+
   @override
   Widget build(BuildContext context) {
     return StreamBuilder(
@@ -179,9 +188,33 @@ class AuthWrapper extends StatelessWidget {
           );
         }
 
-        // If we have a user, show the App
+        // If we have a user, check if email is verified
         if (snapshot.hasData) {
-          return NavScreen(onThemeToggle: onThemeToggle);
+          return FutureBuilder<bool>(
+            future: _checkEmailVerified(),
+            builder: (context, verifiedSnapshot) {
+              if (verifiedSnapshot.connectionState == ConnectionState.waiting) {
+                return const Scaffold(
+                  backgroundColor: Colors.white,
+                  body: Center(
+                    child: CircularProgressIndicator(
+                      color: Color(0xFF1877F2),
+                    ),
+                  ),
+                );
+              }
+              
+              final isVerified = verifiedSnapshot.data ?? false;
+              
+              if (!isVerified) {
+                // Sign out unverified user and show login
+                AuthService().signOut();
+                return const LoginScreen();
+              }
+              
+              return NavScreen(onThemeToggle: onThemeToggle);
+            },
+          );
         }
         
         // No user -> Login

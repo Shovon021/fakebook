@@ -12,6 +12,9 @@ class AuthService {
 
   // Get Current User ID
   String? get currentUserId => _auth.currentUser?.uid;
+  
+  // Get Current User (for reload operations)
+  User? get currentUser => _auth.currentUser;
 
   // Sign Up
   Future<UserModel?> signUp({
@@ -66,13 +69,19 @@ class AuthService {
       
       final User? user = result.user;
       
-      if (user != null && !user.emailVerified) {
-        await user.sendEmailVerification();
-        await _auth.signOut();
-        throw Exception('Email not verified. A new verification link has been sent to $email.');
+      if (user != null) {
+        // Reload user to get fresh emailVerified status
+        await user.reload();
+        final freshUser = _auth.currentUser;
+        
+        if (freshUser != null && !freshUser.emailVerified) {
+          await freshUser.sendEmailVerification();
+          await _auth.signOut();
+          throw Exception('Email not verified. A new verification link has been sent to $email.');
+        }
       }
       
-      return user;
+      return _auth.currentUser;
     } catch (e) {
       debugPrint('SignIn Error: $e');
       rethrow;
