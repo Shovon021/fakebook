@@ -60,12 +60,43 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       );
     } catch (e) {
       if (mounted) {
+        String errorMessage = e.toString().replaceAll('Exception: ', '');
+        final isVerificationError = errorMessage.contains('Email not verified');
+        
+        // Map user-friendly error messages
+        if (errorMessage.contains('invalid-credential') || 
+            errorMessage.contains('user-not-found') || 
+            errorMessage.contains('wrong-password')) {
+          errorMessage = 'Incorrect email or password. Please try again.';
+        } else if (errorMessage.contains('invalid-email')) {
+          errorMessage = 'Please enter a valid email address.';
+        } else if (errorMessage.contains('network-request-failed')) {
+          errorMessage = 'Network error. Please check your internet connection.';
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Login Failed: ${e.toString().replaceAll('Exception: ', '')}'),
-            backgroundColor: Colors.red.shade400,
+            content: Row(
+              children: [
+                Icon(
+                  isVerificationError ? Icons.mark_email_unread_outlined : Icons.error_outline,
+                  color: isVerificationError ? Colors.orange.shade800 : Colors.red.shade600,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    isVerificationError ? errorMessage : errorMessage,
+                    style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w500),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.white,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            margin: const EdgeInsets.all(16),
+            elevation: 4,
+            duration: Duration(seconds: isVerificationError ? 5 : 4),
           ),
         );
       }

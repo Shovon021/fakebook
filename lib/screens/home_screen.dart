@@ -43,9 +43,14 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final currentUser = currentUserProvider.currentUserOrDefault;
 
-    return StreamBuilder<List<PostModel>>(
+    // Listen to user provider changes for instant profile picture updates
+    return ListenableBuilder(
+      listenable: currentUserProvider,
+      builder: (context, _) {
+        final currentUser = currentUserProvider.currentUserOrDefault;
+
+        return StreamBuilder<List<PostModel>>(
       stream: _postService.getPostsStream(),
       builder: (context, postSnapshot) {
         // Show shimmer while loading
@@ -129,6 +134,8 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
             ],
           ),
         );
+      },
+    );
       },
     );
   }

@@ -42,6 +42,10 @@ class AuthService {
 
       await _firestore.collection('users').doc(user.uid).set(newUser.toMap());
 
+      // 3. Send Verification Email & Sign Out
+      await user.sendEmailVerification();
+      await _auth.signOut();
+
       return newUser;
     } catch (e) {
       debugPrint('SignUp Error: $e');
@@ -59,7 +63,16 @@ class AuthService {
         email: email,
         password: password,
       );
-      return result.user;
+      
+      final User? user = result.user;
+      
+      if (user != null && !user.emailVerified) {
+        await user.sendEmailVerification();
+        await _auth.signOut();
+        throw Exception('Email not verified. A new verification link has been sent to $email.');
+      }
+      
+      return user;
     } catch (e) {
       debugPrint('SignIn Error: $e');
       rethrow;

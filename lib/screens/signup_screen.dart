@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
 
@@ -61,11 +60,29 @@ class _SignupScreenState extends State<SignupScreen> with SingleTickerProviderSt
         password: _passwordController.text.trim(),
         name: _nameController.text.trim(),
       );
-      // After successful signup, Firebase Auth automatically logs the user in.
-      // Pop all screens to root so AuthWrapper can detect the logged-in state.
+      
       if (mounted) {
-        HapticFeedback.mediumImpact();
-        Navigator.of(context).popUntil((route) => route.isFirst);
+        // Show verification dialog
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: const Text('Verify Your Email'),
+            content: Text(
+              'Account created successfully!\n\nWe have sent a verification link to ${_emailController.text.trim()}.\n\nPlease check your email and verify your account before logging in.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context); // Close dialog
+                  Navigator.pop(context); // Go back to Login Screen
+                },
+                child: const Text('OK', style: TextStyle(color: AppTheme.facebookBlue, fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {
