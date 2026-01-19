@@ -40,15 +40,51 @@ class _SignupScreenState extends State<SignupScreen> with SingleTickerProviderSt
     super.dispose();
   }
 
-  Future<void> _handleSignup() async {
-    if (_nameController.text.isEmpty || _emailController.text.isEmpty || _passwordController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Please fill all fields'),
-          backgroundColor: Colors.red.shade400,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+  // Facebook-style SnackBar helper
+  void _showFacebookSnackBar(BuildContext context, String message, IconData icon, Color iconColor, {int seconds = 4}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(icon, color: iconColor, size: 22),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                message,
+                style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w500, fontSize: 14),
+              ),
+            ),
+          ],
         ),
+        backgroundColor: Colors.white,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        margin: const EdgeInsets.all(16),
+        elevation: 4,
+        duration: Duration(seconds: seconds),
+      ),
+    );
+  }
+
+  Future<void> _handleSignup() async {
+    // Validate all fields
+    if (_nameController.text.isEmpty || _emailController.text.isEmpty || _passwordController.text.isEmpty) {
+      _showFacebookSnackBar(
+        context,
+        'Please fill in all fields',
+        Icons.edit_outlined,
+        Colors.orange.shade700,
+      );
+      return;
+    }
+    
+    // Validate password length
+    if (_passwordController.text.length < 6) {
+      _showFacebookSnackBar(
+        context,
+        'Password must be at least 6 characters',
+        Icons.lock_outline,
+        Colors.orange.shade700,
       );
       return;
     }
@@ -62,15 +98,21 @@ class _SignupScreenState extends State<SignupScreen> with SingleTickerProviderSt
       );
       
       if (mounted) {
-        // Show verification dialog
+        // Show verification dialog with Facebook style
         showDialog(
           context: context,
           barrierDismissible: false,
           builder: (context) => AlertDialog(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            title: const Text('Verify Your Email'),
+            title: Row(
+              children: [
+                Icon(Icons.mark_email_read_outlined, color: Colors.green.shade600, size: 28),
+                const SizedBox(width: 12),
+                const Text('Verify Your Email'),
+              ],
+            ),
             content: Text(
-              'Account created successfully!\n\nWe have sent a verification link to ${_emailController.text.trim()}.\n\nPlease check your email and verify your account before logging in.',
+              'Account created successfully!\n\nWe have sent a verification link to ${_emailController.text.trim()}.\n\nPlease check your email (including spam folder) and verify your account before logging in.',
             ),
             actions: [
               TextButton(
@@ -78,7 +120,7 @@ class _SignupScreenState extends State<SignupScreen> with SingleTickerProviderSt
                   Navigator.pop(context); // Close dialog
                   Navigator.pop(context); // Go back to Login Screen
                 },
-                child: const Text('OK', style: TextStyle(color: AppTheme.facebookBlue, fontWeight: FontWeight.bold)),
+                child: const Text('Got it!', style: TextStyle(color: AppTheme.facebookBlue, fontWeight: FontWeight.bold, fontSize: 16)),
               ),
             ],
           ),
@@ -86,14 +128,29 @@ class _SignupScreenState extends State<SignupScreen> with SingleTickerProviderSt
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Signup Failed: ${e.toString().replaceAll('Exception: ', '')}'),
-            backgroundColor: Colors.red.shade400,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          ),
-        );
+        String errorMessage = e.toString().replaceAll('Exception: ', '');
+        IconData icon = Icons.error_outline;
+        Color iconColor = Colors.red.shade600;
+        
+        // Map user-friendly error messages with appropriate icons
+        if (errorMessage.contains('email-already-in-use')) {
+          errorMessage = 'This email is already registered. Try logging in instead.';
+          icon = Icons.person_outline;
+        } else if (errorMessage.contains('invalid-email')) {
+          errorMessage = 'Please enter a valid email address.';
+          icon = Icons.alternate_email;
+        } else if (errorMessage.contains('weak-password')) {
+          errorMessage = 'Password is too weak. Use 6+ characters.';
+          icon = Icons.lock_outline;
+        } else if (errorMessage.contains('network-request-failed')) {
+          errorMessage = 'Network error. Please check your internet connection.';
+          icon = Icons.wifi_off_outlined;
+        } else if (errorMessage.contains('too-many-requests')) {
+          errorMessage = 'Too many attempts. Please try again later.';
+          icon = Icons.timer_off_outlined;
+        }
+        
+        _showFacebookSnackBar(context, errorMessage, icon, iconColor);
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);

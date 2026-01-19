@@ -70,12 +70,27 @@ class AuthService {
       final User? user = result.user;
       
       if (user != null) {
-        // Reload user to get fresh emailVerified status
-        await user.reload();
+        // Reload user to get fresh emailVerified status with timeout
+        try {
+          await user.reload().timeout(
+            const Duration(seconds: 5),
+            onTimeout: () {
+              debugPrint('User reload timed out, continuing with cached data');
+            },
+          );
+        } catch (reloadError) {
+          debugPrint('User reload failed: $reloadError');
+          // Continue with cached data if reload fails
+        }
+        
         final freshUser = _auth.currentUser;
         
         if (freshUser != null && !freshUser.emailVerified) {
-          await freshUser.sendEmailVerification();
+          try {
+            await freshUser.sendEmailVerification();
+          } catch (sendError) {
+            debugPrint('Failed to send verification email: $sendError');
+          }
           await _auth.signOut();
           throw Exception('Email not verified. A new verification link has been sent to $email.');
         }

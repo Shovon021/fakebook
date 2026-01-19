@@ -39,15 +39,39 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     super.dispose();
   }
 
+  // Facebook-style SnackBar helper
+  void _showFacebookSnackBar(BuildContext context, String message, IconData icon, Color iconColor, {int seconds = 4}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(icon, color: iconColor, size: 22),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                message,
+                style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w500, fontSize: 14),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: Colors.white,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        margin: const EdgeInsets.all(16),
+        elevation: 4,
+        duration: Duration(seconds: seconds),
+      ),
+    );
+  }
+
   Future<void> _handleLogin() async {
     if (_emailController.text.trim().isEmpty || _passwordController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Please fill in all fields'),
-          backgroundColor: Colors.red.shade400,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        ),
+      _showFacebookSnackBar(
+        context,
+        'Please fill in all fields',
+        Icons.edit_outlined,
+        Colors.orange.shade700,
       );
       return;
     }
@@ -61,44 +85,35 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     } catch (e) {
       if (mounted) {
         String errorMessage = e.toString().replaceAll('Exception: ', '');
-        final isVerificationError = errorMessage.contains('Email not verified');
+        IconData icon = Icons.error_outline;
+        Color iconColor = Colors.red.shade600;
+        int duration = 4;
         
-        // Map user-friendly error messages
-        if (errorMessage.contains('invalid-credential') || 
+        // Map user-friendly error messages with appropriate icons
+        if (errorMessage.contains('Email not verified')) {
+          icon = Icons.mark_email_unread_outlined;
+          iconColor = Colors.orange.shade800;
+          duration = 5;
+        } else if (errorMessage.contains('invalid-credential') || 
             errorMessage.contains('user-not-found') || 
             errorMessage.contains('wrong-password')) {
           errorMessage = 'Incorrect email or password. Please try again.';
+          icon = Icons.lock_outline;
         } else if (errorMessage.contains('invalid-email')) {
           errorMessage = 'Please enter a valid email address.';
+          icon = Icons.alternate_email;
         } else if (errorMessage.contains('network-request-failed')) {
           errorMessage = 'Network error. Please check your internet connection.';
+          icon = Icons.wifi_off_outlined;
+        } else if (errorMessage.contains('too-many-requests')) {
+          errorMessage = 'Too many attempts. Please try again later.';
+          icon = Icons.timer_off_outlined;
+        } else if (errorMessage.contains('user-disabled')) {
+          errorMessage = 'This account has been disabled.';
+          icon = Icons.block_outlined;
         }
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                Icon(
-                  isVerificationError ? Icons.mark_email_unread_outlined : Icons.error_outline,
-                  color: isVerificationError ? Colors.orange.shade800 : Colors.red.shade600,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    isVerificationError ? errorMessage : errorMessage,
-                    style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w500),
-                  ),
-                ),
-              ],
-            ),
-            backgroundColor: Colors.white,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            margin: const EdgeInsets.all(16),
-            elevation: 4,
-            duration: Duration(seconds: isVerificationError ? 5 : 4),
-          ),
-        );
+        _showFacebookSnackBar(context, errorMessage, icon, iconColor, seconds: duration);
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
