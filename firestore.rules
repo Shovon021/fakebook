@@ -34,7 +34,12 @@ service cloud.firestore {
       
       // Subcollections: notifications, friendRequests
       match /notifications/{notificationId} {
-        allow read, write: if isAuthenticated() && isOwner(userId);
+        // Only the user can read their own notifications
+        allow read: if isAuthenticated() && isOwner(userId);
+        // ANY authenticated user can CREATE a notification for another user (e.g., likes, comments)
+        allow create: if isAuthenticated();
+        // Only the owner can update (mark as read) or delete
+        allow update, delete: if isAuthenticated() && isOwner(userId);
       }
       
       match /friendRequests/{requestId} {
