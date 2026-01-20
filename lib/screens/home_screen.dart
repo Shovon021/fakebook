@@ -51,7 +51,7 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
         final currentUser = currentUserProvider.currentUserOrDefault;
 
         return StreamBuilder<List<PostModel>>(
-      stream: _postService.getPostsStream(),
+      stream: _postService.getPostsStream(currentUser.id),
       builder: (context, postSnapshot) {
         // Show shimmer while loading
         if (postSnapshot.connectionState == ConnectionState.waiting) {

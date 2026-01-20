@@ -9,7 +9,7 @@ class PostService {
   final NotificationService _notificationService = NotificationService();
 
   // Get posts stream (real-time updates)
-  Stream<List<PostModel>> getPostsStream({String? currentUserId}) {
+  Stream<List<PostModel>> getPostsStream([String? currentUserId]) {
     return _firestore
         .collection('posts')
         .orderBy('createdAt', descending: true)
