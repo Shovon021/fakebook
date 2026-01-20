@@ -72,48 +72,72 @@ class StoryWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final currentUser = currentUserProvider.currentUser;
-    
-    // Build list: [Create Card] -> [My Story (if exists)] -> [Friends Stories]
-    final displayStories = <StoryModel>[];
-    
-    // 1. Add "Create Story" card (Always visible)
+
+    // 1. Group stories by User ID
+    final Map<String, List<StoryModel>> groupedStories = {};
+    for (final story in stories) {
+      if (!groupedStories.containsKey(story.user.id)) {
+        groupedStories[story.user.id] = [];
+      }
+      groupedStories[story.user.id]!.add(story);
+    }
+
+    // 2. Create Display List (Thumbnails)
+    final displayCards = <StoryModel>[];
+
+    // A. "Create Story" Card (Always first)
     if (currentUser != null) {
-      displayStories.add(StoryModel(
+      displayCards.add(StoryModel(
         id: 'create',
         user: currentUser,
         isOwnStory: true,
         createdAt: DateTime.now(),
       ));
+    }
 
-      // 2. Add User's "Your Story" card (if they have stories)
-      final userOwnStories = stories.where((s) => s.user.id == currentUser.id).toList();
-      if (userOwnStories.isNotEmpty) {
-        // Use copyWith to ensure isOwnStory is true for styling
-        displayStories.add(userOwnStories.first.copyWith(isOwnStory: true));
+    // B. "Your Story" Card (If exists)
+    if (currentUser != null && groupedStories.containsKey(currentUser.id)) {
+      final myStories = groupedStories[currentUser.id]!;
+      // Use the latest story as thumbnail
+      displayCards.add(myStories.last.copyWith(isOwnStory: true));
+    }
+
+    // C. Friends' Stories Cards
+    groupedStories.forEach((userId, userStories) {
+      if (userId != currentUser?.id) {
+         // Add latest story as thumbnail
+         displayCards.add(userStories.last);
       }
+    });
+
+    // 3. Prepare Full Viewer List (Flattened & Sorted for navigation)
+    // We want: [All My Stories, ...FriendA Stories, ...FriendB Stories]
+    final fullViewerList = <StoryModel>[];
+    
+    // Add my stories first
+    if (currentUser != null && groupedStories.containsKey(currentUser.id)) {
+      fullViewerList.addAll(groupedStories[currentUser.id]!);
     }
     
-    // 3. Add other users' stories
-    for (final story in stories) {
-      if (story.user.id != currentUser?.id) {
-        displayStories.add(story);
+    // Add friends stories
+    groupedStories.forEach((userId, userStories) {
+      if (userId != currentUser?.id) {
+        fullViewerList.addAll(userStories);
       }
-    }
-    
+    });
+
     return Container(
       height: 210,
       color: isDark ? const Color(0xFF242526) : Colors.white,
-      child: displayStories.isEmpty
-          ? const SizedBox.shrink()
-          : ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-              itemCount: displayStories.length,
-              itemBuilder: (context, index) {
-                final story = displayStories[index];
-                return _buildStoryCard(context, story, isDark, displayStories);
-              },
-            ),
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+        itemCount: displayCards.length,
+        itemBuilder: (context, index) {
+          final card = displayCards[index];
+          return _buildStoryCard(context, card, isDark, fullViewerList);
+        },
+      ),
     );
   }
 
@@ -121,22 +145,22 @@ class StoryWidget extends StatelessWidget {
     return GestureDetector(
       onTap: () {
         if (story.id == 'create') {
-          // Create story
           _createStory(context);
         } else {
-          // View stories
-          // Filter out 'create' card for the viewer
-          final viewableStories = allStories.where((s) => s.id != 'create').toList();
-          final index = viewableStories.indexWhere((s) => s.id == story.id);
+          // Find the index of the first story for this user in the full viewer list
+          // This allows opening the viewer at the correct position while keeping all stories
+          final initialIndex = allStories.indexWhere((s) => s.user.id == story.user.id);
           
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => StoryViewerScreen(
-                stories: viewableStories,
-                initialIndex: index >= 0 ? index : 0,
+          if (initialIndex != -1) {
+             Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => StoryViewerScreen(
+                  stories: allStories,
+                  initialIndex: initialIndex,
+                ),
               ),
-            ),
-          );
+            );
+          }
         }
       },
       child: Container(

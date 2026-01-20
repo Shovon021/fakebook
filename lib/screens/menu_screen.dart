@@ -5,7 +5,6 @@ import '../services/auth_service.dart';
 import '../utils/image_helper.dart';
 import 'profile_screen.dart';
 import 'groups_screen.dart';
-import 'login_screen.dart';
 
 class MenuScreen extends StatefulWidget {
   const MenuScreen({super.key});
@@ -203,12 +202,13 @@ class _MenuScreenState extends State<MenuScreen> {
                  ),
                  child: TextButton(
                    onPressed: () async {
+                    // Clear provider state
+                    currentUserProvider.clearUser();
+                    // Sign out - AuthWrapper will automatically show LoginScreen
                     await AuthService().signOut();
+                    // Navigate back to root to let AuthWrapper take over
                     if (context.mounted) {
-                       Navigator.of(context).pushAndRemoveUntil(
-                         MaterialPageRoute(builder: (_) => const LoginScreen()),
-                         (route) => false,
-                       );
+                       Navigator.of(context).popUntil((route) => route.isFirst);
                     }
                   }, 
                    child: Text(
