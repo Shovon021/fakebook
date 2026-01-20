@@ -226,13 +226,17 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       }
 
       // Create the post
-      await _postService.createPost(
+      final postId = await _postService.createPost(
         authorId: widget.currentUser.id,
         content: _controller.text,
         imageUrl: imageUrl,
         imagesUrl: imagesUrls,
         videoUrl: videoUrl,
       );
+
+      if (postId == null) {
+        throw Exception('Failed to save post to database');
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

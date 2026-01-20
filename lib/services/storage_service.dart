@@ -44,7 +44,7 @@ class StorageService {
     return null;
   }
 
-  // Upload image to Cloudinary (FREE!)
+  // Upload image to Cloudinary (FREE!) with timeout
   Future<String?> uploadImage({
     required File file,
     required String folder,
@@ -56,12 +56,18 @@ class StorageService {
           folder: folder,
           resourceType: CloudinaryResourceType.Image,
         ),
+      ).timeout(
+        const Duration(seconds: 30),
+        onTimeout: () {
+          debugPrint('❌ Cloudinary upload timed out after 30 seconds');
+          throw Exception('Upload timed out. Please try again.');
+        },
       );
       debugPrint('✅ Cloudinary upload success: ${response.secureUrl}');
       return response.secureUrl;
     } catch (e) {
       debugPrint('❌ Cloudinary upload error: $e');
-      throw Exception('Upload failed: $e');
+      return null; // Return null instead of throwing to prevent crash
     }
   }
 
@@ -94,7 +100,7 @@ class StorageService {
     return null;
   }
 
-  // Upload video to Cloudinary
+  // Upload video to Cloudinary with timeout
   Future<String?> uploadVideo(String userId, File file) async {
     try {
       final response = await _cloudinary.uploadFile(
@@ -103,12 +109,18 @@ class StorageService {
           folder: 'fakebook/videos/$userId',
           resourceType: CloudinaryResourceType.Video,
         ),
+      ).timeout(
+        const Duration(seconds: 60), // Videos need more time
+        onTimeout: () {
+          debugPrint('❌ Cloudinary video upload timed out after 60 seconds');
+          throw Exception('Video upload timed out. Please try again.');
+        },
       );
       debugPrint('✅ Cloudinary video upload success: ${response.secureUrl}');
       return response.secureUrl;
     } catch (e) {
       debugPrint('❌ Cloudinary video upload error: $e');
-      throw Exception('Video upload failed: $e');
+      return null; // Return null instead of throwing to prevent crash
     }
   }
 }

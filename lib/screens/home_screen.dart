@@ -58,6 +58,30 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
           return const HomeScreenShimmer();
         }
 
+        // Handle stream errors gracefully
+        if (postSnapshot.hasError) {
+          debugPrint('❌ Posts stream error: ${postSnapshot.error}');
+          return RefreshIndicator(
+            onRefresh: _handleRefresh,
+            color: const Color(0xFF1877F2),
+            child: ListView(
+              children: const [
+                SizedBox(height: 100),
+                Center(
+                  child: Column(
+                    children: [
+                      Icon(Icons.error_outline, size: 48, color: Colors.grey),
+                      SizedBox(height: 16),
+                      Text('Unable to load posts', style: TextStyle(color: Colors.grey)),
+                      Text('Pull down to retry', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
         final posts = postSnapshot.data ?? [];
 
         // If no posts yet, show empty state with create post

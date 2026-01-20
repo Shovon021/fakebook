@@ -258,8 +258,9 @@ class PostService {
       }
 
       return docRef.id;
-    } catch (e) {
-      debugPrint('Create Post Error: $e');
+    } catch (e, stackTrace) {
+      debugPrint('❌ Create Post Error: $e');
+      debugPrint('Stack trace: $stackTrace');
       return null;
     }
   }

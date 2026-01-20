@@ -968,7 +968,22 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         }
 
         if (snapshot.hasError) {
-          return Center(child: Text('Error loading media', style: TextStyle(color: isDark ? Colors.white : Colors.black)));
+          debugPrint('❌ Profile photos stream error: ${snapshot.error}');
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.error_outline, size: 48, color: isDark ? Colors.grey : Colors.grey.shade400),
+                const SizedBox(height: 16),
+                Text('Unable to load media', style: TextStyle(color: isDark ? Colors.white70 : Colors.black54)),
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: () => setState(() {}),
+                  child: const Text('Tap to retry'),
+                ),
+              ],
+            ),
+          );
         }
 
         final posts = snapshot.data ?? [];

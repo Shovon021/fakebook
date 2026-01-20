@@ -27,7 +27,9 @@ class CurrentUserProvider extends ChangeNotifier {
       if (user != null) {
         _listenToCurrentUser(user.uid);
       } else {
+        // User logged out - clean up properly
         _userSubscription?.cancel();
+        _userSubscription = null;
         _currentUser = null;
         _isLoading = false;
         notifyListeners();
@@ -39,12 +41,20 @@ class CurrentUserProvider extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
+    // CRITICAL: Cancel any existing subscription before creating new one
     _userSubscription?.cancel();
-    _userSubscription = _userService.getUserStream(uid).listen((user) {
-      _currentUser = user;
-      _isLoading = false;
-      notifyListeners();
-    });
+    _userSubscription = _userService.getUserStream(uid).listen(
+      (user) {
+        _currentUser = user;
+        _isLoading = false;
+        notifyListeners();
+      },
+      onError: (error) {
+        debugPrint('❌ User stream error: $error');
+        _isLoading = false;
+        notifyListeners();
+      },
+    );
   }
 
   /// Refresh current user data (re-subscribes to stream)
