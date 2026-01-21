@@ -30,12 +30,21 @@ class _ChatScreenState extends State<ChatScreen> {
   Future<void> _initChat() async {
     final currentUserId = currentUserProvider.userId;
     if (currentUserId != null) {
-      _roomId = await _messengerService.getOrCreateChatRoom(
-        currentUserId,
-        widget.otherUser.id,
-      );
+      try {
+        _roomId = await _messengerService.getOrCreateChatRoom(
+          currentUserId,
+          widget.otherUser.id,
+        );
+      } catch (e) {
+        debugPrint('Error initializing chat: $e');
+        // Fallback: Generate ID locally so we can at least try to show messages (and let stream handle errors)
+        final sortedIds = [currentUserId, widget.otherUser.id]..sort();
+        _roomId = '${sortedIds[0]}_${sortedIds[1]}';
+      }
     }
-    setState(() => _isLoading = false);
+    if (mounted) {
+      setState(() => _isLoading = false);
+    }
   }
 
   @override
